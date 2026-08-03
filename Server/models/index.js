@@ -96,7 +96,7 @@ SousActivite.belongsToMany(Utilisateur, {
     as: 'utilisateursAvecAcces'
 });
 
-module.exports = {
+module.exports = {  
     sequelize,
     Role,
     Utilisateur,

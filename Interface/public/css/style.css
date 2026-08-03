@@ -47,9 +47,8 @@ a:hover { text-decoration: underline; }
     display: flex;
     align-items: center;
     gap: 8px;
+    color: var(--orange);
 }
-
-.topbar .logo .accent { color: var(--orange); }
 
 .topbar nav {
     display: flex;
@@ -341,13 +340,16 @@ table.tableau tr:hover td { background: var(--bleu-clair); }
     border-radius: 12px;
     box-shadow: 0 12px 30px rgba(0,0,0,0.2);
 }
+.carte-login .logo {
+    display: flex;
+    justify-content: center;
+}
 .carte-login h1 {
     text-align: center;
     color: var(--bleu-fonce);
     font-size: 20px;
     margin-top: 0;
 }
-.carte-login .accent { color: var(--orange); }
 .carte-login .sous-titre {
     text-align: center;
     color: var(--gris);
