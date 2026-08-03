@@ -1,0 +1,29 @@
+<%- include('partials/header') %>
+
+<div class="entete-page">
+    <h1>Tableau de bord</h1>
+    <% if (currentUser.Role && currentUser.Role.abbreviation === 'ADMIN') { %>
+        <a href="/activites/nouveau" class="btn btn-accent">+ Nouvelle activité</a>
+    <% } %>
+</div>
+
+<% if (!arborescence.length) { %>
+    <div class="carte vide">Aucune activité pour le moment.</div>
+<% } %>
+
+<ul class="arbre-activites">
+    <% arborescence.forEach(function(activite) { %>
+        <li class="carte-activite">
+            <a href="/activites/<%= activite.id %>" style="text-decoration:none; color:inherit;">
+                <div class="entete-activite">
+                    <span class="icone-dossier">🗂️</span>
+                    <h2><%= activite.nom %></h2>
+                    <span class="abbreviation"><%= activite.abbreviation %></span>
+                </div>
+            </a>
+            <%- include('partials/arbre-sous-activites', { noeuds: activite.sousActivites, id_activite: activite.id }) %>
+        </li>
+    <% }) %>
+</ul>
+
+<%- include('partials/footer') %>

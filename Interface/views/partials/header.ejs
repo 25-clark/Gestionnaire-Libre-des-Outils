@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <title><%= typeof titre !== 'undefined' ? titre + ' · GLO' : 'GLO' %></title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<% if (currentUser) { %>
+<header class="topbar">
+    <a href="/" class="logo">📁 <span>Gestionnaire</span><span class="accent">Outils</span></a>
+    <nav>
+        <a href="/">Tableau de bord</a>
+        <% if (currentUser.Role && currentUser.Role.abbreviation === 'ADMIN') { %>
+            <a href="/roles">Rôles</a>
+            <a href="/acces">Accès</a>
+        <% } %>
+    </nav>
+    <div class="utilisateur">
+        <span><%= currentUser.prenom %> <%= currentUser.nom %></span>
+        <% if (currentUser.Role) { %>
+            <span class="badge-role"><%= currentUser.Role.abbreviation %></span>
+        <% } %>
+        <form action="/logout" method="POST" class="form-inline">
+            <button type="submit" class="btn-deconnexion">Déconnexion</button>
+        </form>
+    </div>
+</header>
+<% } %>
+<div class="conteneur">

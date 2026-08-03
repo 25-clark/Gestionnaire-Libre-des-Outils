@@ -1,0 +1,89 @@
+const { SousActivite, Activite, Utilisateur, Outil } = require('../models');
+
+async function getAll(req, res, next) {
+    try {
+        const where = {};
+        if (req.query.id_activite) where.id_activite = req.query.id_activite;
+        if (req.query.id_parent) where.id_parent = req.query.id_parent;
+
+        const sousActivites = await SousActivite.findAll({ where, order: [['nom', 'ASC']] });
+        res.json(sousActivites);
+    } catch (err) { next(err); }
+}
+
+async function getById(req, res, next) {
+    try {
+        const sousActivite = await SousActivite.findByPk(req.params.id, {
+            include: [
+                { model: Activite },
+                { model: SousActivite, as: 'enfants' },
+                { model: SousActivite, as: 'parent' }
+            ]
+        });
+        if (!sousActivite) return res.status(404).json({ message: 'Sous-activité introuvable.' });
+        res.json(sousActivite);
+    } catch (err) { next(err); }
+}
+
+async function create(req, res, next) {
+    try {
+        const { nom, id_activite, id_parent } = req.body;
+
+        if (!nom || !id_activite) {
+            return res.status(400).json({ message: 'Le nom et l\'activité parente sont requis.' });
+        }
+
+        // Si un id_parent est fourni, il doit appartenir à la même activité.
+        if (id_parent) {
+            const parent = await SousActivite.findByPk(id_parent);
+            if (!parent || parent.id_activite !== parseInt(id_activite, 10)) {
+                return res.status(400).json({ message: 'La sous-activité parente ne correspond pas à cette activité.' });
+            }
+        }
+
+        const sousActivite = await SousActivite.create({
+            nom,
+            id_activite,
+            id_parent: id_parent || null
+        });
+
+        res.status(201).json(sousActivite);
+    } catch (err) { next(err); }
+}
+
+async function update(req, res, next) {
+    try {
+        const sousActivite = await SousActivite.findByPk(req.params.id);
+        if (!sousActivite) return res.status(404).json({ message: 'Sous-activité introuvable.' });
+
+        const { nom, id_parent } = req.body;
+
+        if (id_parent && parseInt(id_parent, 10) === sousActivite.id) {
+            return res.status(400).json({ message: 'Une sous-activité ne peut pas être son propre parent.' });
+        }
+
+        await sousActivite.update({
+            nom: nom ?? sousActivite.nom,
+            id_parent: id_parent !== undefined ? id_parent : sousActivite.id_parent
+        });
+
+        res.json(sousActivite);
+    } catch (err) { next(err); }
+}
+
+async function remove(req, res, next) {
+    try {
+        const sousActivite = await SousActivite.findByPk(req.params.id);
+        if (!sousActivite) return res.status(404).json({ message: 'Sous-activité introuvable.' });
+
+        const nbEnfants = await SousActivite.count({ where: { id_parent: sousActivite.id } });
+        if (nbEnfants > 0) {
+            return res.status(400).json({ message: 'Impossible de supprimer une sous-activité qui contient encore des sous-activités.' });
+        }
+
+        await sousActivite.destroy();
+        res.json({ message: 'Sous-activité supprimée.' });
+    } catch (err) { next(err); }
+}
+
+module.exports = { getAll, getById, create, update, remove };

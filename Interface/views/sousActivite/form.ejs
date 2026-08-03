@@ -1,0 +1,28 @@
+<%- include('../partials/header') %>
+
+<div class="fil-ariane"><a href="/">Tableau de bord</a> <span class="sep">›</span> <%= titre %></div>
+<div class="entete-page"><h1><%= titre %></h1></div>
+
+<div class="carte" style="max-width:520px;">
+    <% if (erreur) { %>
+        <div class="message-erreur"><%= erreur %></div>
+    <% } %>
+
+    <form action="<%= sousActivite && sousActivite.id ? '/sous-activites/' + sousActivite.id + '/modifier' : '/sous-activites' %>" method="POST">
+        <input type="hidden" name="id_activite" value="<%= id_activite %>">
+
+        <label for="nom">Nom de la sous-activité</label>
+        <input type="text" id="nom" name="nom" required value="<%= sousActivite ? sousActivite.nom : '' %>">
+
+        <label for="id_parent">Sous-activité parente (optionnel)</label>
+        <input type="text" id="id_parent" name="id_parent" placeholder="Laisser vide si aucune"
+               value="<%= id_parent %>">
+
+        <div class="actions-form">
+            <button type="submit" class="btn btn-primaire">Enregistrer</button>
+            <a href="/activites/<%= id_activite %>" class="btn btn-gris">Annuler</a>
+        </div>
+    </form>
+</div>
+
+<%- include('../partials/footer') %>

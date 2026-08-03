@@ -1,0 +1,50 @@
+<%- include('../partials/header') %>
+
+<div class="fil-ariane"><a href="/">Tableau de bord</a> <span class="sep">›</span> <%= titre %></div>
+<div class="entete-page"><h1><%= titre %></h1></div>
+
+<div class="carte" style="max-width:520px;">
+    <% if (erreur) { %>
+        <div class="message-erreur"><%= erreur %></div>
+    <% } %>
+    <p style="color:var(--gris); font-size:13px; margin-top:-4px;">
+        En cas d'erreur de saisie, il faudra supprimer puis recréer l'outil (pas de modification possible,
+        seule l'activation/désactivation est permise).
+    </p>
+
+    <form action="/outils" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="id_activite" value="<%= id_activite %>">
+
+        <label for="nom">Nom de l'outil</label>
+        <input type="text" id="nom" name="nom" required>
+
+        <label for="lien">Lien (optionnel)</label>
+        <input type="url" id="lien" name="lien" placeholder="https://...">
+
+        <label for="id_user">Propriétaire</label>
+        <select id="id_user" name="id_user" required>
+            <option value="">— Choisir un utilisateur —</option>
+            <% utilisateurs.forEach(function(u) { %>
+                <option value="<%= u.id %>"><%= u.prenom %> <%= u.nom %> (<%= u.matricule %>)</option>
+            <% }) %>
+        </select>
+
+        <label for="id_sous_activite">Sous-activité (optionnel)</label>
+        <select id="id_sous_activite" name="id_sous_activite">
+            <option value="">— Aucune —</option>
+            <% sousActivites.forEach(function(sa) { %>
+                <option value="<%= sa.id %>" <%= String(sa.id) === String(id_sous_activite) ? 'selected' : '' %>><%= sa.nom %></option>
+            <% }) %>
+        </select>
+
+        <label for="image">Image (optionnel)</label>
+        <input type="file" id="image" name="image" accept="image/*">
+
+        <div class="actions-form">
+            <button type="submit" class="btn btn-primaire">Créer</button>
+            <a href="<%= id_activite ? '/activites/' + id_activite + '?onglet=outils' : '/' %>" class="btn btn-gris">Annuler</a>
+        </div>
+    </form>
+</div>
+
+<%- include('../partials/footer') %>

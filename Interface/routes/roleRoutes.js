@@ -1,0 +1,99 @@
+const express = require('express');
+const router = express.Router();
+const { requireLogin } = require('../middlewares/requireLogin');
+const { apiClient } = require('../config/api');
+
+router.use(requireLogin);
+
+const RESSOURCES = ['utilisateurs', 'roles', 'activites', 'sous_activites', 'outils', 'acces'];
+const ACTIONS = ['read', 'create', 'update', 'delete'];
+
+router.get('/', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const { data: roles } = await api.get('/roles');
+        res.locals.page = 'roles';
+        res.render('role/liste', { titre: 'Rôles', roles });
+    } catch (err) { next(err); }
+});
+
+router.get('/nouveau', (req, res) => {
+    res.render('role/form', {
+        titre: 'Nouveau rôle',
+        role: null,
+        ressources: RESSOURCES,
+        actions: ACTIONS,
+        erreur: null
+    });
+});
+
+router.post('/', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const permissions = construirePermissions(req.body);
+        await api.post('/roles', {
+            nom: req.body.nom,
+            abbreviation: req.body.abbreviation,
+            permissions
+        });
+        res.redirect('/roles');
+    } catch (err) {
+        res.render('role/form', {
+            titre: 'Nouveau rôle',
+            role: req.body,
+            ressources: RESSOURCES,
+            actions: ACTIONS,
+            erreur: err.response?.data?.message || 'Erreur lors de la création.'
+        });
+    }
+});
+
+router.get('/:id/modifier', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const { data: role } = await api.get(`/roles/${req.params.id}`);
+        res.render('role/form', {
+            titre: 'Modifier le rôle',
+            role,
+            ressources: RESSOURCES,
+            actions: ACTIONS,
+            erreur: null
+        });
+    } catch (err) { next(err); }
+});
+
+router.post('/:id/modifier', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const permissions = construirePermissions(req.body);
+        await api.put(`/roles/${req.params.id}`, {
+            nom: req.body.nom,
+            abbreviation: req.body.abbreviation,
+            permissions
+        });
+        res.redirect('/roles');
+    } catch (err) { next(err); }
+});
+
+router.post('/:id/supprimer', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        await api.delete(`/roles/${req.params.id}`);
+        res.redirect('/roles');
+    } catch (err) { next(err); }
+});
+
+// Reconstruit l'objet permissions à partir des cases à cocher du formulaire
+// (nommées perm_<ressource>_<action>).
+function construirePermissions(body) {
+    const permissions = {};
+    for (const ressource of RESSOURCES) {
+        permissions[ressource] = {};
+        for (const action of ACTIONS) {
+            permissions[ressource][action] = body[`perm_${ressource}_${action}`] === 'on';
+        }
+    }
+    return permissions;
+}
+
+module.exports = router;

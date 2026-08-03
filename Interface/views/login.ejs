@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <title>Connexion · GLO</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="page-login">
+    <div class="carte-login">
+        <h1>📁 Gestionnaire <span class="accent">Outils</span></h1>
+        <p class="sous-titre">Connectez-vous avec votre matricule</p>
+
+        <% if (erreur) { %>
+            <div class="message-erreur"><%= erreur %></div>
+        <% } %>
+
+        <form action="/login" method="POST">
+            <label for="matricule">Matricule</label>
+            <input type="text" id="matricule" name="matricule" placeholder="0000.prenom" required autofocus>
+
+            <button type="submit" class="btn btn-primaire">Se connecter</button>
+        </form>
+    </div>
+</body>
+</html>

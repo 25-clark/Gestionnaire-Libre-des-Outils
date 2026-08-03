@@ -1,0 +1,70 @@
+<%- include('../partials/header') %>
+
+<div class="entete-page"><h1>Accès particuliers</h1></div>
+<p style="color:var(--gris); font-size:14px; margin-top:-10px;">
+    Accordez à un utilisateur un accès superuser sur une activité qui n'est pas la sienne
+    (ex : édition possible sur une ou deux activités seulement).
+</p>
+
+<div class="carte" style="max-width:640px;">
+    <form action="/acces/activites" method="POST">
+        <label for="id_user">Utilisateur</label>
+        <select id="id_user" name="id_user" required>
+            <option value="">— Choisir —</option>
+            <% utilisateurs.forEach(function(u) { %>
+                <option value="<%= u.id %>"><%= u.prenom %> <%= u.nom %> (<%= u.matricule %>)</option>
+            <% }) %>
+        </select>
+
+        <label for="id_activite">Activité</label>
+        <select id="id_activite" name="id_activite" required>
+            <option value="">— Choisir —</option>
+            <% activites.forEach(function(a) { %>
+                <option value="<%= a.id %>"><%= a.nom %></option>
+            <% }) %>
+        </select>
+
+        <div class="champ-case">
+            <input type="checkbox" id="write" name="write">
+            <label for="write">Autoriser l'écriture (création/modification)</label>
+        </div>
+        <div class="champ-case">
+            <input type="checkbox" id="delete" name="delete">
+            <label for="delete">Autoriser la suppression</label>
+        </div>
+
+        <div class="actions-form">
+            <button type="submit" class="btn btn-primaire">Accorder l'accès</button>
+        </div>
+    </form>
+</div>
+
+<div class="carte">
+    <h2 style="margin-top:0; font-size:16px; color:var(--bleu-fonce);">Accès sur des activités</h2>
+    <% if (!accesActivites.length) { %>
+        <p class="vide">Aucun accès particulier accordé.</p>
+    <% } else { %>
+        <table class="tableau">
+            <thead><tr><th>Utilisateur</th><th>Activité</th><th>Niveau</th><th></th></tr></thead>
+            <tbody>
+            <% accesActivites.forEach(function(a) { %>
+                <tr>
+                    <td><%= a.Utilisateur ? a.Utilisateur.prenom + ' ' + a.Utilisateur.nom : '—' %></td>
+                    <td><%= a.Activite ? a.Activite.nom : '—' %></td>
+                    <td>
+                        <%= a.permissions && a.permissions.write ? 'Écriture' : 'Lecture' %><% if (a.permissions && a.permissions.delete) { %> + Suppression<% } %>
+                    </td>
+                    <td style="text-align:right;">
+                        <form action="/acces/activites/<%= a.id %>/supprimer" method="POST" class="form-inline"
+                              onsubmit="return confirm('Révoquer cet accès ?');">
+                            <button type="submit" class="btn btn-danger btn-petit">Révoquer</button>
+                        </form>
+                    </td>
+                </tr>
+            <% }) %>
+            </tbody>
+        </table>
+    <% } %>
+</div>
+
+<%- include('../partials/footer') %>
