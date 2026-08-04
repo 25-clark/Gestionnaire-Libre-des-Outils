@@ -2,8 +2,8 @@
 <ul class="sous-arbre">
     <% noeuds.forEach(function(sa) { %>
         <li>
-            <a class="noeud-sous-activite" href="/activites/<%= id_activite %>?onglet=sous-activites#sa-<%= sa.id %>">
-                <span class="icone-dossier-petit"><i class="bi bi-folder2-open"></i></span>
+            <a class="noeud-sous-activite" href="/sous-activites/<%= sa.id %>">
+                <span class="icone-dossier-petit"><i class="bi bi-folder"></i></span>
                 <span><%= sa.nom %></span>
             </a>
             <%- include('arbre-sous-activites', { noeuds: sa.enfants, id_activite: id_activite }) %>

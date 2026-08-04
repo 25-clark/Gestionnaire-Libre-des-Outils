@@ -15,10 +15,12 @@
 <% if (currentUser) { %>
 <header class="topbar">
     <a href="/" class="logo"><img src="/favicon-32x32.png" alt="favicon"> <span>Gestionnaire Libre des Outils</span></a>
-    <nav>
+    <nav class="nav-links">
         <a href="/">Tableau de bord</a>
-        <% if (currentUser.Role && currentUser.Role.abbreviation === 'ADMIN') { %>
+        <% if (peut('roles', 'read')) { %>
             <a href="/roles">Rôles</a>
+        <% } %>
+        <% if (peut('acces', 'read')) { %>
             <a href="/acces">Accès</a>
         <% } %>
     </nav>

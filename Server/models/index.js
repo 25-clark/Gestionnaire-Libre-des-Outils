@@ -96,7 +96,24 @@ SousActivite.belongsToMany(Utilisateur, {
     as: 'utilisateursAvecAcces'
 });
 
-module.exports = {  
+// ---- Associations directes sur les tables pivot elles-mêmes ----
+// belongsToMany (ci-dessus) ne crée PAS d'association directe entre la table
+// pivot et les modèles source/cible. Ces belongsTo sont nécessaires pour
+// pouvoir faire, par ex., UtilisateurActivite.findAll({ include: [Utilisateur, Activite] })
+// (utilisé dans accesController pour lister/gérer les accès particuliers).
+UtilisateurActivite.belongsTo(Utilisateur, { foreignKey: 'id_user' });
+UtilisateurActivite.belongsTo(Activite, { foreignKey: 'id_activite' });
+
+UtilisateurSousActivite.belongsTo(Utilisateur, { foreignKey: 'id_user' });
+UtilisateurSousActivite.belongsTo(SousActivite, { foreignKey: 'id_sous_activite' });
+
+OutilActivite.belongsTo(Outil, { foreignKey: 'id_outil' });
+OutilActivite.belongsTo(Activite, { foreignKey: 'id_activite' });
+
+OutilSousActivite.belongsTo(Outil, { foreignKey: 'id_outil' });
+OutilSousActivite.belongsTo(SousActivite, { foreignKey: 'id_sous_activite' });
+
+module.exports = {
     sequelize,
     Role,
     Utilisateur,

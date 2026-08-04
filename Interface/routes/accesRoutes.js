@@ -26,6 +26,8 @@ router.get('/', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
+// ---------- Accès sur une activité ----------
+
 router.post('/activites', async (req, res, next) => {
     try {
         const api = apiClient(req);
@@ -39,7 +41,7 @@ router.post('/activites', async (req, res, next) => {
             id_activite: req.body.id_activite,
             permissions
         });
-        res.redirect('/acces');
+        res.redirect(req.body.retour || '/acces');
     } catch (err) { next(err); }
 });
 
@@ -47,7 +49,34 @@ router.post('/activites/:id/supprimer', async (req, res, next) => {
     try {
         const api = apiClient(req);
         await api.delete(`/acces/activites/${req.params.id}`);
-        res.redirect('/acces');
+        res.redirect(req.body.retour || '/acces');
+    } catch (err) { next(err); }
+});
+
+// ---------- Accès sur une sous-activité ----------
+
+router.post('/sous-activites', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const permissions = {
+            read: true,
+            write: req.body.write === 'on',
+            delete: req.body.delete === 'on'
+        };
+        await api.post('/acces/sous-activites', {
+            id_user: req.body.id_user,
+            id_sous_activite: req.body.id_sous_activite,
+            permissions
+        });
+        res.redirect(req.body.retour || '/acces');
+    } catch (err) { next(err); }
+});
+
+router.post('/sous-activites/:id/supprimer', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        await api.delete(`/acces/sous-activites/${req.params.id}`);
+        res.redirect(req.body.retour || '/acces');
     } catch (err) { next(err); }
 });
 

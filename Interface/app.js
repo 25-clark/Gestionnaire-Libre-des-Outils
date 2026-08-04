@@ -30,10 +30,16 @@ app.use(session({
     cookie: { maxAge: 1000 * 60 * 60 * 8 } // 8h
 }));
 
-// Rend l'utilisateur connecté disponible dans toutes les vues EJS
+const { peutFaire } = require('./middlewares/requireLogin');
+
+// Rend l'utilisateur connecté disponible dans toutes les vues EJS, ainsi
+// qu'une fonction peut(resource, action) pour n'afficher que les actions
+// que l'utilisateur a réellement le droit de faire (cohérent avec les
+// permissions vérifiées côté Server, qui reste la source de vérité).
 app.use((req, res, next) => {
     res.locals.currentUser = req.session.user || null;
     res.locals.page = '';
+    res.locals.peut = (resource, action) => peutFaire(res.locals.currentUser, resource, action);
     next();
 });
 

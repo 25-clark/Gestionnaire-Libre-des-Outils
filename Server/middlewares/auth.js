@@ -35,6 +35,24 @@ function isAdmin(user) {
 }
 
 /**
+ * Normalise le champ "permissions" d'un rôle. Selon la version de MySQL /
+ * du driver, une colonne JSON peut parfois revenir sous forme de chaîne
+ * plutôt que d'objet déjà parsé : on gère les deux cas pour éviter des
+ * refus d'accès silencieux et incompréhensibles.
+ */
+function normaliserPermissions(permissions) {
+    if (!permissions) return {};
+    if (typeof permissions === 'string') {
+        try {
+            return JSON.parse(permissions);
+        } catch {
+            return {};
+        }
+    }
+    return permissions;
+}
+
+/**
  * Middleware générique : vérifie la permission globale (rôle) pour une
  * ressource et une action données. Ex : checkPermission('outils', 'create')
  * Un admin passe toujours.
@@ -51,14 +69,25 @@ function checkPermission(resource, action) {
             return next();
         }
 
-        const permissions = user.Role.permissions || {};
+        const permissions = normaliserPermissions(user.Role.permissions);
         const resourcePerms = permissions[resource] || {};
 
         if (resourcePerms[action]) {
             return next();
         }
 
-        return res.status(403).json({ message: `Accès refusé : action "${action}" non autorisée sur "${resource}".` });
+        const message = `Accès refusé : action "${action}" non autorisée sur "${resource}".`;
+
+        // En dev, on donne un indice concret pour diagnostiquer rapidement
+        // un rôle mal configuré (case à cocher oubliée, rôle non re-seedé...).
+        if (process.env.NODE_ENV !== 'production') {
+            console.warn(
+                `[checkPermission] refusé pour ${user.matricule} (rôle "${user.Role.nom}") sur ${resource}.${action} — permissions actuelles :`,
+                JSON.stringify(permissions[resource] || 'aucune entrée pour cette ressource')
+            );
+        }
+
+        return res.status(403).json({ message });
     };
 }
 

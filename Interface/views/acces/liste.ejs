@@ -6,6 +6,7 @@
     (ex : édition possible sur une ou deux activités seulement).
 </p>
 
+<% if (peut('acces', 'create')) { %>
 <div class="carte" style="max-width:640px;">
     <form action="/acces/activites" method="POST">
         <label for="id_user">Utilisateur</label>
@@ -38,6 +39,7 @@
         </div>
     </form>
 </div>
+<% } %>
 
 <div class="carte">
     <h2 style="margin-top:0; font-size:16px; color:var(--bleu-fonce);">Accès sur des activités</h2>
@@ -55,10 +57,42 @@
                         <%= a.permissions && a.permissions.write ? 'Écriture' : 'Lecture' %><% if (a.permissions && a.permissions.delete) { %> + Suppression<% } %>
                     </td>
                     <td style="text-align:right;">
-                        <form action="/acces/activites/<%= a.id %>/supprimer" method="POST" class="form-inline"
-                              onsubmit="return confirm('Révoquer cet accès ?');">
-                            <button type="submit" class="btn btn-danger btn-petit">Révoquer</button>
-                        </form>
+                        <% if (peut('acces', 'delete')) { %>
+                            <form action="/acces/activites/<%= a.id %>/supprimer" method="POST" class="form-inline"
+                                  onsubmit="return confirm('Révoquer cet accès ?');">
+                                <button type="submit" class="btn btn-danger btn-petit">Révoquer</button>
+                            </form>
+                        <% } %>
+                    </td>
+                </tr>
+            <% }) %>
+            </tbody>
+        </table>
+    <% } %>
+</div>
+
+<div class="carte">
+    <h2 style="margin-top:0; font-size:16px; color:var(--bleu-fonce);">Accès sur des sous-activités</h2>
+    <% if (!accesSousActivites.length) { %>
+        <p class="vide">Aucun accès particulier accordé (voir aussi l'onglet "Utilisateurs" de chaque sous-activité).</p>
+    <% } else { %>
+        <table class="tableau">
+            <thead><tr><th>Utilisateur</th><th>Sous-activité</th><th>Niveau</th><th></th></tr></thead>
+            <tbody>
+            <% accesSousActivites.forEach(function(a) { %>
+                <tr>
+                    <td><%= a.Utilisateur ? a.Utilisateur.prenom + ' ' + a.Utilisateur.nom : '—' %></td>
+                    <td><%= a.SousActivite ? a.SousActivite.nom : '—' %></td>
+                    <td>
+                        <%= a.permissions && a.permissions.write ? 'Écriture' : 'Lecture' %><% if (a.permissions && a.permissions.delete) { %> + Suppression<% } %>
+                    </td>
+                    <td style="text-align:right;">
+                        <% if (peut('acces', 'delete')) { %>
+                            <form action="/acces/sous-activites/<%= a.id %>/supprimer" method="POST" class="form-inline"
+                                  onsubmit="return confirm('Révoquer cet accès ?');">
+                                <button type="submit" class="btn btn-danger btn-petit">Révoquer</button>
+                            </form>
+                        <% } %>
                     </td>
                 </tr>
             <% }) %>

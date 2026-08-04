@@ -7,13 +7,17 @@
         <% if (activite.logo) { %><img src="<%= activite.logo %>" class="miniature" style="vertical-align:middle; margin-right:8px;"><% } %>
         <%= activite.nom %> <span style="color:var(--gris); font-weight:400; font-size:15px;">(<%= activite.abbreviation %>)</span>
     </h1>
-    <% if (currentUser.Role && currentUser.Role.abbreviation === 'ADMIN') { %>
+    <% if (peut('activites', 'update') || peut('activites', 'delete')) { %>
         <div style="display:flex; gap:8px;">
-            <a href="/activites/<%= activite.id %>/modifier" class="btn btn-gris">Modifier</a>
-            <form action="/activites/<%= activite.id %>/supprimer" method="POST" class="form-inline"
-                  onsubmit="return confirm('Supprimer cette activité ?');">
-                <button type="submit" class="btn btn-danger">Supprimer</button>
-            </form>
+            <% if (peut('activites', 'update')) { %>
+                <a href="/activites/<%= activite.id %>/modifier" class="btn btn-gris">Modifier</a>
+            <% } %>
+            <% if (peut('activites', 'delete')) { %>
+                <form action="/activites/<%= activite.id %>/supprimer" method="POST" class="form-inline"
+                      onsubmit="return confirm('Supprimer cette activité ?');">
+                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                </form>
+            <% } %>
         </div>
     <% } %>
 </div>
@@ -25,10 +29,12 @@
 </div>
 
 <% if (onglet === 'sous-activites') { %>
-    <div class="entete-page">
-        <span></span>
-        <a href="/sous-activites/nouveau?id_activite=<%= activite.id %>" class="btn btn-accent"><i class="bi bi-plus-circle-dotted"></i> Nouvelle sous-activité</a>
-    </div>
+    <% if (peut('sous_activites', 'create')) { %>
+        <div class="entete-page">
+            <span></span>
+            <a href="/sous-activites/nouveau?id_activite=<%= activite.id %>" class="btn btn-accent"><i class="bi bi-plus-circle-dotted"></i> Nouvelle sous-activité</a>
+        </div>
+    <% } %>
 
     <% if (!sousActivites.length) { %>
         <div class="carte vide">Aucune sous-activité pour l'instant.</div>
@@ -39,17 +45,23 @@
                 <tbody>
                 <% sousActivites.forEach(function(sa) { %>
                     <tr id="sa-<%= sa.id %>">
-                        <td><%= sa.nom %></td>
+                        <td><a href="/sous-activites/<%= sa.id %>"><i class="bi bi-folder2-open"></i> <%= sa.nom %></a></td>
                         <td><% if (sa.id_parent) {
                             const parent = sousActivites.find(function(p){ return p.id === sa.id_parent; });
                         %><%= parent ? parent.nom : '—' %><% } else { %>—<% } %></td>
                         <td style="text-align:right; white-space:nowrap;">
-                            <a href="/sous-activites/<%= sa.id %>/modifier" class="btn btn-gris btn-petit">Modifier</a>
-                            <a href="/outils/nouveau?id_activite=<%= activite.id %>&id_sous_activite=<%= sa.id %>" class="btn btn-gris btn-petit"><i class="bi bi-plus-circle-dotted"></i> Outil</a>
-                            <form action="/sous-activites/<%= sa.id %>/supprimer" method="POST" class="form-inline"
-                                  onsubmit="return confirm('Supprimer cette sous-activité ?');">
-                                <button type="submit" class="btn btn-danger btn-petit">Supprimer</button>
-                            </form>
+                            <% if (peut('sous_activites', 'update')) { %>
+                                <a href="/sous-activites/<%= sa.id %>/modifier" class="btn btn-gris btn-petit">Modifier</a>
+                            <% } %>
+                            <% if (peut('outils', 'create')) { %>
+                                <a href="/outils/nouveau?id_activite=<%= activite.id %>&id_sous_activite=<%= sa.id %>" class="btn btn-gris btn-petit"><i class="bi bi-plus-circle-dotted"></i> Outil</a>
+                            <% } %>
+                            <% if (peut('sous_activites', 'delete')) { %>
+                                <form action="/sous-activites/<%= sa.id %>/supprimer" method="POST" class="form-inline"
+                                      onsubmit="return confirm('Supprimer cette sous-activité ?');">
+                                    <button type="submit" class="btn btn-danger btn-petit">Supprimer</button>
+                                </form>
+                            <% } %>
                         </td>
                     </tr>
                 <% }) %>
@@ -60,10 +72,12 @@
 <% } %>
 
 <% if (onglet === 'utilisateurs') { %>
-    <div class="entete-page">
-        <span></span>
-        <a href="/utilisateurs/nouveau?id_activite=<%= activite.id %>" class="btn btn-accent"><i class="bi bi-plus-circle-dotted"></i> Nouvel utilisateur</a>
-    </div>
+    <% if (peut('utilisateurs', 'create')) { %>
+        <div class="entete-page">
+            <span></span>
+            <a href="/utilisateurs/nouveau?id_activite=<%= activite.id %>" class="btn btn-accent"><i class="bi bi-plus-circle-dotted"></i> Nouvel utilisateur</a>
+        </div>
+    <% } %>
 
     <% if (!utilisateurs.length) { %>
         <div class="carte vide">Aucun utilisateur rattaché à cette activité.</div>
@@ -79,10 +93,12 @@
                         <td><%= u.prenom %></td>
                         <td><span class="badge-role" style="background:var(--bleu);"><%= u.Role ? u.Role.abbreviation : '—' %></span></td>
                         <td style="text-align:right;">
-                            <form action="/utilisateurs/<%= u.id %>/supprimer" method="POST" class="form-inline"
-                                  onsubmit="return confirm('Supprimer cet utilisateur ?');">
-                                <button type="submit" class="btn btn-danger btn-petit">Supprimer</button>
-                            </form>
+                            <% if (peut('utilisateurs', 'delete')) { %>
+                                <form action="/utilisateurs/<%= u.id %>/supprimer" method="POST" class="form-inline"
+                                      onsubmit="return confirm('Supprimer cet utilisateur ?');">
+                                    <button type="submit" class="btn btn-danger btn-petit">Supprimer</button>
+                                </form>
+                            <% } %>
                         </td>
                     </tr>
                 <% }) %>
@@ -93,10 +109,12 @@
 <% } %>
 
 <% if (onglet === 'outils') { %>
-    <div class="entete-page">
-        <span></span>
-        <a href="/outils/nouveau?id_activite=<%= activite.id %>" class="btn btn-accent"><i class="bi bi-plus-circle-dotted"></i> Nouvel outil</a>
-    </div>
+    <% if (peut('outils', 'create')) { %>
+        <div class="entete-page">
+            <span></span>
+            <a href="/outils/nouveau?id_activite=<%= activite.id %>" class="btn btn-accent"><i class="bi bi-plus-circle-dotted"></i> Nouvel outil</a>
+        </div>
+    <% } %>
 
     <% if (!outils.length) { %>
         <div class="carte vide">Aucun outil rattaché à cette activité.</div>
@@ -119,15 +137,19 @@
                             <% } %>
                         </td>
                         <td style="text-align:right; white-space:nowrap;">
-                            <form action="/outils/<%= o.id %>/toggle-active" method="POST" class="form-inline">
-                                <input type="hidden" name="id_activite" value="<%= activite.id %>">
-                                <button type="submit" class="btn btn-gris btn-petit"><%= o.active ? 'Désactiver' : 'Activer' %></button>
-                            </form>
-                            <form action="/outils/<%= o.id %>/supprimer" method="POST" class="form-inline"
-                                  onsubmit="return confirm('Supprimer cet outil ?');">
-                                <input type="hidden" name="id_activite" value="<%= activite.id %>">
-                                <button type="submit" class="btn btn-danger btn-petit">Supprimer</button>
-                            </form>
+                            <% if (peut('outils', 'update')) { %>
+                                <form action="/outils/<%= o.id %>/toggle-active" method="POST" class="form-inline">
+                                    <input type="hidden" name="id_activite" value="<%= activite.id %>">
+                                    <button type="submit" class="btn btn-gris btn-petit"><%= o.active ? 'Désactiver' : 'Activer' %></button>
+                                </form>
+                            <% } %>
+                            <% if (peut('outils', 'delete')) { %>
+                                <form action="/outils/<%= o.id %>/supprimer" method="POST" class="form-inline"
+                                      onsubmit="return confirm('Supprimer cet outil ?');">
+                                    <input type="hidden" name="id_activite" value="<%= activite.id %>">
+                                    <button type="submit" class="btn btn-danger btn-petit">Supprimer</button>
+                                </form>
+                            <% } %>
                         </td>
                     </tr>
                 <% }) %>
