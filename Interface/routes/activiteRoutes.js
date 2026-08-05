@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { requireLogin } = require('../middlewares/requireLogin');
+const { requireLogin, peutFaire } = require('../middlewares/requireLogin');
 const { uploadLogo } = require('../middlewares/upload');
 const { apiClient } = require('../config/api');
 
@@ -26,22 +26,35 @@ router.post('/', uploadLogo.single('logo'), async (req, res) => {
     }
 });
 
-// Détail d'une activité : onglets Utilisateurs / Outils / Sous-activités
+// Détail d'une activité : onglets Outils / Sous-activités / Utilisateurs.
+// Par défaut et par sécurité, seul l'onglet "Outils" est actif : les
+// sous-activités et les utilisateurs ne sont montrés que si le rôle de
+// l'utilisateur a la permission de lecture correspondante.
 router.get('/:id', async (req, res, next) => {
     try {
         const api = apiClient(req);
-        const onglet = req.query.onglet || 'sous-activites';
+        const user = req.session.user;
+
+        const ongletsAutorises = ['outils'];
+        if (peutFaire(user, 'sous_activites', 'read')) ongletsAutorises.push('sous-activites');
+        if (peutFaire(user, 'utilisateurs', 'read')) ongletsAutorises.push('utilisateurs');
+
+        let onglet = req.query.onglet || 'outils';
+        if (!ongletsAutorises.includes(onglet)) onglet = 'outils';
 
         const { data: activite } = await api.get(`/activites/${req.params.id}`);
-        const { data: sousActivites } = await api.get(`/sous-activites?id_activite=${req.params.id}`);
 
+        let sousActivites = [];
         let utilisateurs = [];
         let outils = [];
 
-        if (onglet === 'utilisateurs') {
+        if (onglet === 'sous-activites') {
+            const resp = await api.get(`/sous-activites?id_activite=${req.params.id}`);
+            sousActivites = resp.data;
+        } else if (onglet === 'utilisateurs') {
             const resp = await api.get(`/utilisateurs?id_activite=${req.params.id}`);
             utilisateurs = resp.data;
-        } else if (onglet === 'outils') {
+        } else {
             const resp = await api.get(`/outils?id_activite=${req.params.id}`);
             outils = resp.data;
         }

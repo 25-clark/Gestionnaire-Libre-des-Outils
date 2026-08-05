@@ -64,7 +64,7 @@ app.use((err, req, res, next) => {
     res.status(err.response?.status || 500).render('erreur', { titre: 'Erreur', message });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 2521;
 app.listen(PORT, () => {
     console.log(`Interface GLO démarrée sur http://localhost:${PORT}`);
 });

@@ -15,7 +15,7 @@
 <% if (currentUser) { %>
 <header class="topbar">
     <a href="/" class="logo"><img src="/favicon-32x32.png" alt="favicon"> <span>Gestionnaire Libre des Outils</span></a>
-    <nav class="nav-links">
+    <nav>
         <a href="/">Tableau de bord</a>
         <% if (peut('roles', 'read')) { %>
             <a href="/roles">Rôles</a>

@@ -1,7 +1,17 @@
 const { Outil, Utilisateur, Activite, SousActivite } = require('../models');
+const { isAdmin, getIdsActivitesAccessibles } = require('../middlewares/auth');
 
 async function getAll(req, res, next) {
     try {
+        // Un utilisateur non admin ne doit pas pouvoir lister les outils
+        // d'une activité à laquelle il n'a pas accès, même en connaissant son id.
+        if (!isAdmin(req.currentUser) && req.query.id_activite) {
+            const idsAccessibles = await getIdsActivitesAccessibles(req.currentUser);
+            if (!idsAccessibles.includes(parseInt(req.query.id_activite, 10))) {
+                return res.status(403).json({ message: "Vous n'avez pas accès à cette activité." });
+            }
+        }
+
         const include = [
             { model: Utilisateur },
             { model: Activite, as: 'activites' },

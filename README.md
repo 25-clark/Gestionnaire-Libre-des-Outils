@@ -52,7 +52,7 @@ npm start
 # ou npm run dev (avec nodemon)
 ```
 
-Par défaut, l'API tourne sur **http://localhost:4000**.
+Par défaut, l'API tourne sur **http://localhost:2520**.
 
 ---
 
@@ -66,7 +66,7 @@ npm install
 copy .env.example .env
 ```
 
-Vérifier que `API_URL` dans `.env` pointe bien vers le backend (`http://localhost:4000/api` par défaut).
+Vérifier que `API_URL` dans `.env` pointe bien vers le backend (`http://localhost:2520/api` par défaut).
 
 Démarrer l'interface :
 
@@ -75,7 +75,7 @@ npm start
 # ou npm run dev
 ```
 
-Ouvrir **http://localhost:3000** dans le navigateur, puis se connecter avec le matricule
+Ouvrir **http://localhost:2521** dans le navigateur, puis se connecter avec le matricule
 `0000.admin` (aucun mot de passe n'est requis — outil interne).
 
 ---

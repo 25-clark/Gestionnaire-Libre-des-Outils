@@ -10,7 +10,7 @@
 </div>
 
 <div class="entete-page">
-    <h1><i class="bi bi-folder"></i> <%= sousActivite.nom %></h1>
+    <h1><i class="bi bi-folder2-open"></i> <%= sousActivite.nom %></h1>
     <% if (peut('sous_activites', 'update') || peut('sous_activites', 'delete')) { %>
         <div style="display:flex; gap:8px;">
             <% if (peut('sous_activites', 'update')) { %>
@@ -18,7 +18,7 @@
             <% } %>
             <% if (peut('sous_activites', 'delete')) { %>
                 <form action="/sous-activites/<%= sousActivite.id %>/supprimer" method="POST" class="form-inline"
-                      onsubmit="return confirm('Supprimer cette sous-activité: <%= sousActivite.nom %> ?');">
+                      onsubmit="return confirm('Supprimer cette sous-activité ?');">
                     <button type="submit" class="btn btn-danger">Supprimer</button>
                 </form>
             <% } %>
@@ -27,9 +27,13 @@
 </div>
 
 <div class="onglets">
-    <a class="onglet <%= onglet === 'sous-activites' ? 'actif' : '' %>" href="/sous-activites/<%= sousActivite.id %>?onglet=sous-activites">Sous-activités</a>
-    <a class="onglet <%= onglet === 'utilisateurs' ? 'actif' : '' %>" href="/sous-activites/<%= sousActivite.id %>?onglet=utilisateurs">Utilisateurs</a>
     <a class="onglet <%= onglet === 'outils' ? 'actif' : '' %>" href="/sous-activites/<%= sousActivite.id %>?onglet=outils">Outils</a>
+    <% if (peut('sous_activites', 'read')) { %>
+        <a class="onglet <%= onglet === 'sous-activites' ? 'actif' : '' %>" href="/sous-activites/<%= sousActivite.id %>?onglet=sous-activites">Sous-activités</a>
+    <% } %>
+    <% if (peut('acces', 'read')) { %>
+        <a class="onglet <%= onglet === 'utilisateurs' ? 'actif' : '' %>" href="/sous-activites/<%= sousActivite.id %>?onglet=utilisateurs">Utilisateurs</a>
+    <% } %>
 </div>
 
 <% if (onglet === 'sous-activites') { %>
@@ -135,47 +139,7 @@
         </div>
     <% } %>
 
-    <% if (!outils.length) { %>
-        <div class="carte vide">Aucun outil rattaché à cette sous-activité.</div>
-    <% } else { %>
-        <div class="carte">
-            <table class="tableau">
-                <thead><tr><th></th><th>Nom</th><th>Lien</th><th>Propriétaire</th><th>Statut</th><th></th></tr></thead>
-                <tbody>
-                <% outils.forEach(function(o) { %>
-                    <tr>
-                        <td><% if (o.image) { %><img src="<%= o.image %>" class="miniature"><% } %></td>
-                        <td><%= o.nom %></td>
-                        <td><% if (o.lien) { %><a href="<%= o.lien %>" target="_blank" rel="noopener">Ouvrir ↗</a><% } else { %>—<% } %></td>
-                        <td><%= o.Utilisateur ? o.Utilisateur.prenom + ' ' + o.Utilisateur.nom : '—' %></td>
-                        <td>
-                            <% if (o.active) { %>
-                                <span class="pastille pastille-active">Actif</span>
-                            <% } else { %>
-                                <span class="pastille pastille-inactive">Désactivé</span>
-                            <% } %>
-                        </td>
-                        <td style="text-align:right; white-space:nowrap;">
-                            <% if (peut('outils', 'update')) { %>
-                                <form action="/outils/<%= o.id %>/toggle-active" method="POST" class="form-inline">
-                                    <input type="hidden" name="id_activite" value="<%= sousActivite.id_activite %>">
-                                    <button type="submit" class="btn btn-gris btn-petit"><%= o.active ? 'Désactiver' : 'Activer' %></button>
-                                </form>
-                            <% } %>
-                            <% if (peut('outils', 'delete')) { %>
-                                <form action="/outils/<%= o.id %>/supprimer" method="POST" class="form-inline"
-                                      onsubmit="return confirm('Supprimer cet outil ?');">
-                                    <input type="hidden" name="id_activite" value="<%= sousActivite.id_activite %>">
-                                    <button type="submit" class="btn btn-danger btn-petit">Supprimer</button>
-                                </form>
-                            <% } %>
-                        </td>
-                    </tr>
-                <% }) %>
-                </tbody>
-            </table>
-        </div>
-    <% } %>
+    <%- include('../partials/outils-vue', { outils: outils, retour: '/sous-activites/' + sousActivite.id + '?onglet=outils' }) %>
 <% } %>
 
 <%- include('../partials/footer') %>

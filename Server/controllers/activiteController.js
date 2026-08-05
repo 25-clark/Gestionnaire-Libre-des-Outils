@@ -1,4 +1,5 @@
 const { Activite, SousActivite, Utilisateur, Outil } = require('../models');
+const { getIdsActivitesAccessibles } = require('../middlewares/auth');
 
 // Construit récursivement l'arbre des sous-activités d'une activité.
 function construireArbre(sousActivites, idParent = null) {
@@ -13,18 +14,27 @@ function construireArbre(sousActivites, idParent = null) {
         }));
 }
 
+// Ne renvoie que les activités auxquelles l'utilisateur courant a accès
+// (son activité principale + celles accordées en accès particulier).
+// Un admin voit tout. Un utilisateur non rattaché ne voit rien par défaut.
 async function getAll(req, res, next) {
     try {
-        const activites = await Activite.findAll({ order: [['nom', 'ASC']] });
+        const idsAccessibles = await getIdsActivitesAccessibles(req.currentUser);
+        const where = idsAccessibles ? { id: idsAccessibles } : {};
+
+        const activites = await Activite.findAll({ where, order: [['nom', 'ASC']] });
         res.json(activites);
     } catch (err) { next(err); }
 }
 
-// Renvoie toutes les activités avec leur arborescence de sous-activités
-// (utilisé pour l'affichage "dossiers" côté admin).
+// Renvoie les activités accessibles avec leur arborescence de sous-activités
+// (utilisé pour l'affichage "dossiers" du tableau de bord).
 async function getArborescence(req, res, next) {
     try {
-        const activites = await Activite.findAll({ order: [['nom', 'ASC']] });
+        const idsAccessibles = await getIdsActivitesAccessibles(req.currentUser);
+        const where = idsAccessibles ? { id: idsAccessibles } : {};
+
+        const activites = await Activite.findAll({ where, order: [['nom', 'ASC']] });
         const sousActivites = await SousActivite.findAll({ order: [['nom', 'ASC']] });
 
         const resultat = activites.map(activite => ({

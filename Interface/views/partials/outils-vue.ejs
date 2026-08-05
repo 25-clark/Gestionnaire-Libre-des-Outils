@@ -1,0 +1,159 @@
+<% if (!outils.length) { %>
+    <div class="carte vide">Aucun outil pour l'instant.</div>
+<% } else { %>
+
+    <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
+        <div class="vue-switch">
+            <button type="button" class="vue-btn" data-vue="liste">☰ Liste</button>
+            <button type="button" class="vue-btn" data-vue="cartes">▦ Cartes</button>
+            <button type="button" class="vue-btn" data-vue="vignettes">⬚ Vignettes</button>
+        </div>
+    </div>
+
+    <!-- Vue Liste -->
+    <div class="vue-panneau" data-vue="liste">
+        <div class="carte">
+            <table class="tableau">
+                <thead><tr><th></th><th>Nom</th><th>Lien</th><th>Propriétaire</th><th>Statut</th><th></th></tr></thead>
+                <tbody>
+                <% outils.forEach(function(o) { %>
+                    <tr>
+                        <td><% if (o.image) { %><img src="<%= o.image %>" class="miniature"><% } %></td>
+                        <td><%= o.nom %></td>
+                        <td><% if (o.lien) { %><a href="<%= o.lien %>" target="_blank" rel="noopener">Ouvrir ↗</a><% } else { %>—<% } %></td>
+                        <td><%= o.Utilisateur ? o.Utilisateur.prenom + ' ' + o.Utilisateur.nom : '—' %></td>
+                        <td>
+                            <% if (o.active) { %>
+                                <span class="pastille pastille-active">Actif</span>
+                            <% } else { %>
+                                <span class="pastille pastille-inactive">Désactivé</span>
+                            <% } %>
+                        </td>
+                        <td style="text-align:right; white-space:nowrap;">
+                            <% if (peut('outils', 'update')) { %>
+                                <form action="/outils/<%= o.id %>/toggle-active" method="POST" class="form-inline">
+                                    <input type="hidden" name="retour" value="<%= retour %>">
+                                    <button type="submit" class="btn btn-gris btn-petit"><%= o.active ? 'Désactiver' : 'Activer' %></button>
+                                </form>
+                            <% } %>
+                            <% if (peut('outils', 'delete')) { %>
+                                <form action="/outils/<%= o.id %>/supprimer" method="POST" class="form-inline"
+                                      onsubmit="return confirm('Supprimer cet outil ?');">
+                                    <input type="hidden" name="retour" value="<%= retour %>">
+                                    <button type="submit" class="btn btn-danger btn-petit">Supprimer</button>
+                                </form>
+                            <% } %>
+                        </td>
+                    </tr>
+                <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Vue Cartes -->
+    <div class="vue-panneau" data-vue="cartes">
+        <div class="grille-cartes">
+            <% outils.forEach(function(o) { %>
+                <div class="carte-outil">
+                    <div class="image-outil">
+                        <% if (o.image) { %>
+                            <img src="<%= o.image %>" alt="<%= o.nom %>">
+                        <% } else { %>
+                            <span class="icone-defaut">🔧</span>
+                        <% } %>
+                    </div>
+                    <div class="corps-carte">
+                        <span class="nom-outil"><%= o.nom %></span>
+                        <span class="proprietaire-outil"><%= o.Utilisateur ? o.Utilisateur.prenom + ' ' + o.Utilisateur.nom : '—' %></span>
+                        <% if (o.active) { %>
+                            <span class="pastille pastille-active" style="width:fit-content;">Actif</span>
+                        <% } else { %>
+                            <span class="pastille pastille-inactive" style="width:fit-content;">Désactivé</span>
+                        <% } %>
+                    </div>
+                    <div class="pied-carte">
+                        <% if (o.lien) { %>
+                            <a href="<%= o.lien %>" target="_blank" rel="noopener" style="font-size:12px;">Ouvrir ↗</a>
+                        <% } else { %>
+                            <span></span>
+                        <% } %>
+                        <div style="display:flex; gap:4px;">
+                            <% if (peut('outils', 'update')) { %>
+                                <form action="/outils/<%= o.id %>/toggle-active" method="POST" class="form-inline">
+                                    <input type="hidden" name="retour" value="<%= retour %>">
+                                    <button type="submit" class="btn btn-gris btn-petit"><%= o.active ? 'Désactiver' : 'Activer' %></button>
+                                </form>
+                            <% } %>
+                            <% if (peut('outils', 'delete')) { %>
+                                <form action="/outils/<%= o.id %>/supprimer" method="POST" class="form-inline"
+                                      onsubmit="return confirm('Supprimer cet outil ?');">
+                                    <input type="hidden" name="retour" value="<%= retour %>">
+                                    <button type="submit" class="btn btn-danger btn-petit">Suppr.</button>
+                                </form>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+    </div>
+
+    <!-- Vue Vignettes -->
+    <div class="vue-panneau" data-vue="vignettes">
+        <div class="grille-vignettes">
+            <% outils.forEach(function(o) { %>
+                <div class="vignette-outil" title="<%= o.nom %> — <%= o.Utilisateur ? o.Utilisateur.prenom + ' ' + o.Utilisateur.nom : '—' %>">
+                    <span class="point-statut <%= o.active ? 'actif' : 'inactif' %>"></span>
+                    <div class="image-vignette">
+                        <% if (o.image) { %>
+                            <img src="<%= o.image %>" alt="<%= o.nom %>">
+                        <% } else { %>
+                            <span class="icone-defaut">🔧</span>
+                        <% } %>
+                    </div>
+                    <span class="nom-vignette"><%= o.nom %></span>
+                    <% if (peut('outils', 'update') || peut('outils', 'delete')) { %>
+                        <div class="actions-vignette">
+                            <% if (peut('outils', 'update')) { %>
+                                <form action="/outils/<%= o.id %>/toggle-active" method="POST" class="form-inline">
+                                    <input type="hidden" name="retour" value="<%= retour %>">
+                                    <button type="submit" title="<%= o.active ? 'Désactiver' : 'Activer' %>"><%= o.active ? '⏸' : '▶' %></button>
+                                </form>
+                            <% } %>
+                            <% if (peut('outils', 'delete')) { %>
+                                <form action="/outils/<%= o.id %>/supprimer" method="POST" class="form-inline"
+                                      onsubmit="return confirm('Supprimer cet outil ?');">
+                                    <input type="hidden" name="retour" value="<%= retour %>">
+                                    <button type="submit" title="Supprimer">🗑</button>
+                                </form>
+                            <% } %>
+                        </div>
+                    <% } %>
+                </div>
+            <% }) %>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        var boutons = document.querySelectorAll('.vue-btn');
+        var panneaux = document.querySelectorAll('.vue-panneau');
+        var cle = 'glo-vue-outils';
+
+        function activer(vue) {
+            panneaux.forEach(function (p) { p.style.display = (p.dataset.vue === vue) ? '' : 'none'; });
+            boutons.forEach(function (b) { b.classList.toggle('actif', b.dataset.vue === vue); });
+            try { localStorage.setItem(cle, vue); } catch (e) {}
+        }
+
+        boutons.forEach(function (b) {
+            b.addEventListener('click', function () { activer(b.dataset.vue); });
+        });
+
+        var sauvegarde = null;
+        try { sauvegarde = localStorage.getItem(cle); } catch (e) {}
+        activer((sauvegarde && ['liste', 'cartes', 'vignettes'].includes(sauvegarde)) ? sauvegarde : 'liste');
+    })();
+    </script>
+<% } %>

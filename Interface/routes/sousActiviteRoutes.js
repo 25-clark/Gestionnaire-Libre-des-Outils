@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { requireLogin } = require('../middlewares/requireLogin');
+const { requireLogin, peutFaire } = require('../middlewares/requireLogin');
 const { apiClient } = require('../config/api');
 
 router.use(requireLogin);
@@ -52,28 +52,42 @@ async function construireFilAriane(api, sousActivite) {
     return chaine;
 }
 
-// Détail d'une sous-activité : onglets Sous-activités (enfants) / Utilisateurs / Outils
+// Détail d'une sous-activité : onglets Outils / Sous-activités (enfants) / Utilisateurs.
+// Par défaut et par sécurité, seul l'onglet "Outils" est actif : les
+// sous-activités enfants et les accès particuliers ne sont montrés que si
+// le rôle de l'utilisateur a la permission de lecture correspondante.
 router.get('/:id', async (req, res, next) => {
     try {
         const api = apiClient(req);
-        const onglet = req.query.onglet || 'sous-activites';
+        const user = req.session.user;
+
+        const ongletsAutorises = ['outils'];
+        if (peutFaire(user, 'sous_activites', 'read')) ongletsAutorises.push('sous-activites');
+        if (peutFaire(user, 'acces', 'read')) ongletsAutorises.push('utilisateurs');
+
+        let onglet = req.query.onglet || 'outils';
+        if (!ongletsAutorises.includes(onglet)) onglet = 'outils';
 
         const { data: sousActivite } = await api.get(`/sous-activites/${req.params.id}`);
-        const { data: enfants } = await api.get(`/sous-activites?id_parent=${req.params.id}`);
         const [{ data: activite }, ancetres] = await Promise.all([
             api.get(`/activites/${sousActivite.id_activite}`),
             construireFilAriane(api, sousActivite)
         ]);
 
+        let enfants = [];
         let utilisateurs = [];
         let outils = [];
+        let tousUtilisateurs = [];
 
-        if (onglet === 'utilisateurs') {
+        if (onglet === 'sous-activites') {
+            const resp = await api.get(`/sous-activites?id_parent=${req.params.id}`);
+            enfants = resp.data;
+        } else if (onglet === 'utilisateurs') {
             const resp = await api.get(`/acces/sous-activites?id_sous_activite=${req.params.id}`);
             utilisateurs = resp.data;
-            const { data: tousUtilisateurs } = await api.get('/utilisateurs');
-            res.locals.tousUtilisateurs = tousUtilisateurs;
-        } else if (onglet === 'outils') {
+            const resp2 = await api.get('/utilisateurs');
+            tousUtilisateurs = resp2.data;
+        } else {
             const resp = await api.get(`/outils?id_sous_activite=${req.params.id}`);
             outils = resp.data;
         }
@@ -88,7 +102,7 @@ router.get('/:id', async (req, res, next) => {
             utilisateurs,
             outils,
             onglet,
-            tousUtilisateurs: res.locals.tousUtilisateurs || []
+            tousUtilisateurs
         });
     } catch (err) {
         next(err);

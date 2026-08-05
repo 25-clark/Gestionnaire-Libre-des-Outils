@@ -1,10 +1,32 @@
 const { SousActivite, Activite, Utilisateur, Outil } = require('../models');
+const { isAdmin, getIdsActivitesAccessibles } = require('../middlewares/auth');
 
 async function getAll(req, res, next) {
     try {
         const where = {};
         if (req.query.id_activite) where.id_activite = req.query.id_activite;
         if (req.query.id_parent) where.id_parent = req.query.id_parent;
+
+        // Un utilisateur non admin ne doit voir que les sous-activités des
+        // activités auxquelles il a accès (cf. dashboard scoping).
+        if (!isAdmin(req.currentUser)) {
+            const idsAccessibles = await getIdsActivitesAccessibles(req.currentUser);
+
+            if (where.id_activite) {
+                if (!idsAccessibles.includes(parseInt(where.id_activite, 10))) {
+                    return res.status(403).json({ message: "Vous n'avez pas accès à cette activité." });
+                }
+            } else if (where.id_parent) {
+                const parent = await SousActivite.findByPk(where.id_parent);
+                if (!parent || !idsAccessibles.includes(parent.id_activite)) {
+                    return res.status(403).json({ message: "Vous n'avez pas accès à cette sous-activité." });
+                }
+            } else {
+                // Aucun filtre demandé explicitement : restreindre directement
+                // à l'ensemble des activités accessibles.
+                where.id_activite = idsAccessibles;
+            }
+        }
 
         const sousActivites = await SousActivite.findAll({ where, order: [['nom', 'ASC']] });
         res.json(sousActivites);

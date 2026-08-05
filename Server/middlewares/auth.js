@@ -1,4 +1,4 @@
-const { Utilisateur, Role, UtilisateurActivite, UtilisateurSousActivite } = require('../models');
+const { Utilisateur, Role, SousActivite, UtilisateurActivite, UtilisateurSousActivite } = require('../models');
 
 /**
  * Vérifie que l'utilisateur est connecté (session active) et attache
@@ -149,10 +149,85 @@ function checkAccesSousActivite(niveau = 'write') {
     };
 }
 
+/**
+ * Renvoie la liste des ids d'activités auxquelles un utilisateur a
+ * effectivement accès : son activité principale (id_activite) + celles
+ * accordées explicitement en accès particulier (UtilisateurActivite).
+ * Un utilisateur non rattaché et sans accès accordé ne voit RIEN par
+ * défaut — c'est un rôle qui doit lui donner accès aux outils, pas une
+ * activité entière.
+ *
+ * Renvoie null pour un admin : signifie "aucune restriction" (accès à tout).
+ */
+async function getIdsActivitesAccessibles(user) {
+    if (isAdmin(user)) return null;
+
+    const ids = new Set();
+    if (user.id_activite) ids.add(user.id_activite);
+
+    const acces = await UtilisateurActivite.findAll({ where: { id_user: user.id } });
+    acces.forEach((a) => ids.add(a.id_activite));
+
+    return Array.from(ids);
+}
+
+/**
+ * Middleware : vérifie que l'utilisateur a accès en lecture à l'activité
+ * demandée (req.params.id). Un admin passe toujours. Bloque la simple
+ * consultation d'une activité à laquelle l'utilisateur n'a pas été
+ * explicitement rattaché (via son activité principale ou un accès
+ * particulier accordé dans l'onglet "Utilisateurs"/"Accès").
+ */
+function checkAccesLectureActivite() {
+    return async (req, res, next) => {
+        try {
+            const user = req.currentUser;
+            if (isAdmin(user)) return next();
+
+            const idsAccessibles = await getIdsActivitesAccessibles(user);
+            const idDemande = parseInt(req.params.id, 10);
+
+            if (idsAccessibles.includes(idDemande)) return next();
+
+            return res.status(403).json({ message: "Vous n'avez pas accès à cette activité." });
+        } catch (err) {
+            next(err);
+        }
+    };
+}
+
+/**
+ * Idem, mais pour une sous-activité : l'accès dépend de l'accès à son
+ * activité racine (id_activite).
+ */
+function checkAccesLectureSousActivite() {
+    return async (req, res, next) => {
+        try {
+            const user = req.currentUser;
+            if (isAdmin(user)) return next();
+
+            const sousActivite = await SousActivite.findByPk(req.params.id);
+            if (!sousActivite) {
+                return res.status(404).json({ message: 'Sous-activité introuvable.' });
+            }
+
+            const idsAccessibles = await getIdsActivitesAccessibles(user);
+            if (idsAccessibles.includes(sousActivite.id_activite)) return next();
+
+            return res.status(403).json({ message: "Vous n'avez pas accès à cette sous-activité." });
+        } catch (err) {
+            next(err);
+        }
+    };
+}
+
 module.exports = {
     requireAuth,
     isAdmin,
     checkPermission,
     checkAccesActivite,
-    checkAccesSousActivite
+    checkAccesSousActivite,
+    getIdsActivitesAccessibles,
+    checkAccesLectureActivite,
+    checkAccesLectureSousActivite
 };
