@@ -16,8 +16,7 @@
         <li class="carte-activite">
             <a href="/activites/<%= activite.id %>" style="text-decoration:none; color:inherit;">
                 <div class="entete-activite">
-                    <span class="icone-dossier"><% if (activite.logo) { %><img src="<%= activite.logo %>" class="miniature" style="vertical-align:middle; margin-right:8px;"><% } 
-                        else { %><i class="bi bi-folder2-open"></i><% } %></span>
+                    <span class="icone-dossier">🗂️</span>
                     <h2><%= activite.nom %></h2>
                     <span class="abbreviation"><%= activite.abbreviation %></span>
                 </div>

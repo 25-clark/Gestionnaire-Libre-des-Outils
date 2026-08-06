@@ -1,5 +1,5 @@
 <% if (!outils.length) { %>
-    <div class="carte vide">Aucun outil pour l'instant.</div>
+    <div class="carte vide"><%= typeof messageVide !== 'undefined' ? messageVide : "Aucun outil pour l'instant." %></div>
 <% } else { %>
 
     <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
@@ -105,14 +105,27 @@
             <% outils.forEach(function(o) { %>
                 <div class="vignette-outil" title="<%= o.nom %> — <%= o.Utilisateur ? o.Utilisateur.prenom + ' ' + o.Utilisateur.nom : '—' %>">
                     <span class="point-statut <%= o.active ? 'actif' : 'inactif' %>"></span>
-                    <div class="image-vignette">
-                        <% if (o.image) { %>
-                            <img src="<%= o.image %>" alt="<%= o.nom %>">
-                        <% } else { %>
-                            <span class="icone-defaut">🔧</span>
-                        <% } %>
-                    </div>
-                    <span class="nom-vignette"><%= o.nom %></span>
+                    <% if (o.lien) { %>
+                        <a href="<%= o.lien %>" target="_blank" rel="noopener" style="text-decoration:none; color:inherit; display:block;">
+                            <div class="image-vignette">
+                                <% if (o.image) { %>
+                                    <img src="<%= o.image %>" alt="<%= o.nom %>">
+                                <% } else { %>
+                                    <span class="icone-defaut">🔧</span>
+                                <% } %>
+                            </div>
+                            <span class="nom-vignette"><%= o.nom %> ↗</span>
+                        </a>
+                    <% } else { %>
+                        <div class="image-vignette">
+                            <% if (o.image) { %>
+                                <img src="<%= o.image %>" alt="<%= o.nom %>">
+                            <% } else { %>
+                                <span class="icone-defaut">🔧</span>
+                            <% } %>
+                        </div>
+                        <span class="nom-vignette"><%= o.nom %></span>
+                    <% } %>
                     <% if (peut('outils', 'update') || peut('outils', 'delete')) { %>
                         <div class="actions-vignette">
                             <% if (peut('outils', 'update')) { %>

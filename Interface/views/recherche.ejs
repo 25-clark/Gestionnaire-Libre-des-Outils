@@ -1,0 +1,89 @@
+<%- include('partials/header') %>
+
+<div class="entete-page"><h1>Recherche</h1></div>
+
+<div class="carte" style="max-width:520px;">
+    <form action="/recherche" method="GET">
+        <input type="text" name="q" value="<%= q %>" placeholder="Nom d'outil, nom d'utilisateur, matricule..." autofocus>
+        <div class="actions-form">
+            <button type="submit" class="btn btn-primaire">Rechercher</button>
+        </div>
+    </form>
+</div>
+
+<% if (!q) { %>
+    <div class="carte vide">Tapez un terme de recherche ci-dessus.</div>
+<% } else { %>
+
+    <% if (peut('outils', 'read')) { %>
+        <h2 style="font-size:16px; color:var(--bleu-fonce); margin:24px 0 10px;">Outils</h2>
+        <% if (!outils.length) { %>
+            <div class="carte vide">Aucun outil ne correspond à « <%= q %> ».</div>
+        <% } else { %>
+            <div class="carte">
+                <table class="tableau">
+                    <thead><tr><th></th><th>Nom</th><th>Propriétaire</th><th>Statut</th><th>Activité</th><th></th></tr></thead>
+                    <tbody>
+                    <% outils.forEach(function(o) { %>
+                        <% var premiereActivite = (o.activites && o.activites[0]) || null; %>
+                        <% var premiereSousActivite = (o.sousActivites && o.sousActivites[0]) || null; %>
+                        <% var lienRetour = premiereActivite
+                            ? '/activites/' + premiereActivite.id + '?onglet=' + (o.active ? 'outils' : 'archives')
+                            : (premiereSousActivite ? '/sous-activites/' + premiereSousActivite.id + '?onglet=' + (o.active ? 'outils' : 'archives') : null); %>
+                        <tr>
+                            <td><% if (o.image) { %><img src="<%= o.image %>" class="miniature"><% } %></td>
+                            <td><%= o.nom %></td>
+                            <td><%= o.Utilisateur ? o.Utilisateur.prenom + ' ' + o.Utilisateur.nom : '—' %></td>
+                            <td>
+                                <% if (o.active) { %>
+                                    <span class="pastille pastille-active">Actif</span>
+                                <% } else { %>
+                                    <span class="pastille pastille-inactive">Archivé</span>
+                                <% } %>
+                            </td>
+                            <td><%= premiereActivite ? premiereActivite.nom : (premiereSousActivite ? premiereSousActivite.nom : '—') %></td>
+                            <td style="text-align:right;">
+                                <% if (lienRetour) { %>
+                                    <a href="<%= lienRetour %>" class="btn btn-gris btn-petit">Voir</a>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        <% } %>
+    <% } %>
+
+    <% if (peut('utilisateurs', 'read')) { %>
+        <h2 style="font-size:16px; color:var(--bleu-fonce); margin:24px 0 10px;">Utilisateurs</h2>
+        <% if (!utilisateurs.length) { %>
+            <div class="carte vide">Aucun utilisateur ne correspond à « <%= q %> ».</div>
+        <% } else { %>
+            <div class="carte">
+                <table class="tableau">
+                    <thead><tr><th>Matricule</th><th>Nom</th><th>Prénom</th><th>Rôle</th><th>Activité</th><th></th></tr></thead>
+                    <tbody>
+                    <% utilisateurs.forEach(function(u) { %>
+                        <tr>
+                            <td><%= u.matricule %></td>
+                            <td><%= u.nom %></td>
+                            <td><%= u.prenom %></td>
+                            <td><span class="badge-role" style="background:var(--bleu);"><%= u.Role ? u.Role.abbreviation : '—' %></span></td>
+                            <td><%= u.Activite ? u.Activite.nom : '—' %></td>
+                            <td style="text-align:right;">
+                                <% if (u.id_activite) { %>
+                                    <a href="/activites/<%= u.id_activite %>?onglet=utilisateurs" class="btn btn-gris btn-petit">Voir</a>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        <% } %>
+    <% } %>
+
+<% } %>
+
+<%- include('partials/footer') %>

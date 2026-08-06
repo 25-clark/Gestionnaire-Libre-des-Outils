@@ -1,18 +1,42 @@
 const { Utilisateur, Role, Activite, Outil } = require('../models');
+const { isAdmin, getIdsActivitesAccessibles } = require('../middlewares/auth');
 
 async function getAll(req, res, next) {
     try {
         const where = {};
+
         // Filtre optionnel par activité, ex: GET /api/utilisateurs?id_activite=3
         if (req.query.id_activite) {
+            if (!isAdmin(req.currentUser)) {
+                const idsAccessibles = await getIdsActivitesAccessibles(req.currentUser);
+                if (!idsAccessibles.includes(parseInt(req.query.id_activite, 10))) {
+                    return res.status(403).json({ message: "Vous n'avez pas accès à cette activité." });
+                }
+            }
             where.id_activite = req.query.id_activite;
+        } else if (!isAdmin(req.currentUser)) {
+            // Pas de filtre demandé explicitement : un utilisateur non admin ne
+            // doit voir que les utilisateurs des activités auxquelles il a accès.
+            const idsAccessibles = await getIdsActivitesAccessibles(req.currentUser);
+            where.id_activite = idsAccessibles;
         }
 
-        const utilisateurs = await Utilisateur.findAll({
+        let utilisateurs = await Utilisateur.findAll({
             where,
             include: [{ model: Role }, { model: Activite }],
             order: [['nom', 'ASC']]
         });
+
+        // Recherche libre par nom, prénom ou matricule, ex: ?q=dupont
+        if (req.query.q) {
+            const terme = req.query.q.trim().toLowerCase();
+            utilisateurs = utilisateurs.filter(u =>
+                u.nom.toLowerCase().includes(terme) ||
+                u.prenom.toLowerCase().includes(terme) ||
+                u.matricule.toLowerCase().includes(terme)
+            );
+        }
+
         res.json(utilisateurs);
     } catch (err) { next(err); }
 }

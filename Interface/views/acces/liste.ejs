@@ -1,13 +1,17 @@
 <%- include('../partials/header') %>
 
 <div class="entete-page"><h1>Accès particuliers</h1></div>
-<p style="color:var(--gris); font-size:14px; margin-top:-10px;">
-    Accordez à un utilisateur un accès superuser sur une activité qui n'est pas la sienne
-    (ex : édition possible sur une ou deux activités seulement).
+<p style="color:var(--gris); font-size:14px; margin-top:-10px; max-width:640px;">
+    Le <strong>rôle</strong> définit ce qu'un type d'utilisateur peut faire en général.
+    Un <strong>accès particulier</strong> accorde une exception ciblée sur une activité ou
+    sous-activité précise, <em>même si son rôle ne le permet pas</em> — utile pour débloquer
+    ponctuellement "édition + suppression" à un agent sur une seule activité, sans toucher à
+    son rôle ni à tout ce qu'il gère par ailleurs. La consultation reste toujours gérée par le rôle.
 </p>
 
 <% if (peut('acces', 'create')) { %>
 <div class="carte" style="max-width:640px;">
+    <h2 style="margin-top:0; font-size:15px; color:var(--bleu-fonce);">Accorder un accès sur une activité</h2>
     <form action="/acces/activites" method="POST">
         <label for="id_user">Utilisateur</label>
         <select id="id_user" name="id_user" required>

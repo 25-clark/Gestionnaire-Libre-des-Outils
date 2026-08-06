@@ -1,5 +1,12 @@
 <%- include('../partials/header') %>
 
+<% var accesEcritureSousActivite = !!(monAccesSousActivite && monAccesSousActivite.permissions && monAccesSousActivite.permissions.write); %>
+<% var accesSuppressionSousActivite = !!(monAccesSousActivite && monAccesSousActivite.permissions && monAccesSousActivite.permissions.delete); %>
+<% var accesEcritureActivite = !!(monAccesActivite && monAccesActivite.permissions && monAccesActivite.permissions.write); %>
+<% var peutModifier = peut('sous_activites', 'update') || accesEcritureSousActivite; %>
+<% var peutSupprimer = peut('sous_activites', 'delete') || accesSuppressionSousActivite; %>
+<% var peutCreerEnfant = peut('sous_activites', 'create') || accesEcritureActivite; %>
+
 <div class="fil-ariane">
     <a href="/">Tableau de bord</a> <span class="sep">›</span>
     <a href="/activites/<%= activite.id %>"><%= activite.nom %></a>
@@ -10,13 +17,13 @@
 </div>
 
 <div class="entete-page">
-    <h1><i class="bi bi-folder2-open"></i> <%= sousActivite.nom %></h1>
-    <% if (peut('sous_activites', 'update') || peut('sous_activites', 'delete')) { %>
+    <h1>📂 <%= sousActivite.nom %></h1>
+    <% if (peutModifier || peutSupprimer) { %>
         <div style="display:flex; gap:8px;">
-            <% if (peut('sous_activites', 'update')) { %>
+            <% if (peutModifier) { %>
                 <a href="/sous-activites/<%= sousActivite.id %>/modifier" class="btn btn-gris">Modifier</a>
             <% } %>
-            <% if (peut('sous_activites', 'delete')) { %>
+            <% if (peutSupprimer) { %>
                 <form action="/sous-activites/<%= sousActivite.id %>/supprimer" method="POST" class="form-inline"
                       onsubmit="return confirm('Supprimer cette sous-activité ?');">
                     <button type="submit" class="btn btn-danger">Supprimer</button>
@@ -28,6 +35,7 @@
 
 <div class="onglets">
     <a class="onglet <%= onglet === 'outils' ? 'actif' : '' %>" href="/sous-activites/<%= sousActivite.id %>?onglet=outils">Outils</a>
+    <a class="onglet <%= onglet === 'archives' ? 'actif' : '' %>" href="/sous-activites/<%= sousActivite.id %>?onglet=archives">Archives</a>
     <% if (peut('sous_activites', 'read')) { %>
         <a class="onglet <%= onglet === 'sous-activites' ? 'actif' : '' %>" href="/sous-activites/<%= sousActivite.id %>?onglet=sous-activites">Sous-activités</a>
     <% } %>
@@ -37,7 +45,7 @@
 </div>
 
 <% if (onglet === 'sous-activites') { %>
-    <% if (peut('sous_activites', 'create')) { %>
+    <% if (peutCreerEnfant) { %>
         <div class="entete-page">
             <span></span>
             <a href="/sous-activites/nouveau?id_activite=<%= sousActivite.id_activite %>&id_parent=<%= sousActivite.id %>" class="btn btn-accent">+ Nouvelle sous-activité</a>
@@ -139,7 +147,14 @@
         </div>
     <% } %>
 
-    <%- include('../partials/outils-vue', { outils: outils, retour: '/sous-activites/' + sousActivite.id + '?onglet=outils' }) %>
+    <%- include('../partials/outils-vue', { outils: outils, retour: '/sous-activites/' + sousActivite.id + '?onglet=outils', messageVide: "Aucun outil actif pour l'instant." }) %>
+<% } %>
+
+<% if (onglet === 'archives') { %>
+    <p style="color:var(--gris); font-size:13px; margin-top:-10px;">
+        Outils désactivés de cette sous-activité. Réactivez-les pour les faire réapparaître dans l'onglet "Outils".
+    </p>
+    <%- include('../partials/outils-vue', { outils: outils, retour: '/sous-activites/' + sousActivite.id + '?onglet=archives', messageVide: 'Aucun outil archivé.' }) %>
 <% } %>
 
 <%- include('../partials/footer') %>

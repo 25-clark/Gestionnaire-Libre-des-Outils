@@ -52,7 +52,7 @@ async function construireFilAriane(api, sousActivite) {
     return chaine;
 }
 
-// Détail d'une sous-activité : onglets Outils / Sous-activités (enfants) / Utilisateurs.
+// Détail d'une sous-activité : onglets Outils / Archives / Sous-activités (enfants) / Utilisateurs.
 // Par défaut et par sécurité, seul l'onglet "Outils" est actif : les
 // sous-activités enfants et les accès particuliers ne sont montrés que si
 // le rôle de l'utilisateur a la permission de lecture correspondante.
@@ -61,7 +61,7 @@ router.get('/:id', async (req, res, next) => {
         const api = apiClient(req);
         const user = req.session.user;
 
-        const ongletsAutorises = ['outils'];
+        const ongletsAutorises = ['outils', 'archives'];
         if (peutFaire(user, 'sous_activites', 'read')) ongletsAutorises.push('sous-activites');
         if (peutFaire(user, 'acces', 'read')) ongletsAutorises.push('utilisateurs');
 
@@ -69,9 +69,11 @@ router.get('/:id', async (req, res, next) => {
         if (!ongletsAutorises.includes(onglet)) onglet = 'outils';
 
         const { data: sousActivite } = await api.get(`/sous-activites/${req.params.id}`);
-        const [{ data: activite }, ancetres] = await Promise.all([
+        const [{ data: activite }, ancetres, { data: monAccesSousActivite }, { data: monAccesActivite }] = await Promise.all([
             api.get(`/activites/${sousActivite.id_activite}`),
-            construireFilAriane(api, sousActivite)
+            construireFilAriane(api, sousActivite),
+            api.get(`/acces/mon-acces/sous-activite?id_sous_activite=${req.params.id}`),
+            api.get(`/acces/mon-acces/activite?id_activite=${sousActivite.id_activite}`)
         ]);
 
         let enfants = [];
@@ -88,8 +90,12 @@ router.get('/:id', async (req, res, next) => {
             const resp2 = await api.get('/utilisateurs');
             tousUtilisateurs = resp2.data;
         } else {
+            // "outils" et "archives" partagent la même source ; on sépare
+            // simplement actifs / désactivés une fois récupérés.
             const resp = await api.get(`/outils?id_sous_activite=${req.params.id}`);
-            outils = resp.data;
+            outils = onglet === 'archives'
+                ? resp.data.filter(o => !o.active)
+                : resp.data.filter(o => o.active);
         }
 
         res.locals.page = 'sousActivite';
@@ -98,6 +104,8 @@ router.get('/:id', async (req, res, next) => {
             sousActivite,
             activite,
             ancetres,
+            monAccesSousActivite,
+            monAccesActivite,
             enfants,
             utilisateurs,
             outils,

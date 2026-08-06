@@ -26,16 +26,17 @@ router.post('/', uploadLogo.single('logo'), async (req, res) => {
     }
 });
 
-// Détail d'une activité : onglets Outils / Sous-activités / Utilisateurs.
+// Détail d'une activité : onglets Outils / Archives / Sous-activités / Utilisateurs.
 // Par défaut et par sécurité, seul l'onglet "Outils" est actif : les
 // sous-activités et les utilisateurs ne sont montrés que si le rôle de
-// l'utilisateur a la permission de lecture correspondante.
+// l'utilisateur a la permission de lecture correspondante. "Archives"
+// regroupe les outils désactivés (retirés de l'onglet Outils courant).
 router.get('/:id', async (req, res, next) => {
     try {
         const api = apiClient(req);
         const user = req.session.user;
 
-        const ongletsAutorises = ['outils'];
+        const ongletsAutorises = ['outils', 'archives'];
         if (peutFaire(user, 'sous_activites', 'read')) ongletsAutorises.push('sous-activites');
         if (peutFaire(user, 'utilisateurs', 'read')) ongletsAutorises.push('utilisateurs');
 
@@ -43,6 +44,7 @@ router.get('/:id', async (req, res, next) => {
         if (!ongletsAutorises.includes(onglet)) onglet = 'outils';
 
         const { data: activite } = await api.get(`/activites/${req.params.id}`);
+        const { data: monAcces } = await api.get(`/acces/mon-acces/activite?id_activite=${req.params.id}`);
 
         let sousActivites = [];
         let utilisateurs = [];
@@ -55,14 +57,19 @@ router.get('/:id', async (req, res, next) => {
             const resp = await api.get(`/utilisateurs?id_activite=${req.params.id}`);
             utilisateurs = resp.data;
         } else {
+            // "outils" et "archives" partagent la même source ; on sépare
+            // simplement actifs / désactivés une fois récupérés.
             const resp = await api.get(`/outils?id_activite=${req.params.id}`);
-            outils = resp.data;
+            outils = onglet === 'archives'
+                ? resp.data.filter(o => !o.active)
+                : resp.data.filter(o => o.active);
         }
 
         res.locals.page = 'activite';
         res.render('activite/detail', {
             titre: activite.nom,
             activite,
+            monAcces,
             sousActivites,
             utilisateurs,
             outils,

@@ -115,7 +115,8 @@ function checkAccesActivite(niveau = 'write') {
                 where: { id_user: user.id, id_activite: idActivite }
             });
 
-            if (acces && acces.permissions && acces.permissions[niveau]) {
+            const permissions = normaliserPermissions(acces && acces.permissions);
+            if (permissions[niveau]) {
                 return next();
             }
 
@@ -138,7 +139,8 @@ function checkAccesSousActivite(niveau = 'write') {
                 where: { id_user: user.id, id_sous_activite: idSousActivite }
             });
 
-            if (acces && acces.permissions && acces.permissions[niveau]) {
+            const permissions = normaliserPermissions(acces && acces.permissions);
+            if (permissions[niveau]) {
                 return next();
             }
 
@@ -221,6 +223,123 @@ function checkAccesLectureSousActivite() {
     };
 }
 
+/**
+ * ============================================================
+ * RÔLE + ACCÈS PARTICULIER : LES DEUX SE COMPLÈTENT (OR), PAS AND
+ * ============================================================
+ * Le rôle définit une capacité par défaut ("ce type d'utilisateur peut
+ * modifier des activités"). L'accès particulier accorde une EXCEPTION
+ * ciblée sur une activité/sous-activité précise, INDÉPENDAMMENT du rôle
+ * ("cet utilisateur précis peut aussi modifier CETTE activité, même si
+ * son rôle ne le permet pas en général"). C'est le fonctionnement
+ * "superuser ponctuel" voulu : un admin peut débloquer une action pour
+ * un équipier sur un seul périmètre, sans changer son rôle globalement.
+ *
+ * Autorise une action de modification/suppression sur une ACTIVITÉ si :
+ * - admin, ou
+ * - le rôle autorise l'action globalement ET l'utilisateur a accès (au
+ *   moins en lecture) à cette activité, ou
+ * - un accès particulier a été accordé sur CETTE activité précisément,
+ *   avec le niveau requis (write pour update, delete pour delete).
+ */
+function checkActionActivite(action) {
+    const niveauAcces = action === 'delete' ? 'delete' : 'write';
+
+    return async (req, res, next) => {
+        try {
+            const user = req.currentUser;
+            if (isAdmin(user)) return next();
+
+            const idActivite = parseInt(req.params.id, 10);
+
+            const permissions = normaliserPermissions(user.Role.permissions);
+            const roleAutorise = !!(permissions.activites && permissions.activites[action]);
+
+            if (roleAutorise) {
+                const idsAccessibles = await getIdsActivitesAccessibles(user);
+                if (idsAccessibles.includes(idActivite)) return next();
+            }
+
+            const acces = await UtilisateurActivite.findOne({ where: { id_user: user.id, id_activite: idActivite } });
+            const accesPermissions = normaliserPermissions(acces && acces.permissions);
+            if (accesPermissions[niveauAcces]) return next();
+
+            return res.status(403).json({ message: `Accès refusé : action "${action}" non autorisée sur cette activité.` });
+        } catch (err) {
+            next(err);
+        }
+    };
+}
+
+/**
+ * Idem pour une SOUS-ACTIVITÉ : le rôle autorise globalement + accès à
+ * l'activité racine, OU un accès particulier ciblé sur cette sous-activité.
+ */
+function checkActionSousActivite(action) {
+    const niveauAcces = action === 'delete' ? 'delete' : 'write';
+
+    return async (req, res, next) => {
+        try {
+            const user = req.currentUser;
+            if (isAdmin(user)) return next();
+
+            const idSousActivite = parseInt(req.params.id, 10);
+            const sousActivite = await SousActivite.findByPk(idSousActivite);
+            if (!sousActivite) {
+                return res.status(404).json({ message: 'Sous-activité introuvable.' });
+            }
+
+            const permissions = normaliserPermissions(user.Role.permissions);
+            const roleAutorise = !!(permissions.sous_activites && permissions.sous_activites[action]);
+
+            if (roleAutorise) {
+                const idsAccessibles = await getIdsActivitesAccessibles(user);
+                if (idsAccessibles.includes(sousActivite.id_activite)) return next();
+            }
+
+            const acces = await UtilisateurSousActivite.findOne({ where: { id_user: user.id, id_sous_activite: idSousActivite } });
+            const accesPermissions = normaliserPermissions(acces && acces.permissions);
+            if (accesPermissions[niveauAcces]) return next();
+
+            return res.status(403).json({ message: `Accès refusé : action "${action}" non autorisée sur cette sous-activité.` });
+        } catch (err) {
+            next(err);
+        }
+    };
+}
+
+/**
+ * Autorise la CRÉATION d'une sous-activité sous une activité donnée
+ * (req.body.id_activite) selon la même logique OR : rôle global + accès
+ * à l'activité, ou accès particulier "write" accordé sur cette activité.
+ */
+function checkCreationSousActivite() {
+    return async (req, res, next) => {
+        try {
+            const user = req.currentUser;
+            if (isAdmin(user)) return next();
+
+            const idActivite = parseInt(req.body.id_activite, 10);
+
+            const permissions = normaliserPermissions(user.Role.permissions);
+            const roleAutorise = !!(permissions.sous_activites && permissions.sous_activites.create);
+
+            if (roleAutorise) {
+                const idsAccessibles = await getIdsActivitesAccessibles(user);
+                if (idsAccessibles.includes(idActivite)) return next();
+            }
+
+            const acces = await UtilisateurActivite.findOne({ where: { id_user: user.id, id_activite: idActivite } });
+            const accesPermissions = normaliserPermissions(acces && acces.permissions);
+            if (accesPermissions.write) return next();
+
+            return res.status(403).json({ message: 'Accès refusé : création de sous-activité non autorisée sur cette activité.' });
+        } catch (err) {
+            next(err);
+        }
+    };
+}
+
 module.exports = {
     requireAuth,
     isAdmin,
@@ -229,5 +348,9 @@ module.exports = {
     checkAccesSousActivite,
     getIdsActivitesAccessibles,
     checkAccesLectureActivite,
-    checkAccesLectureSousActivite
+    checkAccesLectureSousActivite,
+    checkActionActivite,
+    checkActionSousActivite,
+    checkCreationSousActivite,
+    normaliserPermissions
 };

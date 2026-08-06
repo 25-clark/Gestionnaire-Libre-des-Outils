@@ -9,7 +9,6 @@ router.use(requireLogin);
 router.get('/nouveau', async (req, res, next) => {
     try {
         const api = apiClient(req);
-        const { data: utilisateurs } = await api.get('/utilisateurs');
         const { data: activites } = await api.get('/activites');
         const id_activite = req.query.id_activite || '';
         const id_sous_activite = req.query.id_sous_activite || '';
@@ -22,7 +21,6 @@ router.get('/nouveau', async (req, res, next) => {
 
         res.render('outil/form', {
             titre: 'Nouvel outil',
-            utilisateurs,
             activites,
             sousActivites,
             id_activite,
@@ -40,10 +38,11 @@ router.post('/', uploadOutilImage.single('image'), async (req, res, next) => {
         const activites = req.body.id_activite ? [req.body.id_activite] : [];
         const sousActivites = req.body.id_sous_activite ? [req.body.id_sous_activite] : [];
 
+        // Pas de id_user envoyé : le Server assigne automatiquement
+        // l'utilisateur connecté comme propriétaire.
         const { data: outil } = await api.post('/outils', {
             nom: req.body.nom,
             lien: req.body.lien,
-            id_user: req.body.id_user,
             image,
             activites: JSON.stringify(activites),
             sousActivites: JSON.stringify(sousActivites)

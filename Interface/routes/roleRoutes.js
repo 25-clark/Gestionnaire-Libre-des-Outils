@@ -52,6 +52,9 @@ router.get('/:id/modifier', async (req, res, next) => {
     try {
         const api = apiClient(req);
         const { data: role } = await api.get(`/roles/${req.params.id}`);
+        if (typeof role.permissions === 'string') {
+            try { role.permissions = JSON.parse(role.permissions); } catch { role.permissions = {}; }
+        }
         res.render('role/form', {
             titre: 'Modifier le rôle',
             role,

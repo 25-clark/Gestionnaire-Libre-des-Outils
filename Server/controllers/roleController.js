@@ -1,9 +1,18 @@
 const { Role, Utilisateur } = require('../models');
+const { normaliserPermissions } = require('../middlewares/auth');
+
+// Renvoie le rôle avec ses permissions garanties sous forme d'objet JS
+// (et non une chaîne JSON), quel que soit ce que renvoie le driver MySQL.
+function serialiserRole(role) {
+    const json = role.toJSON();
+    json.permissions = normaliserPermissions(json.permissions);
+    return json;
+}
 
 async function getAll(req, res, next) {
     try {
         const roles = await Role.findAll({ order: [['id', 'ASC']] });
-        res.json(roles);
+        res.json(roles.map(serialiserRole));
     } catch (err) { next(err); }
 }
 
@@ -11,7 +20,7 @@ async function getById(req, res, next) {
     try {
         const role = await Role.findByPk(req.params.id);
         if (!role) return res.status(404).json({ message: 'Rôle introuvable.' });
-        res.json(role);
+        res.json(serialiserRole(role));
     } catch (err) { next(err); }
 }
 
@@ -22,7 +31,7 @@ async function create(req, res, next) {
             return res.status(400).json({ message: 'Le nom et l\'abréviation sont requis.' });
         }
         const role = await Role.create({ nom, abbreviation, permissions: permissions || {} });
-        res.status(201).json(role);
+        res.status(201).json(serialiserRole(role));
     } catch (err) { next(err); }
 }
 
@@ -37,7 +46,7 @@ async function update(req, res, next) {
             abbreviation: abbreviation ?? role.abbreviation,
             permissions: permissions ?? role.permissions
         });
-        res.json(role);
+        res.json(serialiserRole(role));
     } catch (err) { next(err); }
 }
 

@@ -1,7 +1,7 @@
 require('dotenv').config();
 const axios = require('axios');
 
-const API_URL = process.env.API_URL || 'http://localhost:2520/api';
+const API_URL = process.env.API_URL || 'http://localhost:4000/api';
 
 /**
  * L'Interface (EJS) et le Server (API) sont deux applications distinctes.

@@ -1,4 +1,11 @@
 const { UtilisateurActivite, UtilisateurSousActivite, Utilisateur, Activite, SousActivite } = require('../models');
+const { normaliserPermissions } = require('../middlewares/auth');
+
+function serialiser(acces) {
+    const json = acces.toJSON();
+    json.permissions = normaliserPermissions(json.permissions);
+    return json;
+}
 
 // ---------- Accès sur une Activité ----------
 
@@ -12,7 +19,7 @@ async function getAccesActivites(req, res, next) {
             where,
             include: [{ model: Utilisateur }, { model: Activite }]
         });
-        res.json(acces);
+        res.json(acces.map(serialiser));
     } catch (err) { next(err); }
 }
 
@@ -32,7 +39,7 @@ async function accorderAccesActivite(req, res, next) {
             await acces.update({ permissions });
         }
 
-        res.status(cree ? 201 : 200).json(acces);
+        res.status(cree ? 201 : 200).json(serialiser(acces));
     } catch (err) { next(err); }
 }
 
@@ -57,7 +64,7 @@ async function getAccesSousActivites(req, res, next) {
             where,
             include: [{ model: Utilisateur }, { model: SousActivite }]
         });
-        res.json(acces);
+        res.json(acces.map(serialiser));
     } catch (err) { next(err); }
 }
 
@@ -77,7 +84,7 @@ async function accorderAccesSousActivite(req, res, next) {
             await acces.update({ permissions });
         }
 
-        res.status(cree ? 201 : 200).json(acces);
+        res.status(cree ? 201 : 200).json(serialiser(acces));
     } catch (err) { next(err); }
 }
 
@@ -90,11 +97,42 @@ async function revoquerAccesSousActivite(req, res, next) {
     } catch (err) { next(err); }
 }
 
+// ---------- Mon propre accès (pas de permission "acces" requise : ----------
+// ---------- consulter SON PROPRE accès est toujours autorisé) -------------
+
+async function getMonAccesActivite(req, res, next) {
+    try {
+        const idActivite = parseInt(req.query.id_activite, 10);
+        if (!idActivite) return res.json(null);
+
+        const acces = await UtilisateurActivite.findOne({
+            where: { id_user: req.currentUser.id, id_activite: idActivite }
+        });
+
+        res.json(acces ? serialiser(acces) : null);
+    } catch (err) { next(err); }
+}
+
+async function getMonAccesSousActivite(req, res, next) {
+    try {
+        const idSousActivite = parseInt(req.query.id_sous_activite, 10);
+        if (!idSousActivite) return res.json(null);
+
+        const acces = await UtilisateurSousActivite.findOne({
+            where: { id_user: req.currentUser.id, id_sous_activite: idSousActivite }
+        });
+
+        res.json(acces ? serialiser(acces) : null);
+    } catch (err) { next(err); }
+}
+
 module.exports = {
     getAccesActivites,
     accorderAccesActivite,
     revoquerAccesActivite,
     getAccesSousActivites,
     accorderAccesSousActivite,
-    revoquerAccesSousActivite
+    revoquerAccesSousActivite,
+    getMonAccesActivite,
+    getMonAccesSousActivite
 };

@@ -21,13 +21,10 @@
         <label for="lien">Lien (optionnel)</label>
         <input type="url" id="lien" name="lien" placeholder="https://...">
 
-        <label for="id_user">Propriétaire</label>
-        <select id="id_user" name="id_user" required>
-            <option value="">— Choisir un utilisateur —</option>
-            <% utilisateurs.forEach(function(u) { %>
-                <option value="<%= u.id %>"><%= u.prenom %> <%= u.nom %> (<%= u.matricule %>)</option>
-            <% }) %>
-        </select>
+        <label>Propriétaire</label>
+        <p style="margin:4px 0 0; padding:9px 11px; background:var(--gris-clair); border-radius:var(--rayon); font-size:14px;">
+            <%= currentUser.prenom %> <%= currentUser.nom %> <span style="color:var(--gris);">(vous)</span>
+        </p>
 
         <label for="id_sous_activite">Sous-activité (optionnel)</label>
         <select id="id_sous_activite" name="id_sous_activite">

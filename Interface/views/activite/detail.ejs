@@ -1,21 +1,24 @@
 <%- include('../partials/header') %>
 
+<% var accesEcriture = !!(monAcces && monAcces.permissions && monAcces.permissions.write); %>
+<% var accesSuppression = !!(monAcces && monAcces.permissions && monAcces.permissions.delete); %>
+<% var peutModifier = peut('activites', 'update') || accesEcriture; %>
+<% var peutSupprimer = peut('activites', 'delete') || accesSuppression; %>
+<% var peutCreerSousActivite = peut('sous_activites', 'create') || accesEcriture; %>
+
 <div class="fil-ariane"><a href="/">Tableau de bord</a> <span class="sep">›</span> <%= activite.nom %></div>
 
 <div class="entete-page">
     <h1>
-        <% if (activite.logo) { %><img src="<%= activite.logo %>" class="miniature" style="vertical-align:middle; margin-right:8px;">
-        <% } else { %> 
-            <i class="bi bi-folder2-open"></i>
-            <% } %>
+        <% if (activite.logo) { %><img src="<%= activite.logo %>" class="miniature" style="vertical-align:middle; margin-right:8px;"><% } %>
         <%= activite.nom %> <span style="color:var(--gris); font-weight:400; font-size:15px;">(<%= activite.abbreviation %>)</span>
     </h1>
-    <% if (peut('activites', 'update') || peut('activites', 'delete')) { %>
+    <% if (peutModifier || peutSupprimer) { %>
         <div style="display:flex; gap:8px;">
-            <% if (peut('activites', 'update')) { %>
+            <% if (peutModifier) { %>
                 <a href="/activites/<%= activite.id %>/modifier" class="btn btn-gris">Modifier</a>
             <% } %>
-            <% if (peut('activites', 'delete')) { %>
+            <% if (peutSupprimer) { %>
                 <form action="/activites/<%= activite.id %>/supprimer" method="POST" class="form-inline"
                       onsubmit="return confirm('Supprimer cette activité ?');">
                     <button type="submit" class="btn btn-danger">Supprimer</button>
@@ -27,6 +30,7 @@
 
 <div class="onglets">
     <a class="onglet <%= onglet === 'outils' ? 'actif' : '' %>" href="/activites/<%= activite.id %>?onglet=outils">Outils</a>
+    <a class="onglet <%= onglet === 'archives' ? 'actif' : '' %>" href="/activites/<%= activite.id %>?onglet=archives">Archives</a>
     <% if (peut('sous_activites', 'read')) { %>
         <a class="onglet <%= onglet === 'sous-activites' ? 'actif' : '' %>" href="/activites/<%= activite.id %>?onglet=sous-activites">Sous-activités</a>
     <% } %>
@@ -36,7 +40,7 @@
 </div>
 
 <% if (onglet === 'sous-activites') { %>
-    <% if (peut('sous_activites', 'create')) { %>
+    <% if (peutCreerSousActivite) { %>
         <div class="entete-page">
             <span></span>
             <a href="/sous-activites/nouveau?id_activite=<%= activite.id %>" class="btn btn-accent">+ Nouvelle sous-activité</a>
@@ -52,7 +56,7 @@
                 <tbody>
                 <% sousActivites.forEach(function(sa) { %>
                     <tr id="sa-<%= sa.id %>">
-                        <td><a href="/sous-activites/<%= sa.id %>"><i class="bi bi-folder"></i> <%= sa.nom %></a></td>
+                        <td><a href="/sous-activites/<%= sa.id %>">📂 <%= sa.nom %></a></td>
                         <td><% if (sa.id_parent) {
                             const parent = sousActivites.find(function(p){ return p.id === sa.id_parent; });
                         %><%= parent ? parent.nom : '—' %><% } else { %>—<% } %></td>
@@ -123,7 +127,14 @@
         </div>
     <% } %>
 
-    <%- include('../partials/outils-vue', { outils: outils, retour: '/activites/' + activite.id + '?onglet=outils' }) %>
+    <%- include('../partials/outils-vue', { outils: outils, retour: '/activites/' + activite.id + '?onglet=outils', messageVide: "Aucun outil actif pour l'instant." }) %>
+<% } %>
+
+<% if (onglet === 'archives') { %>
+    <p style="color:var(--gris); font-size:13px; margin-top:-10px;">
+        Outils désactivés de cette activité. Réactivez-les pour les faire réapparaître dans l'onglet "Outils".
+    </p>
+    <%- include('../partials/outils-vue', { outils: outils, retour: '/activites/' + activite.id + '?onglet=archives', messageVide: 'Aucun outil archivé.' }) %>
 <% } %>
 
 <%- include('../partials/footer') %>

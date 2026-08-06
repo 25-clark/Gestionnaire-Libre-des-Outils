@@ -12,6 +12,7 @@ const utilisateurRoutes = require('./routes/utilisateurRoutes');
 const outilRoutes = require('./routes/outilRoutes');
 const roleRoutes = require('./routes/roleRoutes');
 const accesRoutes = require('./routes/accesRoutes');
+const rechercheRoutes = require('./routes/rechercheRoutes');
 
 const app = express();
 
@@ -51,6 +52,7 @@ app.use('/utilisateurs', utilisateurRoutes);
 app.use('/outils', outilRoutes);
 app.use('/roles', roleRoutes);
 app.use('/acces', accesRoutes);
+app.use('/recherche', rechercheRoutes);
 
 // 404
 app.use((req, res) => {
@@ -64,7 +66,7 @@ app.use((err, req, res, next) => {
     res.status(err.response?.status || 500).render('erreur', { titre: 'Erreur', message });
 });
 
-const PORT = process.env.PORT || 2521;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Interface GLO démarrée sur http://localhost:${PORT}`);
+    console.log(`🖥️  Interface GLO démarrée sur http://localhost:${PORT}`);
 });

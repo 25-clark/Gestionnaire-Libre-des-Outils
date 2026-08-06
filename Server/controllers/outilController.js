@@ -30,6 +30,10 @@ async function getAll(req, res, next) {
         if (req.query.id_user) {
             outils = outils.filter(o => o.id_user === parseInt(req.query.id_user, 10));
         }
+        if (req.query.q) {
+            const terme = req.query.q.trim().toLowerCase();
+            outils = outils.filter(o => o.nom.toLowerCase().includes(terme));
+        }
 
         res.json(outils);
     } catch (err) { next(err); }
@@ -51,11 +55,16 @@ async function getById(req, res, next) {
 
 async function create(req, res, next) {
     try {
-        const { nom, lien, id_user, activites, sousActivites } = req.body;
+        const { nom, lien, activites, sousActivites } = req.body;
 
-        if (!nom || !id_user) {
-            return res.status(400).json({ message: 'Le nom et le propriétaire sont requis.' });
+        if (!nom) {
+            return res.status(400).json({ message: 'Le nom est requis.' });
         }
+
+        // Le propriétaire d'un outil est toujours celui qui le crée — pas de
+        // choix possible, y compris pour un admin, pour éviter toute confusion
+        // sur "qui a créé quoi".
+        const id_user = req.currentUser.id;
 
         const image = req.file ? `/uploads/outils/${req.file.filename}` : (req.body.image || null);
 
