@@ -19,6 +19,12 @@ module.exports = (sequelize) => {
             type: DataTypes.STRING,
             allowNull: true
         },
+        // IP ou nom d'hôte de l'outil, optionnel — utilisé pour les tests
+        // réseau (ping, traceroute, nslookup...), voir diagnosticController.js.
+        adresse: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
         active: {
             // false = désactivé (mais pas supprimé)
             type: DataTypes.BOOLEAN,

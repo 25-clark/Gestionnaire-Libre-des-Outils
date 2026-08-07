@@ -13,6 +13,9 @@ const activiteRoutes = require('./routes/activiteRoutes');
 const sousActiviteRoutes = require('./routes/sousActiviteRoutes');
 const outilRoutes = require('./routes/outilRoutes');
 const accesRoutes = require('./routes/accesRoutes');
+const parametreRoutes = require('./routes/parametreRoutes');
+const diagnosticRoutes = require('./routes/diagnosticRoutes');
+const journalRoutes = require('./routes/journalRoutes');
 
 const app = express();
 
@@ -44,6 +47,9 @@ app.use('/api/activites', activiteRoutes);
 app.use('/api/sous-activites', sousActiviteRoutes);
 app.use('/api/outils', outilRoutes);
 app.use('/api/acces', accesRoutes);
+app.use('/api/parametres', parametreRoutes);
+app.use('/api/diagnostic', diagnosticRoutes);
+app.use('/api/journal', journalRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 

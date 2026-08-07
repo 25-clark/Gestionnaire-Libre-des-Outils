@@ -43,6 +43,7 @@ router.post('/', uploadOutilImage.single('image'), async (req, res, next) => {
         const { data: outil } = await api.post('/outils', {
             nom: req.body.nom,
             lien: req.body.lien,
+            adresse: req.body.adresse,
             image,
             activites: JSON.stringify(activites),
             sousActivites: JSON.stringify(sousActivites)

@@ -1,5 +1,6 @@
 const { SousActivite, Activite, Utilisateur, Outil } = require('../models');
 const { isAdmin, getIdsActivitesAccessibles } = require('../middlewares/auth');
+const { consigner } = require('../utils/journal');
 
 async function getAll(req, res, next) {
     try {
@@ -28,7 +29,14 @@ async function getAll(req, res, next) {
             }
         }
 
-        const sousActivites = await SousActivite.findAll({ where, order: [['nom', 'ASC']] });
+        let sousActivites = await SousActivite.findAll({ where, order: [['nom', 'ASC']] });
+
+        // Recherche libre par nom, ex: ?q=cablage
+        if (req.query.q) {
+            const terme = req.query.q.trim().toLowerCase();
+            sousActivites = sousActivites.filter(sa => sa.nom.toLowerCase().includes(terme));
+        }
+
         res.json(sousActivites);
     } catch (err) { next(err); }
 }
@@ -69,6 +77,14 @@ async function create(req, res, next) {
             id_parent: id_parent || null
         });
 
+        await consigner({
+            user: req.currentUser,
+            action: 'creation',
+            ressource: 'sous_activite',
+            id_ressource: sousActivite.id,
+            libelle: `Sous-activité "${nom}" créée`
+        });
+
         res.status(201).json(sousActivite);
     } catch (err) { next(err); }
 }
@@ -89,6 +105,14 @@ async function update(req, res, next) {
             id_parent: id_parent !== undefined ? id_parent : sousActivite.id_parent
         });
 
+        await consigner({
+            user: req.currentUser,
+            action: 'modification',
+            ressource: 'sous_activite',
+            id_ressource: sousActivite.id,
+            libelle: `Sous-activité "${sousActivite.nom}" modifiée`
+        });
+
         res.json(sousActivite);
     } catch (err) { next(err); }
 }
@@ -103,7 +127,17 @@ async function remove(req, res, next) {
             return res.status(400).json({ message: 'Impossible de supprimer une sous-activité qui contient encore des sous-activités.' });
         }
 
+        const nomSousActivite = sousActivite.nom;
         await sousActivite.destroy();
+
+        await consigner({
+            user: req.currentUser,
+            action: 'suppression',
+            ressource: 'sous_activite',
+            id_ressource: req.params.id,
+            libelle: `Sous-activité "${nomSousActivite}" supprimée`
+        });
+
         res.json({ message: 'Sous-activité supprimée.' });
     } catch (err) { next(err); }
 }

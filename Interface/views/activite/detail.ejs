@@ -1,11 +1,5 @@
 <%- include('../partials/header') %>
 
-<% var accesEcriture = !!(monAcces && monAcces.permissions && monAcces.permissions.write); %>
-<% var accesSuppression = !!(monAcces && monAcces.permissions && monAcces.permissions.delete); %>
-<% var peutModifier = peut('activites', 'update') || accesEcriture; %>
-<% var peutSupprimer = peut('activites', 'delete') || accesSuppression; %>
-<% var peutCreerSousActivite = peut('sous_activites', 'create') || accesEcriture; %>
-
 <div class="fil-ariane"><a href="/">Tableau de bord</a> <span class="sep">›</span> <%= activite.nom %></div>
 
 <div class="entete-page">
@@ -13,12 +7,12 @@
         <% if (activite.logo) { %><img src="<%= activite.logo %>" class="miniature" style="vertical-align:middle; margin-right:8px;"><% } %>
         <%= activite.nom %> <span style="color:var(--gris); font-weight:400; font-size:15px;">(<%= activite.abbreviation %>)</span>
     </h1>
-    <% if (peutModifier || peutSupprimer) { %>
+    <% if (peut('activites', 'update') || peut('activites', 'delete')) { %>
         <div style="display:flex; gap:8px;">
-            <% if (peutModifier) { %>
+            <% if (peut('activites', 'update')) { %>
                 <a href="/activites/<%= activite.id %>/modifier" class="btn btn-gris">Modifier</a>
             <% } %>
-            <% if (peutSupprimer) { %>
+            <% if (peut('activites', 'delete')) { %>
                 <form action="/activites/<%= activite.id %>/supprimer" method="POST" class="form-inline"
                       onsubmit="return confirm('Supprimer cette activité ?');">
                     <button type="submit" class="btn btn-danger">Supprimer</button>
@@ -40,7 +34,7 @@
 </div>
 
 <% if (onglet === 'sous-activites') { %>
-    <% if (peutCreerSousActivite) { %>
+    <% if (peut('sous_activites', 'create')) { %>
         <div class="entete-page">
             <span></span>
             <a href="/sous-activites/nouveau?id_activite=<%= activite.id %>" class="btn btn-accent">+ Nouvelle sous-activité</a>
@@ -83,6 +77,9 @@
 <% } %>
 
 <% if (onglet === 'utilisateurs') { %>
+    <% if (typeof mdpReinitialise !== 'undefined' && mdpReinitialise) { %>
+        <div class="message-succes">Mot de passe réinitialisé à la valeur par défaut. L'utilisateur devra le changer à sa prochaine connexion.</div>
+    <% } %>
     <% if (peut('utilisateurs', 'create')) { %>
         <div class="entete-page">
             <span></span>
@@ -104,6 +101,12 @@
                         <td><%= u.prenom %></td>
                         <td><span class="badge-role" style="background:var(--bleu);"><%= u.Role ? u.Role.abbreviation : '—' %></span></td>
                         <td style="text-align:right;">
+                            <% if (currentUser.Role && currentUser.Role.abbreviation === 'ADMIN') { %>
+                                <form action="/utilisateurs/<%= u.id %>/reinitialiser-mdp" method="POST" class="form-inline"
+                                      onsubmit="return confirm('Réinitialiser le mot de passe de cet utilisateur à la valeur par défaut ?');">
+                                    <button type="submit" class="btn btn-gris btn-petit" title="Réinitialiser le mot de passe">🔑 Réinitialiser</button>
+                                </form>
+                            <% } %>
                             <% if (peut('utilisateurs', 'delete')) { %>
                                 <form action="/utilisateurs/<%= u.id %>/supprimer" method="POST" class="form-inline"
                                       onsubmit="return confirm('Supprimer cet utilisateur ?');">

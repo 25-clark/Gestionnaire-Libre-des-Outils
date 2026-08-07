@@ -1,5 +1,14 @@
-const { Utilisateur, Role, Activite, Outil } = require('../models');
+const { Utilisateur, Role, Activite, Outil, Parametre } = require('../models');
 const { isAdmin, getIdsActivitesAccessibles } = require('../middlewares/auth');
+const { hacher } = require('../utils/motDePasse');
+const { consigner } = require('../utils/journal');
+
+// Renvoie le mot de passe par défaut configuré dans les réglages généraux
+// (créé automatiquement s'il n'existe pas encore).
+async function motDePasseDefautActuel() {
+    const [parametre] = await Parametre.findOrCreate({ where: { id: 1 }, defaults: {} });
+    return parametre.mot_de_passe_defaut;
+}
 
 async function getAll(req, res, next) {
     try {
@@ -59,16 +68,28 @@ async function create(req, res, next) {
             return res.status(400).json({ message: 'Matricule, nom, prénom et rôle sont requis.' });
         }
 
+        const mot_de_passe_defaut = await motDePasseDefautActuel();
+
         const utilisateur = await Utilisateur.create({
             matricule,
             nom,
             prenom,
             id_activite: id_activite || null,
-            id_role
+            id_role,
+            mot_de_passe: hacher(mot_de_passe_defaut),
+            doit_changer_mdp: true
         });
 
         const utilisateurComplet = await Utilisateur.findByPk(utilisateur.id, {
             include: [{ model: Role }, { model: Activite }]
+        });
+
+        await consigner({
+            user: req.currentUser,
+            action: 'creation',
+            ressource: 'utilisateur',
+            id_ressource: utilisateur.id,
+            libelle: `Utilisateur ${prenom} ${nom} (${matricule}) créé`
         });
 
         res.status(201).json(utilisateurComplet);
@@ -83,14 +104,50 @@ async function create(req, res, next) {
 // Volontairement PAS de update() : selon la règle métier, en cas d'erreur sur
 // un utilisateur (nom/prénom), on le supprime et on le recrée.
 
+// Remet le mot de passe d'un utilisateur à la valeur par défaut et le force
+// à le changer à la prochaine connexion (cas "j'ai oublié mon mot de passe").
+async function reinitialiserMotDePasse(req, res, next) {
+    try {
+        const utilisateur = await Utilisateur.findByPk(req.params.id);
+        if (!utilisateur) return res.status(404).json({ message: 'Utilisateur introuvable.' });
+
+        const mot_de_passe_defaut = await motDePasseDefautActuel();
+
+        await utilisateur.update({
+            mot_de_passe: hacher(mot_de_passe_defaut),
+            doit_changer_mdp: true
+        });
+
+        await consigner({
+            user: req.currentUser,
+            action: 'reinitialisation_mdp',
+            ressource: 'utilisateur',
+            id_ressource: utilisateur.id,
+            libelle: `Mot de passe de ${utilisateur.prenom} ${utilisateur.nom} (${utilisateur.matricule}) réinitialisé par ${req.currentUser.prenom} ${req.currentUser.nom}`
+        });
+
+        res.json({ message: 'Mot de passe réinitialisé à la valeur par défaut.' });
+    } catch (err) { next(err); }
+}
+
 async function remove(req, res, next) {
     try {
         const utilisateur = await Utilisateur.findByPk(req.params.id);
         if (!utilisateur) return res.status(404).json({ message: 'Utilisateur introuvable.' });
 
+        const { prenom, nom, matricule } = utilisateur;
         await utilisateur.destroy();
+
+        await consigner({
+            user: req.currentUser,
+            action: 'suppression',
+            ressource: 'utilisateur',
+            id_ressource: req.params.id,
+            libelle: `Utilisateur ${prenom} ${nom} (${matricule}) supprimé`
+        });
+
         res.json({ message: 'Utilisateur supprimé.' });
     } catch (err) { next(err); }
 }
 
-module.exports = { getAll, getById, create, remove };
+module.exports = { getAll, getById, create, remove, reinitialiserMotDePasse };

@@ -15,8 +15,12 @@
         <input type="text" id="nom" name="nom" required value="<%= sousActivite ? sousActivite.nom : '' %>">
 
         <label for="id_parent">Sous-activité parente (optionnel)</label>
-        <input type="text" id="id_parent" name="id_parent" placeholder="Laisser vide si aucune"
-               value="<%= id_parent %>">
+        <select id="id_parent" name="id_parent">
+            <option value="">— Aucune (niveau racine de l'activité) —</option>
+            <% sousActivitesDisponibles.forEach(function(sa) { %>
+                <option value="<%= sa.id %>" <%= String(id_parent) === String(sa.id) ? 'selected' : '' %>><%= sa.nom %></option>
+            <% }) %>
+        </select>
 
         <div class="actions-form">
             <button type="submit" class="btn btn-primaire">Enregistrer</button>

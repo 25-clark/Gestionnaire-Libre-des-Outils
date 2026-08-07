@@ -6,8 +6,10 @@ const {
     Activite,
     SousActivite,
     Outil,
-    UtilisateurSousActivite
+    UtilisateurSousActivite,
+    Parametre
 } = require('./models');
+const { hacher } = require('./utils/motDePasse');
 
 async function seed() {
     try {
@@ -60,6 +62,14 @@ async function seed() {
         ]);
         console.log('✅ Rôles créés');
 
+        // ---------- Paramètres généraux ----------
+        const MOT_DE_PASSE_DEFAUT = 'Bienvenue123';
+        await Parametre.create({
+            nom_entreprise: null,
+            mot_de_passe_defaut: MOT_DE_PASSE_DEFAUT
+        });
+        console.log(`✅ Paramètres créés (mot de passe par défaut : ${MOT_DE_PASSE_DEFAUT})`);
+
         const adminRole = roles.find(r => r.nom === 'Administrateur');
         const agentRole = roles.find(r => r.nom === 'Agent');
 
@@ -70,9 +80,11 @@ async function seed() {
             matricule: '0000.admin',
             nom: 'Admin',
             prenom: 'System',
-            id_role: adminRole.id
+            id_role: adminRole.id,
+            mot_de_passe: hacher(MOT_DE_PASSE_DEFAUT),
+            doit_changer_mdp: true
         });
-        console.log('✅ Admin créé (matricule : 0000.admin)');
+        console.log(`✅ Admin créé (matricule : 0000.admin, mot de passe : ${MOT_DE_PASSE_DEFAUT})`);
 
         // ---------- Activité ----------
         const activite = await Activite.create({
@@ -107,9 +119,11 @@ async function seed() {
             nom: 'Dupont',
             prenom: 'Jean',
             id_activite: activite.id,
-            id_role: agentRole.id
+            id_role: agentRole.id,
+            mot_de_passe: hacher(MOT_DE_PASSE_DEFAUT),
+            doit_changer_mdp: true
         });
-        console.log('✅ Agent créé (matricule : 0001.dupont)');
+        console.log(`✅ Agent créé (matricule : 0001.dupont, mot de passe : ${MOT_DE_PASSE_DEFAUT})`);
 
         // ---------- Accès particulier de l'agent sur "Câblage" ----------
         await UtilisateurSousActivite.create({

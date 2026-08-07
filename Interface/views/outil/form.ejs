@@ -21,6 +21,12 @@
         <label for="lien">Lien (optionnel)</label>
         <input type="url" id="lien" name="lien" placeholder="https://...">
 
+        <label for="adresse">Adresse IP / nom d'hôte (optionnel)</label>
+        <input type="text" id="adresse" name="adresse" placeholder="192.168.1.10 ou routeur.local">
+        <p style="color:var(--gris); font-size:13px; margin-top:-6px;">
+            Permet de tester la joignabilité de l'outil (ping, traceroute...) depuis l'onglet Diagnostic réseau.
+        </p>
+
         <label>Propriétaire</label>
         <p style="margin:4px 0 0; padding:9px 11px; background:var(--gris-clair); border-radius:var(--rayon); font-size:14px;">
             <%= currentUser.prenom %> <%= currentUser.nom %> <span style="color:var(--gris);">(vous)</span>

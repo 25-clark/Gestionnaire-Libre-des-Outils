@@ -9,6 +9,8 @@ const UtilisateurActivite = require('./UtilisateurActivite')(sequelize);
 const UtilisateurSousActivite = require('./UtilisateurSousActivite')(sequelize);
 const OutilActivite = require('./OutilActivite')(sequelize);
 const OutilSousActivite = require('./OutilSousActivite')(sequelize);
+const Parametre = require('./Parametre')(sequelize);
+const Journal = require('./Journal')(sequelize);
 
 // ========================= ASSOCIATIONS =========================
 
@@ -123,5 +125,7 @@ module.exports = {
     UtilisateurActivite,
     UtilisateurSousActivite,
     OutilActivite,
-    OutilSousActivite
+    OutilSousActivite,
+    Parametre,
+    Journal
 };

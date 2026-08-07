@@ -30,6 +30,9 @@
                             <% } %>
                         </td>
                         <td style="text-align:right; white-space:nowrap;">
+                            <% if (o.adresse) { %>
+                                <a href="/diagnostic?cible=<%= encodeURIComponent(o.adresse) %>" class="btn btn-gris btn-petit" title="Tester la connectivité de <%= o.adresse %>">🩺 Tester</a>
+                            <% } %>
                             <% if (peut('outils', 'update')) { %>
                                 <form action="/outils/<%= o.id %>/toggle-active" method="POST" class="form-inline">
                                     <input type="hidden" name="retour" value="<%= retour %>">
@@ -79,6 +82,9 @@
                             <span></span>
                         <% } %>
                         <div style="display:flex; gap:4px;">
+                            <% if (o.adresse) { %>
+                                <a href="/diagnostic?cible=<%= encodeURIComponent(o.adresse) %>" class="btn btn-gris btn-petit" title="Tester la connectivité">🩺</a>
+                            <% } %>
                             <% if (peut('outils', 'update')) { %>
                                 <form action="/outils/<%= o.id %>/toggle-active" method="POST" class="form-inline">
                                     <input type="hidden" name="retour" value="<%= retour %>">
@@ -105,29 +111,19 @@
             <% outils.forEach(function(o) { %>
                 <div class="vignette-outil" title="<%= o.nom %> — <%= o.Utilisateur ? o.Utilisateur.prenom + ' ' + o.Utilisateur.nom : '—' %>">
                     <span class="point-statut <%= o.active ? 'actif' : 'inactif' %>"></span>
-                    <% if (o.lien) { %>
-                        <a href="<%= o.lien %>" target="_blank" rel="noopener" style="text-decoration:none; color:inherit; display:block;">
-                            <div class="image-vignette">
-                                <% if (o.image) { %>
-                                    <img src="<%= o.image %>" alt="<%= o.nom %>">
-                                <% } else { %>
-                                    <span class="icone-defaut">🔧</span>
-                                <% } %>
-                            </div>
-                            <span class="nom-vignette"><%= o.nom %> ↗</span>
-                        </a>
-                    <% } else { %>
-                        <div class="image-vignette">
-                            <% if (o.image) { %>
-                                <img src="<%= o.image %>" alt="<%= o.nom %>">
-                            <% } else { %>
-                                <span class="icone-defaut">🔧</span>
-                            <% } %>
-                        </div>
-                        <span class="nom-vignette"><%= o.nom %></span>
-                    <% } %>
-                    <% if (peut('outils', 'update') || peut('outils', 'delete')) { %>
+                    <div class="image-vignette">
+                        <% if (o.image) { %>
+                            <img src="<%= o.image %>" alt="<%= o.nom %>">
+                        <% } else { %>
+                            <span class="icone-defaut">🔧</span>
+                        <% } %>
+                    </div>
+                    <span class="nom-vignette"><%= o.nom %></span>
+                    <% if (o.adresse || peut('outils', 'update') || peut('outils', 'delete')) { %>
                         <div class="actions-vignette">
+                            <% if (o.adresse) { %>
+                                <a href="/diagnostic?cible=<%= encodeURIComponent(o.adresse) %>" title="Tester la connectivité">🩺</a>
+                            <% } %>
                             <% if (peut('outils', 'update')) { %>
                                 <form action="/outils/<%= o.id %>/toggle-active" method="POST" class="form-inline">
                                     <input type="hidden" name="retour" value="<%= retour %>">

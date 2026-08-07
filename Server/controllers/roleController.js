@@ -1,5 +1,6 @@
 const { Role, Utilisateur } = require('../models');
 const { normaliserPermissions } = require('../middlewares/auth');
+const { consigner } = require('../utils/journal');
 
 // Renvoie le rôle avec ses permissions garanties sous forme d'objet JS
 // (et non une chaîne JSON), quel que soit ce que renvoie le driver MySQL.
@@ -31,6 +32,15 @@ async function create(req, res, next) {
             return res.status(400).json({ message: 'Le nom et l\'abréviation sont requis.' });
         }
         const role = await Role.create({ nom, abbreviation, permissions: permissions || {} });
+
+        await consigner({
+            user: req.currentUser,
+            action: 'creation',
+            ressource: 'role',
+            id_ressource: role.id,
+            libelle: `Rôle "${nom}" créé`
+        });
+
         res.status(201).json(serialiserRole(role));
     } catch (err) { next(err); }
 }
@@ -46,6 +56,15 @@ async function update(req, res, next) {
             abbreviation: abbreviation ?? role.abbreviation,
             permissions: permissions ?? role.permissions
         });
+
+        await consigner({
+            user: req.currentUser,
+            action: 'modification',
+            ressource: 'role',
+            id_ressource: role.id,
+            libelle: `Rôle "${role.nom}" modifié`
+        });
+
         res.json(serialiserRole(role));
     } catch (err) { next(err); }
 }
@@ -64,7 +83,17 @@ async function remove(req, res, next) {
             return res.status(400).json({ message: 'Ce rôle est encore utilisé par des utilisateurs.' });
         }
 
+        const nomRole = role.nom;
         await role.destroy();
+
+        await consigner({
+            user: req.currentUser,
+            action: 'suppression',
+            ressource: 'role',
+            id_ressource: req.params.id,
+            libelle: `Rôle "${nomRole}" supprimé`
+        });
+
         res.json({ message: 'Rôle supprimé.' });
     } catch (err) { next(err); }
 }

@@ -11,15 +11,35 @@ router.get('/', async (req, res, next) => {
         const api = apiClient(req);
         const user = req.session.user;
 
+        let activites = [];
+        let sousActivites = [];
         let outils = [];
+        let archives = [];
         let utilisateurs = [];
 
+        // Chaque catégorie n'est cherchée que si le rôle de l'utilisateur a le
+        // droit de lecture correspondant. Le Server applique en plus son
+        // propre périmètre d'accès (activités/sous-activités accessibles),
+        // donc un compte restreint ne voit ici que ce qu'il a le droit de voir.
         if (q) {
             const appels = [];
 
+            if (peutFaire(user, 'activites', 'read')) {
+                appels.push(
+                    api.get(`/activites?q=${encodeURIComponent(q)}`).then(resp => { activites = resp.data; })
+                );
+            }
+            if (peutFaire(user, 'sous_activites', 'read')) {
+                appels.push(
+                    api.get(`/sous-activites?q=${encodeURIComponent(q)}`).then(resp => { sousActivites = resp.data; })
+                );
+            }
             if (peutFaire(user, 'outils', 'read')) {
                 appels.push(
-                    api.get(`/outils?q=${encodeURIComponent(q)}`).then(resp => { outils = resp.data; })
+                    api.get(`/outils?q=${encodeURIComponent(q)}`).then(resp => {
+                        outils = resp.data.filter(o => o.active);
+                        archives = resp.data.filter(o => !o.active);
+                    })
                 );
             }
             if (peutFaire(user, 'utilisateurs', 'read')) {
@@ -34,7 +54,10 @@ router.get('/', async (req, res, next) => {
         res.render('recherche', {
             titre: 'Recherche',
             q,
+            activites,
+            sousActivites,
             outils,
+            archives,
             utilisateurs
         });
     } catch (err) { next(err); }

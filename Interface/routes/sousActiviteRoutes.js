@@ -9,11 +9,17 @@ router.use(requireLogin);
 router.get('/nouveau', async (req, res, next) => {
     try {
         const { id_activite, id_parent } = req.query;
+        const api = apiClient(req);
+        const { data: sousActivitesDisponibles } = id_activite
+            ? await api.get(`/sous-activites?id_activite=${id_activite}`)
+            : { data: [] };
+
         res.render('sousActivite/form', {
             titre: 'Nouvelle sous-activité',
             sousActivite: null,
             id_activite,
             id_parent: id_parent || '',
+            sousActivitesDisponibles,
             erreur: null
         });
     } catch (err) { next(err); }
@@ -25,11 +31,19 @@ router.post('/', async (req, res) => {
         const { data: sousActivite } = await api.post('/sous-activites', req.body);
         res.redirect(`/sous-activites/${sousActivite.id}`);
     } catch (err) {
+        let sousActivitesDisponibles = [];
+        try {
+            const api = apiClient(req);
+            const resp = await api.get(`/sous-activites?id_activite=${req.body.id_activite}`);
+            sousActivitesDisponibles = resp.data;
+        } catch { /* on affiche quand même le formulaire, sans la liste */ }
+
         res.render('sousActivite/form', {
             titre: 'Nouvelle sous-activité',
             sousActivite: null,
             id_activite: req.body.id_activite,
             id_parent: req.body.id_parent || '',
+            sousActivitesDisponibles,
             erreur: err.response?.data?.message || 'Erreur lors de la création.'
         });
     }
@@ -69,11 +83,9 @@ router.get('/:id', async (req, res, next) => {
         if (!ongletsAutorises.includes(onglet)) onglet = 'outils';
 
         const { data: sousActivite } = await api.get(`/sous-activites/${req.params.id}`);
-        const [{ data: activite }, ancetres, { data: monAccesSousActivite }, { data: monAccesActivite }] = await Promise.all([
+        const [{ data: activite }, ancetres] = await Promise.all([
             api.get(`/activites/${sousActivite.id_activite}`),
-            construireFilAriane(api, sousActivite),
-            api.get(`/acces/mon-acces/sous-activite?id_sous_activite=${req.params.id}`),
-            api.get(`/acces/mon-acces/activite?id_activite=${sousActivite.id_activite}`)
+            construireFilAriane(api, sousActivite)
         ]);
 
         let enfants = [];
@@ -104,8 +116,6 @@ router.get('/:id', async (req, res, next) => {
             sousActivite,
             activite,
             ancetres,
-            monAccesSousActivite,
-            monAccesActivite,
             enfants,
             utilisateurs,
             outils,
@@ -121,11 +131,16 @@ router.get('/:id/modifier', async (req, res, next) => {
     try {
         const api = apiClient(req);
         const { data: sousActivite } = await api.get(`/sous-activites/${req.params.id}`);
+        const { data: toutesSousActivites } = await api.get(`/sous-activites?id_activite=${sousActivite.id_activite}`);
+        // Une sous-activité ne peut pas être son propre parent : on l'exclut des options.
+        const sousActivitesDisponibles = toutesSousActivites.filter(sa => sa.id !== sousActivite.id);
+
         res.render('sousActivite/form', {
             titre: 'Modifier la sous-activité',
             sousActivite,
             id_activite: sousActivite.id_activite,
             id_parent: sousActivite.id_parent || '',
+            sousActivitesDisponibles,
             erreur: null
         });
     } catch (err) { next(err); }
@@ -137,11 +152,19 @@ router.post('/:id/modifier', async (req, res) => {
         await api.put(`/sous-activites/${req.params.id}`, req.body);
         res.redirect(`/sous-activites/${req.params.id}`);
     } catch (err) {
+        let sousActivitesDisponibles = [];
+        try {
+            const api = apiClient(req);
+            const resp = await api.get(`/sous-activites?id_activite=${req.body.id_activite}`);
+            sousActivitesDisponibles = resp.data.filter(sa => String(sa.id) !== req.params.id);
+        } catch { /* on affiche quand même le formulaire, sans la liste */ }
+
         res.render('sousActivite/form', {
             titre: 'Modifier la sous-activité',
             sousActivite: { id: req.params.id, ...req.body },
             id_activite: req.body.id_activite,
             id_parent: req.body.id_parent || '',
+            sousActivitesDisponibles,
             erreur: err.response?.data?.message || 'Erreur lors de la modification.'
         });
     }

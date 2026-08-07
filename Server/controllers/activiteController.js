@@ -1,5 +1,6 @@
 const { Activite, SousActivite, Utilisateur, Outil } = require('../models');
 const { getIdsActivitesAccessibles } = require('../middlewares/auth');
+const { consigner } = require('../utils/journal');
 
 // Construit récursivement l'arbre des sous-activités d'une activité.
 function construireArbre(sousActivites, idParent = null) {
@@ -22,7 +23,14 @@ async function getAll(req, res, next) {
         const idsAccessibles = await getIdsActivitesAccessibles(req.currentUser);
         const where = idsAccessibles ? { id: idsAccessibles } : {};
 
-        const activites = await Activite.findAll({ where, order: [['nom', 'ASC']] });
+        let activites = await Activite.findAll({ where, order: [['nom', 'ASC']] });
+
+        // Recherche libre par nom, ex: ?q=maintenance
+        if (req.query.q) {
+            const terme = req.query.q.trim().toLowerCase();
+            activites = activites.filter(a => a.nom.toLowerCase().includes(terme));
+        }
+
         res.json(activites);
     } catch (err) { next(err); }
 }
@@ -80,6 +88,14 @@ async function create(req, res, next) {
             id_user: req.currentUser.id
         });
 
+        await consigner({
+            user: req.currentUser,
+            action: 'creation',
+            ressource: 'activite',
+            id_ressource: activite.id,
+            libelle: `Activité "${nom}" créée`
+        });
+
         res.status(201).json(activite);
     } catch (err) { next(err); }
 }
@@ -97,6 +113,14 @@ async function update(req, res, next) {
             nom: nom ?? activite.nom,
             abbreviation: abbreviation ?? activite.abbreviation,
             logo
+        });
+
+        await consigner({
+            user: req.currentUser,
+            action: 'modification',
+            ressource: 'activite',
+            id_ressource: activite.id,
+            libelle: `Activité "${activite.nom}" modifiée`
         });
 
         res.json(activite);
@@ -120,7 +144,17 @@ async function remove(req, res, next) {
             });
         }
 
+        const nomActivite = activite.nom;
         await activite.destroy();
+
+        await consigner({
+            user: req.currentUser,
+            action: 'suppression',
+            ressource: 'activite',
+            id_ressource: req.params.id,
+            libelle: `Activité "${nomActivite}" supprimée`
+        });
+
         res.json({ message: 'Activité supprimée.' });
     } catch (err) { next(err); }
 }

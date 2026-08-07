@@ -4,7 +4,7 @@
 
 <div class="carte" style="max-width:520px;">
     <form action="/recherche" method="GET">
-        <input type="text" name="q" value="<%= q %>" placeholder="Nom d'outil, nom d'utilisateur, matricule..." autofocus>
+        <input type="text" name="q" value="<%= q %>" placeholder="Activité, sous-activité, outil, utilisateur, matricule..." autofocus>
         <div class="actions-form">
             <button type="submit" class="btn btn-primaire">Rechercher</button>
         </div>
@@ -14,6 +14,50 @@
 <% if (!q) { %>
     <div class="carte vide">Tapez un terme de recherche ci-dessus.</div>
 <% } else { %>
+
+    <% if (peut('activites', 'read')) { %>
+        <h2 style="font-size:16px; color:var(--bleu-fonce); margin:24px 0 10px;">Activités</h2>
+        <% if (!activites.length) { %>
+            <div class="carte vide">Aucune activité ne correspond à « <%= q %> ».</div>
+        <% } else { %>
+            <div class="carte">
+                <table class="tableau">
+                    <thead><tr><th></th><th>Nom</th><th>Abréviation</th><th></th></tr></thead>
+                    <tbody>
+                    <% activites.forEach(function(a) { %>
+                        <tr>
+                            <td><% if (a.logo) { %><img src="<%= a.logo %>" class="miniature"><% } %></td>
+                            <td><%= a.nom %></td>
+                            <td><%= a.abbreviation %></td>
+                            <td style="text-align:right;"><a href="/activites/<%= a.id %>" class="btn btn-gris btn-petit">Voir</a></td>
+                        </tr>
+                    <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        <% } %>
+    <% } %>
+
+    <% if (peut('sous_activites', 'read')) { %>
+        <h2 style="font-size:16px; color:var(--bleu-fonce); margin:24px 0 10px;">Sous-activités</h2>
+        <% if (!sousActivites.length) { %>
+            <div class="carte vide">Aucune sous-activité ne correspond à « <%= q %> ».</div>
+        <% } else { %>
+            <div class="carte">
+                <table class="tableau">
+                    <thead><tr><th>Nom</th><th></th></tr></thead>
+                    <tbody>
+                    <% sousActivites.forEach(function(sa) { %>
+                        <tr>
+                            <td><%= sa.nom %></td>
+                            <td style="text-align:right;"><a href="/sous-activites/<%= sa.id %>" class="btn btn-gris btn-petit">Voir</a></td>
+                        </tr>
+                    <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        <% } %>
+    <% } %>
 
     <% if (peut('outils', 'read')) { %>
         <h2 style="font-size:16px; color:var(--bleu-fonce); margin:24px 0 10px;">Outils</h2>
@@ -53,6 +97,33 @@
                 </table>
             </div>
         <% } %>
+    <% } %>
+
+    <% if (peut('outils', 'read') && archives.length) { %>
+        <h2 style="font-size:16px; color:var(--bleu-fonce); margin:24px 0 10px;">Archives</h2>
+        <div class="carte">
+            <table class="tableau">
+                <thead><tr><th></th><th>Nom</th><th>Propriétaire</th><th>Activité</th><th></th></tr></thead>
+                <tbody>
+                <% archives.forEach(function(o) { %>
+                    <% var premiereActivite = (o.activites && o.activites[0]) || null; %>
+                    <% var premiereSousActivite = (o.sousActivites && o.sousActivites[0]) || null; %>
+                    <% var lienRetour = premiereActivite
+                        ? '/activites/' + premiereActivite.id + '?onglet=archives'
+                        : (premiereSousActivite ? '/sous-activites/' + premiereSousActivite.id + '?onglet=archives' : null); %>
+                    <tr>
+                        <td><% if (o.image) { %><img src="<%= o.image %>" class="miniature"><% } %></td>
+                        <td><%= o.nom %></td>
+                        <td><%= o.Utilisateur ? o.Utilisateur.prenom + ' ' + o.Utilisateur.nom : '—' %></td>
+                        <td><%= premiereActivite ? premiereActivite.nom : (premiereSousActivite ? premiereSousActivite.nom : '—') %></td>
+                        <td style="text-align:right;">
+                            <% if (lienRetour) { %><a href="<%= lienRetour %>" class="btn btn-gris btn-petit">Voir</a><% } %>
+                        </td>
+                    </tr>
+                <% }) %>
+                </tbody>
+            </table>
+        </div>
     <% } %>
 
     <% if (peut('utilisateurs', 'read')) { %>

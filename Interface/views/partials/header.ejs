@@ -3,24 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= typeof titre !== 'undefined' ? titre + ' · GLO' : 'GLO' %></title>
+    <title><%= typeof titre !== 'undefined' ? titre + ' · ' + nomApplication : nomApplication %></title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 <% if (currentUser) { %>
 <header class="topbar">
-    <a href="/" class="logo">📁 <span>Gestionnaire</span><span class="accent">Outils</span></a>
+    <a href="/" class="logo">📁 <span><%= nomEntreprise ? nomEntreprise : 'Gestionnaire' %></span><% if (!nomEntreprise) { %><span class="accent">Outils</span><% } %></a>
     <nav>
         <a href="/">Tableau de bord</a>
-        <% if (peut('roles', 'read')) { %>
-            <a href="/roles">Rôles</a>
+        <% var itemsSecurite = []; %>
+        <% if (peut('roles', 'read')) itemsSecurite.push({ href: '/roles', label: 'Rôles' }); %>
+        <% if (peut('acces', 'read')) itemsSecurite.push({ href: '/acces', label: 'Accès' }); %>
+        <% if (currentUser.Role && currentUser.Role.abbreviation === 'ADMIN') { %>
+            <% itemsSecurite.push({ href: '/parametres', label: 'Réglages' }); %>
+            <% itemsSecurite.push({ href: '/journal', label: "Journal d'événements" }); %>
         <% } %>
-        <% if (peut('acces', 'read')) { %>
-            <a href="/acces">Accès</a>
+        <% itemsSecurite.push({ href: '/changer-mot-de-passe', label: 'Changer mon mot de passe' }); %>
+        <% if (itemsSecurite.length) { %>
+            <div class="menu-deroulant">
+                <button type="button" class="lien-menu-deroulant">Sécurité ▾</button>
+                <div class="contenu-menu-deroulant">
+                    <% itemsSecurite.forEach(function(item) { %>
+                        <a href="<%= item.href %>"><%= item.label %></a>
+                    <% }) %>
+                </div>
+            </div>
+        <% } %>
+        <% if (peut('outils', 'read')) { %>
+            <a href="/diagnostic">Diagnostic réseau</a>
         <% } %>
     </nav>
     <form action="/recherche" method="GET" class="recherche-topbar">
-        <input type="text" name="q" placeholder="Rechercher un outil, un utilisateur..." value="<%= typeof q !== 'undefined' ? q : '' %>">
+        <input type="text" name="q" placeholder="Rechercher une activité, un outil, un utilisateur..." value="<%= typeof q !== 'undefined' ? q : '' %>">
         <button type="submit" title="Rechercher">🔍</button>
     </form>
     <div class="utilisateur">

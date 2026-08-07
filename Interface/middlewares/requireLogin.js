@@ -2,6 +2,15 @@ function requireLogin(req, res, next) {
     if (!req.session.user || !req.session.apiCookie) {
         return res.redirect('/login');
     }
+
+    // Mot de passe par défaut pas encore changé : on bloque l'accès au reste
+    // de l'application tant que ce n'est pas fait (sécurité + traçabilité).
+    // (La page /changer-mot-de-passe elle-même n'est pas protégée par ce
+    // middleware — voir authRoutes.js — donc pas de boucle de redirection.)
+    if (req.session.user.doit_changer_mdp) {
+        return res.redirect('/changer-mot-de-passe');
+    }
+
     next();
 }
 

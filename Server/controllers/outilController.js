@@ -1,5 +1,6 @@
 const { Outil, Utilisateur, Activite, SousActivite } = require('../models');
 const { isAdmin, getIdsActivitesAccessibles } = require('../middlewares/auth');
+const { consigner } = require('../utils/journal');
 
 async function getAll(req, res, next) {
     try {
@@ -55,7 +56,7 @@ async function getById(req, res, next) {
 
 async function create(req, res, next) {
     try {
-        const { nom, lien, activites, sousActivites } = req.body;
+        const { nom, lien, adresse, activites, sousActivites } = req.body;
 
         if (!nom) {
             return res.status(400).json({ message: 'Le nom est requis.' });
@@ -68,7 +69,7 @@ async function create(req, res, next) {
 
         const image = req.file ? `/uploads/outils/${req.file.filename}` : (req.body.image || null);
 
-        const outil = await Outil.create({ nom, lien: lien || null, image, id_user });
+        const outil = await Outil.create({ nom, lien: lien || null, adresse: adresse || null, image, id_user });
 
         // activites / sousActivites : tableau d'ids (JSON stringifié si envoyé en multipart)
         const idsActivites = normaliserListe(activites);
@@ -83,6 +84,14 @@ async function create(req, res, next) {
                 { model: Activite, as: 'activites' },
                 { model: SousActivite, as: 'sousActivites' }
             ]
+        });
+
+        await consigner({
+            user: req.currentUser,
+            action: 'creation',
+            ressource: 'outil',
+            id_ressource: outil.id,
+            libelle: `Outil "${nom}" créé`
         });
 
         res.status(201).json(outilComplet);
@@ -107,6 +116,15 @@ async function toggleActive(req, res, next) {
         if (!outil) return res.status(404).json({ message: 'Outil introuvable.' });
 
         await outil.update({ active: !outil.active });
+
+        await consigner({
+            user: req.currentUser,
+            action: 'modification',
+            ressource: 'outil',
+            id_ressource: outil.id,
+            libelle: `Outil "${outil.nom}" ${outil.active ? 'réactivé' : 'archivé'}`
+        });
+
         res.json(outil);
     } catch (err) { next(err); }
 }
@@ -116,7 +134,17 @@ async function remove(req, res, next) {
         const outil = await Outil.findByPk(req.params.id);
         if (!outil) return res.status(404).json({ message: 'Outil introuvable.' });
 
+        const nomOutil = outil.nom;
         await outil.destroy();
+
+        await consigner({
+            user: req.currentUser,
+            action: 'suppression',
+            ressource: 'outil',
+            id_ressource: req.params.id,
+            libelle: `Outil "${nomOutil}" supprimé`
+        });
+
         res.json({ message: 'Outil supprimé.' });
     } catch (err) { next(err); }
 }

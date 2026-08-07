@@ -5,18 +5,31 @@ const { apiClient } = require('../config/api');
 
 router.use(requireLogin);
 
-// Formulaire de création (id_activite optionnel passé en query)
+// Formulaire de création (id_activite passé en query : on crée directement
+// dans l'activité depuis laquelle on est venu, sans avoir à la re-choisir).
 router.get('/nouveau', async (req, res, next) => {
     try {
         const api = apiClient(req);
         const { data: roles } = await api.get('/roles');
-        const { data: activites } = await api.get('/activites');
+        const id_activite = req.query.id_activite || '';
+
+        let activite = null;
+        let activites = [];
+        if (id_activite) {
+            const resp = await api.get(`/activites/${id_activite}`);
+            activite = resp.data;
+        } else {
+            // Repli défensif si le formulaire est atteint sans contexte.
+            const resp = await api.get('/activites');
+            activites = resp.data;
+        }
 
         res.render('utilisateur/form', {
             titre: 'Nouvel utilisateur',
             roles,
+            activite,
             activites,
-            id_activite: req.query.id_activite || '',
+            id_activite,
             erreur: null
         });
     } catch (err) { next(err); }
@@ -35,12 +48,22 @@ router.post('/', async (req, res, next) => {
         try {
             const api = apiClient(req);
             const { data: roles } = await api.get('/roles');
-            const { data: activites } = await api.get('/activites');
+            const id_activite = req.body.id_activite || '';
+            let activite = null;
+            let activites = [];
+            if (id_activite) {
+                const resp = await api.get(`/activites/${id_activite}`);
+                activite = resp.data;
+            } else {
+                const resp = await api.get('/activites');
+                activites = resp.data;
+            }
             res.render('utilisateur/form', {
                 titre: 'Nouvel utilisateur',
                 roles,
+                activite,
                 activites,
-                id_activite: req.body.id_activite || '',
+                id_activite,
                 erreur: err.response?.data?.message || 'Erreur lors de la création.'
             });
         } catch (err2) { next(err2); }
@@ -55,6 +78,19 @@ router.post('/:id/supprimer', async (req, res, next) => {
 
         if (utilisateur.id_activite) {
             return res.redirect(`/activites/${utilisateur.id_activite}?onglet=utilisateurs`);
+        }
+        res.redirect('/');
+    } catch (err) { next(err); }
+});
+
+router.post('/:id/reinitialiser-mdp', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const { data: utilisateur } = await api.get(`/utilisateurs/${req.params.id}`);
+        await api.post(`/utilisateurs/${req.params.id}/reinitialiser-mdp`);
+
+        if (utilisateur.id_activite) {
+            return res.redirect(`/activites/${utilisateur.id_activite}?onglet=utilisateurs&mdpReinitialise=1`);
         }
         res.redirect('/');
     } catch (err) { next(err); }

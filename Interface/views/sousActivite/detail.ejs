@@ -1,12 +1,5 @@
 <%- include('../partials/header') %>
 
-<% var accesEcritureSousActivite = !!(monAccesSousActivite && monAccesSousActivite.permissions && monAccesSousActivite.permissions.write); %>
-<% var accesSuppressionSousActivite = !!(monAccesSousActivite && monAccesSousActivite.permissions && monAccesSousActivite.permissions.delete); %>
-<% var accesEcritureActivite = !!(monAccesActivite && monAccesActivite.permissions && monAccesActivite.permissions.write); %>
-<% var peutModifier = peut('sous_activites', 'update') || accesEcritureSousActivite; %>
-<% var peutSupprimer = peut('sous_activites', 'delete') || accesSuppressionSousActivite; %>
-<% var peutCreerEnfant = peut('sous_activites', 'create') || accesEcritureActivite; %>
-
 <div class="fil-ariane">
     <a href="/">Tableau de bord</a> <span class="sep">›</span>
     <a href="/activites/<%= activite.id %>"><%= activite.nom %></a>
@@ -18,12 +11,12 @@
 
 <div class="entete-page">
     <h1>📂 <%= sousActivite.nom %></h1>
-    <% if (peutModifier || peutSupprimer) { %>
+    <% if (peut('sous_activites', 'update') || peut('sous_activites', 'delete')) { %>
         <div style="display:flex; gap:8px;">
-            <% if (peutModifier) { %>
+            <% if (peut('sous_activites', 'update')) { %>
                 <a href="/sous-activites/<%= sousActivite.id %>/modifier" class="btn btn-gris">Modifier</a>
             <% } %>
-            <% if (peutSupprimer) { %>
+            <% if (peut('sous_activites', 'delete')) { %>
                 <form action="/sous-activites/<%= sousActivite.id %>/supprimer" method="POST" class="form-inline"
                       onsubmit="return confirm('Supprimer cette sous-activité ?');">
                     <button type="submit" class="btn btn-danger">Supprimer</button>
@@ -45,7 +38,7 @@
 </div>
 
 <% if (onglet === 'sous-activites') { %>
-    <% if (peutCreerEnfant) { %>
+    <% if (peut('sous_activites', 'create')) { %>
         <div class="entete-page">
             <span></span>
             <a href="/sous-activites/nouveau?id_activite=<%= sousActivite.id_activite %>&id_parent=<%= sousActivite.id %>" class="btn btn-accent">+ Nouvelle sous-activité</a>

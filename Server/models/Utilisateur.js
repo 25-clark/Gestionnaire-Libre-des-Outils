@@ -41,11 +41,35 @@ module.exports = (sequelize) => {
                 model: 'roles',
                 key: 'id'
             }
+        },
+        // Haché (voir utils/motDePasse.js), jamais stocké en clair.
+        mot_de_passe: {
+            type: DataTypes.STRING,
+            allowNull: false
+        },
+        // true tant que l'utilisateur n'a pas personnalisé son mot de passe
+        // par défaut (à la création ou après une réinitialisation par un
+        // admin) : force le changement immédiat à la prochaine connexion.
+        doit_changer_mdp: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: true
         }
     }, {
         tableName: 'utilisateurs',
         timestamps: true,
-        underscored: true
+        underscored: true,
+        // Exclut mot_de_passe (haché) de TOUTES les lectures par défaut, y
+        // compris via include: [{ model: Utilisateur }] ailleurs dans l'app —
+        // pas besoin de le faire manuellement à chaque contrôleur.
+        defaultScope: {
+            attributes: { exclude: ['mot_de_passe'] }
+        },
+        scopes: {
+            // Réservé à la connexion et à la vérification de l'ancien mot de
+            // passe (authController.js). Ne jamais renvoyer ce scope au client.
+            avecMotDePasse: {}
+        }
     });
 
     return Utilisateur;

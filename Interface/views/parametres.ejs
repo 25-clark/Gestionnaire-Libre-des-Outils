@@ -1,0 +1,33 @@
+<%- include('partials/header') %>
+
+<div class="entete-page"><h1>Réglages généraux</h1></div>
+
+<% if (erreur) { %>
+    <div class="message-erreur"><%= erreur %></div>
+<% } %>
+<% if (succes) { %>
+    <div class="message-succes">Réglages enregistrés.</div>
+<% } %>
+
+<div class="carte" style="max-width:520px;">
+    <form action="/parametres" method="POST">
+        <label for="nom_entreprise">Nom de l'entreprise</label>
+        <input type="text" id="nom_entreprise" name="nom_entreprise" value="<%= parametre.nom_entreprise || '' %>"
+               placeholder="Laisser vide pour afficher « Gestionnaire Outils »">
+        <p style="color:var(--gris); font-size:13px; margin-top:-6px;">
+            S'affiche à la place de « Gestionnaire Outils » dans l'en-tête et la page de connexion.
+        </p>
+
+        <label for="mot_de_passe_defaut">Mot de passe par défaut</label>
+        <input type="text" id="mot_de_passe_defaut" name="mot_de_passe_defaut" value="<%= parametre.mot_de_passe_defaut %>" minlength="6" required>
+        <p style="color:var(--gris); font-size:13px; margin-top:-6px;">
+            Attribué à chaque nouvel utilisateur, et lors d'une réinitialisation de mot de passe.
+            L'utilisateur devra le changer à sa première connexion. Le modifier ici ne change pas
+            les mots de passe déjà personnalisés.
+        </p>
+
+        <button type="submit" class="btn btn-primaire">Enregistrer</button>
+    </form>
+</div>
+
+<%- include('partials/footer') %>

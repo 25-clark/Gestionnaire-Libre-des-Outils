@@ -44,7 +44,6 @@ router.get('/:id', async (req, res, next) => {
         if (!ongletsAutorises.includes(onglet)) onglet = 'outils';
 
         const { data: activite } = await api.get(`/activites/${req.params.id}`);
-        const { data: monAcces } = await api.get(`/acces/mon-acces/activite?id_activite=${req.params.id}`);
 
         let sousActivites = [];
         let utilisateurs = [];
@@ -69,11 +68,11 @@ router.get('/:id', async (req, res, next) => {
         res.render('activite/detail', {
             titre: activite.nom,
             activite,
-            monAcces,
             sousActivites,
             utilisateurs,
             outils,
-            onglet
+            onglet,
+            mdpReinitialise: req.query.mdpReinitialise === '1'
         });
     } catch (err) {
         next(err);
