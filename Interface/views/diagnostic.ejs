@@ -1,6 +1,6 @@
 <%- include('partials/header') %>
 
-<div class="entete-page"><h1>🩺 Diagnostic réseau</h1></div>
+<div class="entete-page"><h1><i class="bi bi-terminal-fill"></i> Diagnostic réseau</h1></div>
 <p style="color:var(--gris); font-size:14px; margin-top:-10px;">
     Teste la joignabilité d'une adresse IP ou d'un nom d'hôte — utile pour vérifier qu'un outil réseau répond.
 </p>
@@ -15,10 +15,10 @@
 
         <label>Test</label>
         <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
-            <button type="submit" name="test" value="ping" class="btn btn-gris">📶 Ping</button>
-            <button type="submit" name="test" value="traceroute" class="btn btn-gris">🛣️ Traceroute</button>
-            <button type="submit" name="test" value="nslookup" class="btn btn-gris">🔎 Nslookup / DNS</button>
-            <button type="submit" name="test" value="port" class="btn btn-gris">🔌 Test de port</button>
+            <button type="submit" name="test" value="ping" class="btn btn-gris"><i class="bi bi-wifi"></i> Ping</button>
+            <button type="submit" name="test" value="traceroute" class="btn btn-gris"><i class="bi bi-border-width"></i> Traceroute</button>
+            <button type="submit" name="test" value="nslookup" class="btn btn-gris"><i class="bi bi-link"></i> Nslookup / DNS</button>
+            <button type="submit" name="test" value="port" class="btn btn-gris"><i class="bi bi-plug"></i> Test de port</button>
         </div>
     </form>
 </div>

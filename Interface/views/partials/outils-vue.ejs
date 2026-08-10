@@ -36,7 +36,7 @@
                             <% if (peut('outils', 'update')) { %>
                                 <form action="/outils/<%= o.id %>/toggle-active" method="POST" class="form-inline">
                                     <input type="hidden" name="retour" value="<%= retour %>">
-                                    <button type="submit" class="btn btn-gris btn-petit"><%= o.active ? 'Désactiver' : 'Activer' %></button>
+                                    <button type="submit" class="btn btn-gris btn-petit"><%= o.active ? 'Archiver' : 'Activer' %></button>
                                 </form>
                             <% } %>
                             <% if (peut('outils', 'delete')) { %>
@@ -88,7 +88,7 @@
                             <% if (peut('outils', 'update')) { %>
                                 <form action="/outils/<%= o.id %>/toggle-active" method="POST" class="form-inline">
                                     <input type="hidden" name="retour" value="<%= retour %>">
-                                    <button type="submit" class="btn btn-gris btn-petit"><%= o.active ? 'Désactiver' : 'Activer' %></button>
+                                    <button type="submit" class="btn btn-gris btn-petit"><%= o.active ? 'Archiver' : 'Activer' %></button>
                                 </form>
                             <% } %>
                             <% if (peut('outils', 'delete')) { %>
@@ -109,7 +109,7 @@
     <div class="vue-panneau" data-vue="vignettes">
         <div class="grille-vignettes">
             <% outils.forEach(function(o) { %>
-                <div class="vignette-outil" title="<%= o.nom %> — <%= o.Utilisateur ? o.Utilisateur.prenom + ' ' + o.Utilisateur.nom : '—' %>">
+                <a href="<%= o.lien %>" target="_blank" class="vignette-outil" title="<%= o.nom %> — <%= o.Utilisateur ? o.Utilisateur.prenom + ' ' + o.Utilisateur.nom : '—' %>">
                     <span class="point-statut <%= o.active ? 'actif' : 'inactif' %>"></span>
                     <div class="image-vignette">
                         <% if (o.image) { %>
@@ -127,7 +127,7 @@
                             <% if (peut('outils', 'update')) { %>
                                 <form action="/outils/<%= o.id %>/toggle-active" method="POST" class="form-inline">
                                     <input type="hidden" name="retour" value="<%= retour %>">
-                                    <button type="submit" title="<%= o.active ? 'Désactiver' : 'Activer' %>"><%= o.active ? '⏸' : '▶' %></button>
+                                    <button type="submit" title="<%= o.active ? 'Archiver' : 'Activer' %>"><%= o.active ? '⏸' : '▶' %></button>
                                 </form>
                             <% } %>
                             <% if (peut('outils', 'delete')) { %>
@@ -139,7 +139,7 @@
                             <% } %>
                         </div>
                     <% } %>
-                </div>
+                </a>
             <% }) %>
         </div>
     </div>

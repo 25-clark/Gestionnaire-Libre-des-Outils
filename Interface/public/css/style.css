@@ -50,7 +50,8 @@ a:hover { text-decoration: underline; }
     letter-spacing: 0.5px;
     display: flex;
     align-items: center;
-    color: black;
+    color: rgb(31, 28, 28);
+    text-decoration: none;
     gap: 8px;
 }
 
@@ -97,12 +98,14 @@ a:hover { text-decoration: underline; }
     margin: 0 20px;
 }
 .recherche-topbar input {
-    background: transparent;
-    border: none;
+    background: transparent !important;
+    border: none !important;
     color: var(--blanc);
     font-size: 13px;
     padding: 7px 0;
     width: 100%;
+    outline: none !important;
+    box-shadow: none !important;
 }
 .recherche-topbar input::placeholder { color: rgba(255,255,255,0.7); }
 .recherche-topbar input:focus { outline: none; box-shadow: none; }
@@ -321,6 +324,7 @@ input:focus, select:focus, textarea:focus {
     border-bottom: 2px solid var(--gris-bordure);
     margin-bottom: 20px;
     overflow-x: auto;
+    height: 100%;
 }
 .onglet {
     padding: 10px 18px;
@@ -328,7 +332,6 @@ input:focus, select:focus, textarea:focus {
     font-weight: 600;
     color: var(--gris);
     border-bottom: 2px solid transparent;
-    margin-bottom: -2px;
     white-space: nowrap;
 }
 .onglet.actif {
@@ -448,6 +451,14 @@ table.tableau tr:hover td { background: var(--bleu-clair); }
     padding: 34px 30px;
     border-radius: 12px;
     box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+}
+.carte-login .logo {
+    display: flex;
+    justify-content: center;
+}
+.carte-login .logo img {
+    width: 25px;
+    height: 25px;
 }
 .carte-login h1 {
     text-align: center;

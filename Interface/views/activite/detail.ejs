@@ -104,7 +104,7 @@
                             <% if (currentUser.Role && currentUser.Role.abbreviation === 'ADMIN') { %>
                                 <form action="/utilisateurs/<%= u.id %>/reinitialiser-mdp" method="POST" class="form-inline"
                                       onsubmit="return confirm('Réinitialiser le mot de passe de cet utilisateur à la valeur par défaut ?');">
-                                    <button type="submit" class="btn btn-gris btn-petit" title="Réinitialiser le mot de passe">🔑 Réinitialiser</button>
+                                    <button type="submit" class="btn btn-gris btn-petit" title="Réinitialiser le mot de passe"><i class="bi bi-key-fill"></i> Réinitialiser</button>
                                 </form>
                             <% } %>
                             <% if (peut('utilisateurs', 'delete')) { %>
