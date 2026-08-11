@@ -92,7 +92,7 @@
     <% } else { %>
         <div class="carte">
             <table class="tableau">
-                <thead><tr><th>Matricule</th><th>Nom</th><th>Prénom</th><th>Rôle</th><th></th></tr></thead>
+                <thead><tr><th>Matricule</th><th>Nom</th><th>Prénom</th><th>Rôle</th><th>Dernière connexion</th><th></th></tr></thead>
                 <tbody>
                 <% utilisateurs.forEach(function(u) { %>
                     <tr>
@@ -100,11 +100,18 @@
                         <td><%= u.nom %></td>
                         <td><%= u.prenom %></td>
                         <td><span class="badge-role" style="background:var(--bleu);"><%= u.Role ? u.Role.abbreviation : '—' %></span></td>
+                        <td style="font-size:13px; color:var(--gris);">
+                            <% if (u.derniere_connexion) { %>
+                                <%= new Date(u.derniere_connexion).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) %>
+                            <% } else { %>
+                                <span style="font-style:italic;">Jamais connecté</span>
+                            <% } %>
+                        </td>
                         <td style="text-align:right;">
                             <% if (currentUser.Role && currentUser.Role.abbreviation === 'ADMIN') { %>
                                 <form action="/utilisateurs/<%= u.id %>/reinitialiser-mdp" method="POST" class="form-inline"
                                       onsubmit="return confirm('Réinitialiser le mot de passe de cet utilisateur à la valeur par défaut ?');">
-                                    <button type="submit" class="btn btn-gris btn-petit" title="Réinitialiser le mot de passe"><i class="bi bi-key-fill"></i> Réinitialiser</button>
+                                    <button type="submit" class="btn btn-gris btn-petit" title="Réinitialiser le mot de passe">🔑 Réinitialiser</button>
                                 </form>
                             <% } %>
                             <% if (peut('utilisateurs', 'delete')) { %>

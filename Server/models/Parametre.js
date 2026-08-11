@@ -24,6 +24,46 @@ module.exports = (sequelize) => {
             type: DataTypes.STRING,
             allowNull: false,
             defaultValue: 'Bienvenue123'
+        },
+        // ---- Politique de mot de passe ----
+        mdp_longueur_min: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 6
+        },
+        // Exige au moins une majuscule + une minuscule + un chiffre.
+        mdp_complexite: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
+        },
+        // ---- Anti-brute-force (voir authController.js / utils/limiteurIp.js) ----
+        max_tentatives_connexion: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 5
+        },
+        duree_blocage_minutes: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 15
+        },
+        // ---- Session ----
+        session_duree_heures: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 8
+        },
+        // ---- Surveillance réseau automatique (voir utils/surveillance.js) ----
+        surveillance_active: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: true
+        },
+        surveillance_intervalle_minutes: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 5
         }
     }, {
         tableName: 'parametres',

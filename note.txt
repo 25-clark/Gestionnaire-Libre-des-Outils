@@ -1,0 +1,45 @@
+pour la barre de recherche on peut aussi chercher des sous activités,
+des activités, des outils, des archives et des utilisateurs selon l'accès
+de l'utilisateur.
+Pour les accès particulièrement, il faut faire quoi car le niveau sur l'affichage
+reste Lecture alors qu'on lui a accordé Autoriser l'écriture (création/modification)
+et Autoriser la suppression c'est quoi leur fonction respective il faut leur donner
+de la valeur
+et pour créer un sous-activité par exemple et sur le champ sous-activité parente
+il vaut mieux afficher les sous-activités déjà disponible dans l'activité sélectionnée
+Mais le mieux c'est quand on clique sur Nouvelle activité, nouvel outil, nouvel utilisateur
+dans une activité ou sous-activité on crée immédiatement là où on est actuellement
+Et la connexion simplement avec le matricule ne suffit pas il vaut mieux ajouter un mdp
+pour la sécurité. Donc créer un utilisateur c'est comme le cas actuel et on crée un mdp par
+défaut dans une gestion générale et quand l'utilisateur se connecte au début on vérifie si le mdp que 
+l'utilisateur a tapé correspond au mdp par défaut et on lui demande de changer immédiatement le mdp. Et quand il
+a dit qu'il a oublié son mdp l'admin peut avoir une option sur chaque utilisateur un bouton Réinitialiser le mdp pour 
+réinsérer le mdp par défaut et on lui redemande de modifier toujours son mdp comme au début
+Si c'est une entreprise car cette application sera libre, on demande le nom de l'entreprise et on l'affiche à la place de 
+Gestionnaire Outils
+Il faudrait aussi ajouter des logs et événements pour savoir qui a fait quoi
+
+Maintenant, il faut rassembler dans un navbar Sécurité: Rôles, Accès et Reglages car ce sont tous de la sécurité et
+changer mdp sur l'icône que tu as ajouté il faut l'ajouter aussi dans Sécurité et insérer aussi les test: ping, traceroutes,
+nslookup et dns, et beaucoup d'autres comme un autre navbar Test ou un bouton sur un outil et si possible ajouter aussi le
+journal d'événements et les logs
+
+Maintenant concentre toi sur ces demandes et oublie les anciens car j'ai déjà travaillé dessus et j'ai terminé les logs et événements, je t'ai envoyé en zip mon nouveau code source et analyse pour que tu comprennes ces nouvelles demandes:
+🔒 Sécurité — la plus urgente
+Protection anti-brute-force : rien n'empêche actuellement quelqu'un de tester des mots de passe en boucle sur /login. Un blocage temporaire après X tentatives échouées (par matricule et/ou par IP) serait le complément naturel du mot de passe qu'on vient d'ajouter — et le Journal peut déjà servir à détecter les tentatives suspectes.
+Politique de mot de passe configurable : longueur minimale, complexité — actuellement juste "6 caractères minimum" en dur.
+Expiration de session configurable : actuellement fixée à 8h en dur dans le code.
+🩺 Extension naturelle du diagnostic réseau
+Surveillance automatique (monitoring) : puisque les outils ont maintenant une adresse, un ping périodique en arrière-plan afficherait automatiquement un statut "🟢 En ligne / 🔴 Hors ligne" sur chaque outil, sans clic manuel. C'est probablement la suite la plus naturelle du diagnostic qu'on vient de faire.
+Historique de disponibilité : gardait une trace des pannes/coupures d'un outil dans le temps.
+📊 Suivi & reporting
+Export CSV/PDF des listes (outils, utilisateurs, journal, diagnostic) — souvent demandé pour des audits ou des rapports à la direction.
+Tableau de bord statistique : nombre d'outils actifs/archivés, répartition des utilisateurs par rôle, activité récente — vue d'ensemble en un coup d'œil.
+Dernière connexion visible par utilisateur (facile, la donnée est déjà dans le Journal) — utile pour repérer les comptes inactifs.
+🔧 Terrain (pratique pour du matériel physique)
+QR code par outil : génère une étiquette à coller sur l'équipement physique, qui renvoie directement à sa fiche en scannant.
+Pièces jointes par outil : manuels, factures, certificats de conformité.
+🔔 Confort
+Notifications (email ou in-app) : nouvel utilisateur créé, mot de passe réinitialisé, accès accordé — pour que la personne concernée soit prévenue sans attendre qu'on lui dise.
+
+Gestion des tickets comme dans GLPI

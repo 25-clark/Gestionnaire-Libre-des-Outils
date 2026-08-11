@@ -1,6 +1,6 @@
 <%- include('partials/header') %>
 
-<div class="entete-page"><h1><i class="bi bi-calendar2-event-fill"></i> Journal d'événements</h1></div>
+<div class="entete-page"><h1>📜 Journal d'événements</h1></div>
 <p style="color:var(--gris); font-size:14px; margin-top:-10px;"><%= total %> événement(s) au total.</p>
 
 <div class="carte" style="max-width:900px;">
@@ -22,7 +22,7 @@
             <label for="action">Action</label>
             <select id="action" name="action">
                 <option value="">— Toutes —</option>
-                <% [['connexion','Connexion'],['deconnexion','Déconnexion'],['creation','Création'],['modification','Modification'],['suppression','Suppression'],['reinitialisation_mdp','Réinit. mot de passe'],['octroi_acces','Octroi d\'accès'],['revocation_acces','Révocation d\'accès']].forEach(function(a) { %>
+                <% [['connexion','Connexion'],['connexion_echouee','Échec de connexion'],['compte_bloque','Compte bloqué'],['deconnexion','Déconnexion'],['creation','Création'],['modification','Modification'],['suppression','Suppression'],['reinitialisation_mdp','Réinit. mot de passe'],['octroi_acces','Octroi d\'accès'],['revocation_acces','Révocation d\'accès'],['changement_statut','Changement statut réseau']].forEach(function(a) { %>
                     <option value="<%= a[0] %>" <%= action === a[0] ? 'selected' : '' %>><%= a[1] %></option>
                 <% }) %>
             </select>

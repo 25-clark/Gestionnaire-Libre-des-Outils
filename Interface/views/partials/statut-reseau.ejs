@@ -1,0 +1,17 @@
+<% /* Attend : o (outil), retour (URL de redirection après action) */ %>
+<% if (o.adresse) { %>
+    <% if (o.dernier_statut === 'en_ligne') { %>
+        <span class="pastille-reseau en-ligne" title="Dernière vérification : <%= o.derniere_verification ? new Date(o.derniere_verification).toLocaleString('fr-FR') : '—' %>">🟢 En ligne</span>
+    <% } else if (o.dernier_statut === 'hors_ligne') { %>
+        <span class="pastille-reseau hors-ligne" title="Dernière vérification : <%= o.derniere_verification ? new Date(o.derniere_verification).toLocaleString('fr-FR') : '—' %>">🔴 Hors ligne</span>
+    <% } else { %>
+        <span class="pastille-reseau inconnu" title="Pas encore vérifié par la surveillance automatique">⚪ Inconnu</span>
+    <% } %>
+    <% if (peut('outils', 'update')) { %>
+        <form action="/outils/<%= o.id %>/verifier-statut" method="POST" class="form-inline">
+            <input type="hidden" name="retour" value="<%= retour %>">
+            <button type="submit" class="btn-icone" title="Vérifier maintenant">🔄</button>
+        </form>
+    <% } %>
+    <a href="/outils/<%= o.id %>/historique-statut" class="btn-icone" title="Historique de disponibilité">📈</a>
+<% } %>

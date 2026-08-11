@@ -1,6 +1,7 @@
-const { Outil, Utilisateur, Activite, SousActivite } = require('../models');
+const { Outil, Utilisateur, Activite, SousActivite, OutilHistoriqueStatut } = require('../models');
 const { isAdmin, getIdsActivitesAccessibles } = require('../middlewares/auth');
 const { consigner } = require('../utils/journal');
+const { verifierUnOutil } = require('../utils/surveillance');
 
 async function getAll(req, res, next) {
     try {
@@ -149,4 +150,40 @@ async function remove(req, res, next) {
     } catch (err) { next(err); }
 }
 
-module.exports = { getAll, getById, create, toggleActive, remove };
+// Déclenche une vérification immédiate du statut réseau (au lieu d'attendre
+// le prochain cycle automatique, jusqu'à surveillance_intervalle_minutes).
+// Sans objet si l'outil n'a pas d'adresse renseignée.
+async function verifierStatut(req, res, next) {
+    try {
+        const outil = await Outil.findByPk(req.params.id);
+        if (!outil) return res.status(404).json({ message: 'Outil introuvable.' });
+
+        if (!outil.adresse) {
+            return res.status(400).json({ message: "Cet outil n'a pas d'adresse renseignée : rien à vérifier." });
+        }
+
+        await verifierUnOutil(outil);
+        await outil.reload();
+
+        res.json(outil);
+    } catch (err) { next(err); }
+}
+
+// Historique des changements de statut (en ligne/hors ligne), du plus récent
+// au plus ancien — alimenté par la surveillance automatique.
+async function historiqueStatut(req, res, next) {
+    try {
+        const outil = await Outil.findByPk(req.params.id);
+        if (!outil) return res.status(404).json({ message: 'Outil introuvable.' });
+
+        const historique = await OutilHistoriqueStatut.findAll({
+            where: { id_outil: req.params.id },
+            order: [['createdAt', 'DESC']],
+            limit: 100
+        });
+
+        res.json(historique);
+    } catch (err) { next(err); }
+}
+
+module.exports = { getAll, getById, create, toggleActive, remove, verifierStatut, historiqueStatut };

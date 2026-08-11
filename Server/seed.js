@@ -66,7 +66,21 @@ async function seed() {
         const MOT_DE_PASSE_DEFAUT = 'Bienvenue123';
         await Parametre.create({
             nom_entreprise: null,
-            mot_de_passe_defaut: MOT_DE_PASSE_DEFAUT
+            mot_de_passe_defaut: MOT_DE_PASSE_DEFAUT,
+            // Politique de mot de passe : 6 caractères minimum, pas de
+            // complexité exigée par défaut — ajustable depuis Réglages généraux.
+            mdp_longueur_min: 6,
+            mdp_complexite: false,
+            // Anti-brute-force : 5 échecs -> blocage 15 minutes (par matricule
+            // ET par IP, voir authController.js / utils/limiteurIp.js).
+            max_tentatives_connexion: 5,
+            duree_blocage_minutes: 15,
+            // Durée de session : 8h, comme avant (désormais configurable).
+            session_duree_heures: 8,
+            // Surveillance réseau automatique : activée par défaut, cycle
+            // toutes les 5 minutes (voir utils/surveillance.js).
+            surveillance_active: true,
+            surveillance_intervalle_minutes: 5
         });
         console.log(`✅ Paramètres créés (mot de passe par défaut : ${MOT_DE_PASSE_DEFAUT})`);
 

@@ -16,6 +16,7 @@ const rechercheRoutes = require('./routes/rechercheRoutes');
 const parametreRoutes = require('./routes/parametreRoutes');
 const diagnosticRoutes = require('./routes/diagnosticRoutes');
 const journalRoutes = require('./routes/journalRoutes');
+const statistiqueRoutes = require('./routes/statistiqueRoutes');
 
 const app = express();
 
@@ -76,6 +77,7 @@ app.use('/recherche', rechercheRoutes);
 app.use('/parametres', parametreRoutes);
 app.use('/diagnostic', diagnosticRoutes);
 app.use('/journal', journalRoutes);
+app.use('/statistiques', statistiqueRoutes);
 
 // 404
 app.use((req, res) => {

@@ -49,7 +49,7 @@ module.exports = (sequelize) => {
         // createdAt nous intéresse.
         timestamps: true,
         updatedAt: false,
-        underscored: true
+        underscored: false
     });
 
     return Journal;

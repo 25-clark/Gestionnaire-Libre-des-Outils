@@ -25,6 +25,18 @@ module.exports = (sequelize) => {
             type: DataTypes.STRING,
             allowNull: true
         },
+        // Résultat de la surveillance automatique périodique (voir
+        // utils/surveillance.js) : 'inconnu' tant qu'aucune adresse n'est
+        // renseignée ou qu'aucun cycle n'a encore eu lieu.
+        dernier_statut: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            defaultValue: 'inconnu' // 'inconnu' | 'en_ligne' | 'hors_ligne'
+        },
+        derniere_verification: {
+            type: DataTypes.DATE,
+            allowNull: true
+        },
         active: {
             // false = désactivé (mais pas supprimé)
             type: DataTypes.BOOLEAN,

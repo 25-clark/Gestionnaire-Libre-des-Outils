@@ -21,8 +21,9 @@
         <% if (peut('roles', 'read')) itemsSecurite.push({ href: '/roles', label: 'Rôles' }); %>
         <% if (peut('acces', 'read')) itemsSecurite.push({ href: '/acces', label: 'Accès' }); %>
         <% if (currentUser.Role && currentUser.Role.abbreviation === 'ADMIN') { %>
-            <% itemsSecurite.push({ href: '/parametres', label: 'Réglages' }); %>
+            <% itemsSecurite.push({ href: '/parametres', label: 'Réglages généraux' }); %>
             <% itemsSecurite.push({ href: '/journal', label: "Journal d'événements" }); %>
+            <% itemsSecurite.push({ href: '/statistiques', label: 'Statistiques' }); %>
         <% } %>
         <% itemsSecurite.push({ href: '/changer-mot-de-passe', label: 'Changer mon mot de passe' }); %>
         <% if (itemsSecurite.length) { %>

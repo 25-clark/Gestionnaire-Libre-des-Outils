@@ -1,4 +1,4 @@
-const { Utilisateur, Role, Activite, Outil, Parametre } = require('../models');
+const { Utilisateur, Role, Activite, Outil, Parametre, Journal, sequelize } = require('../models');
 const { isAdmin, getIdsActivitesAccessibles } = require('../middlewares/auth');
 const { hacher } = require('../utils/motDePasse');
 const { consigner } = require('../utils/journal');
@@ -46,7 +46,28 @@ async function getAll(req, res, next) {
             );
         }
 
-        res.json(utilisateurs);
+        // Dernière connexion (utile pour repérer les comptes inactifs),
+        // calculée à partir du Journal plutôt que stockée en doublon sur
+        // Utilisateur — une seule requête groupée pour toute la liste.
+        const ids = utilisateurs.map(u => u.id);
+        let dernieresConnexions = new Map();
+        if (ids.length) {
+            const lignes = await Journal.findAll({
+                attributes: ['id_user', [sequelize.fn('MAX', sequelize.col('createdAt')), 'derniere']],
+                where: { action: 'connexion', id_user: ids },
+                group: ['id_user'],
+                raw: true
+            });
+            dernieresConnexions = new Map(lignes.map(l => [l.id_user, l.derniere]));
+        }
+
+        const resultat = utilisateurs.map(u => {
+            const json = u.toJSON();
+            json.derniere_connexion = dernieresConnexions.get(u.id) || null;
+            return json;
+        });
+
+        res.json(resultat);
     } catch (err) { next(err); }
 }
 
@@ -115,7 +136,11 @@ async function reinitialiserMotDePasse(req, res, next) {
 
         await utilisateur.update({
             mot_de_passe: hacher(mot_de_passe_defaut),
-            doit_changer_mdp: true
+            doit_changer_mdp: true,
+            // Une réinitialisation par un admin est aussi l'occasion de
+            // débloquer le compte s'il l'était suite à des échecs répétés.
+            tentatives_echouees: 0,
+            bloque_jusqu_a: null
         });
 
         await consigner({

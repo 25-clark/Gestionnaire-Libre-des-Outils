@@ -1,5 +1,6 @@
 const { Parametre } = require('../models');
 const { consigner } = require('../utils/journal');
+const { validerPolitiqueMotDePasse } = require('../utils/motDePasse');
 
 // Une seule ligne de réglages existe toujours (id: 1), créée à la volée si
 // elle n'existe pas encore (première utilisation de l'app).
@@ -29,14 +30,67 @@ async function obtenir(req, res, next) {
     } catch (err) { next(err); }
 }
 
+// Bornes raisonnables pour éviter qu'un réglage absurde (0 tentative, 0
+// caractère...) ne rende l'application inutilisable ou dangereusement
+// permissive. On corrige silencieusement (clamp) plutôt que de rejeter,
+// pour rester simple à l'usage.
+function borner(valeur, min, max, valeurParDefaut) {
+    const n = parseInt(valeur, 10);
+    if (Number.isNaN(n)) return valeurParDefaut;
+    return Math.min(Math.max(n, min), max);
+}
+
 async function mettreAJour(req, res, next) {
     try {
         const parametre = await trouverOuCreer();
-        const { nom_entreprise, mot_de_passe_defaut } = req.body;
+        const {
+            nom_entreprise,
+            mot_de_passe_defaut,
+            mdp_longueur_min,
+            mdp_complexite,
+            max_tentatives_connexion,
+            duree_blocage_minutes,
+            session_duree_heures,
+            surveillance_active,
+            surveillance_intervalle_minutes
+        } = req.body;
+
+        const nouvelleLongueurMin = mdp_longueur_min !== undefined
+            ? borner(mdp_longueur_min, 4, 32, parametre.mdp_longueur_min)
+            : parametre.mdp_longueur_min;
+        const nouvelleComplexite = mdp_complexite !== undefined ? !!mdp_complexite : parametre.mdp_complexite;
+
+        // Le mot de passe par défaut doit lui-même respecter la politique
+        // qu'on est en train d'enregistrer (sinon les nouveaux comptes/
+        // réinitialisations partiraient avec un mot de passe non conforme).
+        if (mot_de_passe_defaut) {
+            const { valide, message } = validerPolitiqueMotDePasse(mot_de_passe_defaut, {
+                mdp_longueur_min: nouvelleLongueurMin,
+                mdp_complexite: nouvelleComplexite
+            });
+            if (!valide) {
+                return res.status(400).json({ message: `Mot de passe par défaut : ${message}` });
+            }
+        }
 
         await parametre.update({
             nom_entreprise: nom_entreprise !== undefined ? (nom_entreprise || null) : parametre.nom_entreprise,
-            mot_de_passe_defaut: mot_de_passe_defaut || parametre.mot_de_passe_defaut
+            mot_de_passe_defaut: mot_de_passe_defaut || parametre.mot_de_passe_defaut,
+            mdp_longueur_min: nouvelleLongueurMin,
+            mdp_complexite: nouvelleComplexite,
+            max_tentatives_connexion: max_tentatives_connexion !== undefined
+                ? borner(max_tentatives_connexion, 3, 20, parametre.max_tentatives_connexion)
+                : parametre.max_tentatives_connexion,
+            duree_blocage_minutes: duree_blocage_minutes !== undefined
+                ? borner(duree_blocage_minutes, 1, 1440, parametre.duree_blocage_minutes)
+                : parametre.duree_blocage_minutes,
+            session_duree_heures: session_duree_heures !== undefined
+                ? borner(session_duree_heures, 1, 168, parametre.session_duree_heures)
+                : parametre.session_duree_heures,
+            surveillance_active: surveillance_active !== undefined ? !!surveillance_active : parametre.surveillance_active,
+            surveillance_intervalle_minutes: surveillance_intervalle_minutes !== undefined
+                ? borner(surveillance_intervalle_minutes, 1, 1440, parametre.surveillance_intervalle_minutes)
+                : parametre.surveillance_intervalle_minutes
         });
 
         await consigner({

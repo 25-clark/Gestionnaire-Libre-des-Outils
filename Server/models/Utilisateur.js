@@ -54,6 +54,21 @@ module.exports = (sequelize) => {
             type: DataTypes.BOOLEAN,
             allowNull: false,
             defaultValue: true
+        },
+        // Anti-brute-force par compte (voir authController.js) : incrémenté à
+        // chaque mot de passe erroné, remis à zéro à la première connexion
+        // réussie. Persisté en base (contrairement au compteur par IP, qui
+        // lui est en mémoire) pour survivre à un redémarrage du serveur.
+        tentatives_echouees: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0
+        },
+        // Date jusqu'à laquelle ce compte est bloqué suite à trop d'échecs
+        // (null = pas bloqué).
+        bloque_jusqu_a: {
+            type: DataTypes.DATE,
+            allowNull: true
         }
     }, {
         tableName: 'utilisateurs',

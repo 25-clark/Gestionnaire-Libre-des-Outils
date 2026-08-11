@@ -23,8 +23,20 @@ router.get('/', async (req, res, next) => {
 
 router.post('/', async (req, res) => {
     try {
+        const body = { ...req.body };
+        // Une checkbox non cochée n'est pas envoyée du tout par le navigateur :
+        // on normalise ici en booléen explicite pour ne jamais dépendre d'un
+        // "valeur absente = inchangé" côté Server, qui empêcherait de désactiver
+        // la complexité une fois activée.
+        body.mdp_complexite = Array.isArray(body.mdp_complexite)
+            ? body.mdp_complexite.includes('on')
+            : body.mdp_complexite === 'on';
+        body.surveillance_active = Array.isArray(body.surveillance_active)
+            ? body.surveillance_active.includes('on')
+            : body.surveillance_active === 'on';
+
         const api = apiClient(req);
-        const { data: parametre } = await api.put('/parametres', req.body);
+        const { data: parametre } = await api.put('/parametres', body);
         res.render('parametres', { titre: 'Réglages', parametre, erreur: null, succes: true });
     } catch (err) {
         let parametre = req.body;

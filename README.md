@@ -121,10 +121,40 @@ En plus des permissions globales du rôle, un admin peut accorder un **accès pa
 
 ## 6. Notes techniques
 
-- Authentification par session (cookie), sans mot de passe (matricule uniquement).
+- Authentification par session (cookie) avec matricule + mot de passe (haché, jamais stocké en clair).
 - Les deux applications communiquent en HTTP : l'Interface relaie le cookie de session du
   Server à chaque appel API (voir `Interface/config/api.js`).
 - Les images (logos d'activité, images d'outil) sont uploadées et hébergées côté `Interface/`
   (`public/uploads/`), puis le chemin est transmis au `Server/` qui l'enregistre en base.
-- Pensez à ajouter un vrai système de mot de passe / SSO si l'application devient accessible
-  depuis l'extérieur du réseau interne.
+- Pensez à activer HTTPS si l'application devient accessible depuis l'extérieur du réseau interne.
+
+---
+
+## 7. Sécurité, surveillance réseau et statistiques
+
+**Anti-brute-force** (`Server/utils/limiteurIp.js`, `authController.js`) : après *N* échecs de
+connexion (réglable), un compte est bloqué temporairement — à la fois par **matricule** (persisté
+en base, `Utilisateur.tentatives_echouees` / `bloque_jusqu_a`) et par **IP** (en mémoire, protection
+complémentaire contre le test de plusieurs matricules depuis la même machine).
+
+**Politique de mot de passe** et **durée de session** configurables depuis **Réglages généraux**
+(menu Administration, réservé à l'admin) : longueur minimale, exigence de complexité, nombre
+d'échecs avant blocage, durée du blocage, durée de session avant déconnexion automatique.
+
+**Surveillance réseau automatique** (`Server/utils/surveillance.js`) : tout outil ayant une
+adresse renseignée est pingé périodiquement en arrière-plan (intervalle réglable, 5 min par
+défaut). Statut 🟢/🔴/⚪ affiché automatiquement dans les listes d'outils, avec bouton
+"🔄 Vérifier maintenant" pour forcer une vérification immédiate, et un historique des
+changements d'état (`OutilHistoriqueStatut`) consultable via l'icône 📈.
+
+**Statistiques** (menu Administration, réservé à l'admin) : vue d'ensemble du parc — nombre
+d'activités/sous-activités/utilisateurs/outils, répartition des utilisateurs par rôle, état de
+la surveillance réseau, et les 12 derniers événements du Journal.
+
+**Dernière connexion** : visible dans l'onglet "Utilisateurs" de chaque activité (calculée à la
+volée depuis le Journal, pas stockée en double), pratique pour repérer les comptes inactifs.
+
+⚠️ Ces fonctionnalités ajoutent des colonnes/tables (`Utilisateur.tentatives_echouees`,
+`Parametre.*`, `Outil.dernier_statut`, `OutilHistoriqueStatut`...). Comme ce projet n'a pas de
+système de migration, il faut relancer `npm run seed` côté `Server/` pour que la base de données
+reflète ces changements (cela réinitialise les données — à faire uniquement en développement).

@@ -5,6 +5,7 @@ const session = require('express-session');
 const path = require('path');
 
 const { sequelize } = require('./models');
+const { demarrerSurveillance } = require('./utils/surveillance');
 
 const authRoutes = require('./routes/authRoutes');
 const roleRoutes = require('./routes/roleRoutes');
@@ -16,6 +17,7 @@ const accesRoutes = require('./routes/accesRoutes');
 const parametreRoutes = require('./routes/parametreRoutes');
 const diagnosticRoutes = require('./routes/diagnosticRoutes');
 const journalRoutes = require('./routes/journalRoutes');
+const statistiqueRoutes = require('./routes/statistiqueRoutes');
 
 const app = express();
 
@@ -32,6 +34,10 @@ app.use(session({
     saveUninitialized: false,
     cookie: {
         httpOnly: true,
+        // Valeur de repli avant la première connexion (ex: options publiques
+        // /api/parametres/public). La vraie durée, configurable dans les
+        // Réglages généraux, est appliquée à chaque connexion réussie
+        // (voir authController.js : req.session.cookie.maxAge = ...).
         maxAge: 1000 * 60 * 60 * 8 // 8h
     }
 }));
@@ -50,6 +56,7 @@ app.use('/api/acces', accesRoutes);
 app.use('/api/parametres', parametreRoutes);
 app.use('/api/diagnostic', diagnosticRoutes);
 app.use('/api/journal', journalRoutes);
+app.use('/api/statistiques', statistiqueRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
@@ -66,6 +73,7 @@ sequelize.authenticate()
         console.log('Connexion à la base de données réussie.');
         app.listen(PORT, () => {
             console.log(`Serveur GLO démarré sur http://localhost:${PORT}`);
+            demarrerSurveillance();
         });
     })
     .catch((err) => {

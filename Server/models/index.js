@@ -11,6 +11,7 @@ const OutilActivite = require('./OutilActivite')(sequelize);
 const OutilSousActivite = require('./OutilSousActivite')(sequelize);
 const Parametre = require('./Parametre')(sequelize);
 const Journal = require('./Journal')(sequelize);
+const OutilHistoriqueStatut = require('./OutilHistoriqueStatut')(sequelize);
 
 // ========================= ASSOCIATIONS =========================
 
@@ -115,6 +116,10 @@ OutilActivite.belongsTo(Activite, { foreignKey: 'id_activite' });
 OutilSousActivite.belongsTo(Outil, { foreignKey: 'id_outil' });
 OutilSousActivite.belongsTo(SousActivite, { foreignKey: 'id_sous_activite' });
 
+// ---- Outil <-> OutilHistoriqueStatut (historique de disponibilité) ----
+Outil.hasMany(OutilHistoriqueStatut, { foreignKey: 'id_outil', as: 'historiqueStatuts' });
+OutilHistoriqueStatut.belongsTo(Outil, { foreignKey: 'id_outil' });
+
 module.exports = {
     sequelize,
     Role,
@@ -127,5 +132,6 @@ module.exports = {
     OutilActivite,
     OutilSousActivite,
     Parametre,
-    Journal
+    Journal,
+    OutilHistoriqueStatut
 };

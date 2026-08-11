@@ -9,7 +9,7 @@
     <div class="message-succes">Réglages enregistrés.</div>
 <% } %>
 
-<div class="carte" style="max-width:520px;">
+<div class="carte" style="max-width:560px;">
     <form action="/parametres" method="POST">
         <label for="nom_entreprise">Nom de l'entreprise</label>
         <input type="text" id="nom_entreprise" name="nom_entreprise" value="<%= parametre.nom_entreprise || '' %>"
@@ -19,14 +19,72 @@
         </p>
 
         <label for="mot_de_passe_defaut">Mot de passe par défaut</label>
-        <input type="text" id="mot_de_passe_defaut" name="mot_de_passe_defaut" value="<%= parametre.mot_de_passe_defaut %>" minlength="6" required>
+        <input type="password" id="mot_de_passe_defaut" name="mot_de_passe_defaut" value="<%= parametre.mot_de_passe_defaut %>" minlength="6" required>
         <p style="color:var(--gris); font-size:13px; margin-top:-6px;">
             Attribué à chaque nouvel utilisateur, et lors d'une réinitialisation de mot de passe.
             L'utilisateur devra le changer à sa première connexion. Le modifier ici ne change pas
-            les mots de passe déjà personnalisés.
+            les mots de passe déjà personnalisés. Doit respecter la politique ci-dessous.
         </p>
 
-        <button type="submit" class="btn btn-primaire">Enregistrer</button>
+        <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
+        <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 4px;">🔒 Politique de mot de passe</h2>
+
+        <label for="mdp_longueur_min">Longueur minimale</label>
+        <input type="number" id="mdp_longueur_min" name="mdp_longueur_min" min="4" max="32"
+               value="<%= parametre.mdp_longueur_min %>" style="max-width:120px;">
+
+        <div class="champ-case">
+            <input type="checkbox" id="mdp_complexite" name="mdp_complexite" <%= parametre.mdp_complexite ? 'checked' : '' %>>
+            <label for="mdp_complexite">Exiger majuscule + minuscule + chiffre</label>
+        </div>
+
+        <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
+        <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 4px;">🛡️ Anti-brute-force</h2>
+        <p style="color:var(--gris); font-size:13px; margin-top:-2px;">
+            Un compte (par matricule) et une machine (par adresse IP) sont bloqués temporairement
+            après trop d'échecs de connexion consécutifs.
+        </p>
+
+        <label for="max_tentatives_connexion">Nombre d'échecs avant blocage</label>
+        <input type="number" id="max_tentatives_connexion" name="max_tentatives_connexion" min="3" max="20"
+               value="<%= parametre.max_tentatives_connexion %>" style="max-width:120px;">
+
+        <label for="duree_blocage_minutes">Durée du blocage (minutes)</label>
+        <input type="number" id="duree_blocage_minutes" name="duree_blocage_minutes" min="1" max="1440"
+               value="<%= parametre.duree_blocage_minutes %>" style="max-width:120px;">
+
+        <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
+        <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 4px;">⏱️ Session</h2>
+
+        <label for="session_duree_heures">Durée avant déconnexion automatique (heures)</label>
+        <input type="number" id="session_duree_heures" name="session_duree_heures" min="1" max="168"
+               value="<%= parametre.session_duree_heures %>" style="max-width:120px;">
+        <p style="color:var(--gris); font-size:13px; margin-top:-6px;">
+            S'applique à partir de la prochaine connexion (les sessions déjà ouvertes gardent leur durée actuelle).
+        </p>
+
+        <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
+        <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 4px;">🩺 Surveillance réseau automatique</h2>
+        <p style="color:var(--gris); font-size:13px; margin-top:-2px;">
+            Ping périodique en arrière-plan des outils ayant une adresse renseignée : statut
+            🟢 En ligne / 🔴 Hors ligne affiché automatiquement, sans clic manuel.
+        </p>
+
+        <div class="champ-case">
+            <input type="checkbox" id="surveillance_active" name="surveillance_active" <%= parametre.surveillance_active ? 'checked' : '' %>>
+            <label for="surveillance_active">Activer la surveillance automatique</label>
+        </div>
+
+        <label for="surveillance_intervalle_minutes">Intervalle entre deux vérifications (minutes)</label>
+        <input type="number" id="surveillance_intervalle_minutes" name="surveillance_intervalle_minutes" min="1" max="1440"
+               value="<%= parametre.surveillance_intervalle_minutes %>" style="max-width:120px;">
+        <p style="color:var(--gris); font-size:13px; margin-top:-6px;">
+            S'applique au prochain cycle (pas besoin de redémarrer le serveur).
+        </p>
+
+        <div class="actions-form">
+            <button type="submit" class="btn btn-primaire">Enregistrer</button>
+        </div>
     </form>
 </div>
 

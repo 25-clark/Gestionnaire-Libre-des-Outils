@@ -79,8 +79,10 @@ function checkAccesOutilExistant(niveau) {
 
 router.get('/', checkPermission('outils', 'read'), outilController.getAll);
 router.get('/:id', checkPermission('outils', 'read'), outilController.getById);
+router.get('/:id/historique-statut', checkPermission('outils', 'read'), checkAccesOutilExistant('read'), outilController.historiqueStatut);
 router.post('/', checkPermission('outils', 'create'), uploadOutilImage.single('image'), checkAccesCreationOutil, outilController.create);
 router.patch('/:id/toggle-active', checkPermission('outils', 'update'), checkAccesOutilExistant('write'), outilController.toggleActive);
+router.post('/:id/verifier-statut', checkPermission('outils', 'update'), checkAccesOutilExistant('write'), outilController.verifierStatut);
 router.delete('/:id', checkPermission('outils', 'delete'), checkAccesOutilExistant('delete'), outilController.remove);
 
 module.exports = router;

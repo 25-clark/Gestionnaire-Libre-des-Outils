@@ -66,6 +66,25 @@ router.post('/:id/toggle-active', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
+router.post('/:id/verifier-statut', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        await api.post(`/outils/${req.params.id}/verifier-statut`);
+        res.redirect(req.body.retour || '/');
+    } catch (err) { next(err); }
+});
+
+router.get('/:id/historique-statut', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const [{ data: outil }, { data: historique }] = await Promise.all([
+            api.get(`/outils/${req.params.id}`),
+            api.get(`/outils/${req.params.id}/historique-statut`)
+        ]);
+        res.render('outil/historique-statut', { titre: `Historique — ${outil.nom}`, outil, historique });
+    } catch (err) { next(err); }
+});
+
 router.post('/:id/supprimer', async (req, res, next) => {
     try {
         const api = apiClient(req);

@@ -14,7 +14,7 @@
     <div class="vue-panneau" data-vue="liste">
         <div class="carte">
             <table class="tableau">
-                <thead><tr><th></th><th>Nom</th><th>Lien</th><th>Propriétaire</th><th>Statut</th><th></th></tr></thead>
+                <thead><tr><th></th><th>Nom</th><th>Lien</th><th>Propriétaire</th><th>Statut</th><th>Réseau</th><th></th></tr></thead>
                 <tbody>
                 <% outils.forEach(function(o) { %>
                     <tr>
@@ -29,6 +29,9 @@
                                 <span class="pastille pastille-inactive">Désactivé</span>
                             <% } %>
                         </td>
+                        <td style="white-space:nowrap;">
+                            <%- include('statut-reseau', { o: o, retour: retour }) %>
+                        </td>
                         <td style="text-align:right; white-space:nowrap;">
                             <% if (o.adresse) { %>
                                 <a href="/diagnostic?cible=<%= encodeURIComponent(o.adresse) %>" class="btn btn-gris btn-petit" title="Tester la connectivité de <%= o.adresse %>">🩺 Tester</a>
@@ -36,7 +39,7 @@
                             <% if (peut('outils', 'update')) { %>
                                 <form action="/outils/<%= o.id %>/toggle-active" method="POST" class="form-inline">
                                     <input type="hidden" name="retour" value="<%= retour %>">
-                                    <button type="submit" class="btn btn-gris btn-petit"><%= o.active ? 'Archiver' : 'Activer' %></button>
+                                    <button type="submit" class="btn btn-gris btn-petit"><%= o.active ? 'Désactiver' : 'Activer' %></button>
                                 </form>
                             <% } %>
                             <% if (peut('outils', 'delete')) { %>
@@ -74,6 +77,9 @@
                         <% } else { %>
                             <span class="pastille pastille-inactive" style="width:fit-content;">Désactivé</span>
                         <% } %>
+                        <% if (o.adresse) { %>
+                            <div style="margin-top:2px;"><%- include('statut-reseau', { o: o, retour: retour }) %></div>
+                        <% } %>
                     </div>
                     <div class="pied-carte">
                         <% if (o.lien) { %>
@@ -88,7 +94,7 @@
                             <% if (peut('outils', 'update')) { %>
                                 <form action="/outils/<%= o.id %>/toggle-active" method="POST" class="form-inline">
                                     <input type="hidden" name="retour" value="<%= retour %>">
-                                    <button type="submit" class="btn btn-gris btn-petit"><%= o.active ? 'Archiver' : 'Activer' %></button>
+                                    <button type="submit" class="btn btn-gris btn-petit"><%= o.active ? 'Désactiver' : 'Activer' %></button>
                                 </form>
                             <% } %>
                             <% if (peut('outils', 'delete')) { %>
@@ -109,7 +115,7 @@
     <div class="vue-panneau" data-vue="vignettes">
         <div class="grille-vignettes">
             <% outils.forEach(function(o) { %>
-                <a href="<%= o.lien %>" target="_blank" class="vignette-outil" title="<%= o.nom %> — <%= o.Utilisateur ? o.Utilisateur.prenom + ' ' + o.Utilisateur.nom : '—' %>">
+                <div class="vignette-outil" title="<%= o.nom %> — <%= o.Utilisateur ? o.Utilisateur.prenom + ' ' + o.Utilisateur.nom : '—' %>">
                     <span class="point-statut <%= o.active ? 'actif' : 'inactif' %>"></span>
                     <div class="image-vignette">
                         <% if (o.image) { %>
@@ -119,6 +125,17 @@
                         <% } %>
                     </div>
                     <span class="nom-vignette"><%= o.nom %></span>
+                    <% if (o.adresse) { %>
+                        <div style="margin-top:3px;">
+                            <% if (o.dernier_statut === 'en_ligne') { %>
+                                <span class="pastille-reseau en-ligne" style="font-size:10px; padding:1px 6px;">🟢</span>
+                            <% } else if (o.dernier_statut === 'hors_ligne') { %>
+                                <span class="pastille-reseau hors-ligne" style="font-size:10px; padding:1px 6px;">🔴</span>
+                            <% } else { %>
+                                <span class="pastille-reseau inconnu" style="font-size:10px; padding:1px 6px;">⚪</span>
+                            <% } %>
+                        </div>
+                    <% } %>
                     <% if (o.adresse || peut('outils', 'update') || peut('outils', 'delete')) { %>
                         <div class="actions-vignette">
                             <% if (o.adresse) { %>
@@ -127,7 +144,7 @@
                             <% if (peut('outils', 'update')) { %>
                                 <form action="/outils/<%= o.id %>/toggle-active" method="POST" class="form-inline">
                                     <input type="hidden" name="retour" value="<%= retour %>">
-                                    <button type="submit" title="<%= o.active ? 'Archiver' : 'Activer' %>"><%= o.active ? '⏸' : '▶' %></button>
+                                    <button type="submit" title="<%= o.active ? 'Désactiver' : 'Activer' %>"><%= o.active ? '⏸' : '▶' %></button>
                                 </form>
                             <% } %>
                             <% if (peut('outils', 'delete')) { %>
@@ -139,7 +156,7 @@
                             <% } %>
                         </div>
                     <% } %>
-                </a>
+                </div>
             <% }) %>
         </div>
     </div>
