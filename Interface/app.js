@@ -17,6 +17,8 @@ const parametreRoutes = require('./routes/parametreRoutes');
 const diagnosticRoutes = require('./routes/diagnosticRoutes');
 const journalRoutes = require('./routes/journalRoutes');
 const statistiqueRoutes = require('./routes/statistiqueRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const ticketRoutes = require('./routes/ticketRoutes');
 
 const app = express();
 
@@ -36,7 +38,7 @@ app.use(session({
 }));
 
 const { peutFaire } = require('./middlewares/requireLogin');
-const { apiClientAnonyme } = require('./config/api');
+const { apiClient, apiClientAnonyme } = require('./config/api');
 
 // Petit cache en mémoire (30s) pour éviter d'appeler l'API à chaque requête
 // juste pour le nom de l'entreprise, affiché dans l'en-tête et le login.
@@ -62,6 +64,15 @@ app.use(async (req, res, next) => {
     res.locals.peut = (resource, action) => peutFaire(res.locals.currentUser, resource, action);
     res.locals.nomEntreprise = await obtenirNomEntreprise();
     res.locals.nomApplication = res.locals.nomEntreprise || 'Gestionnaire Outils';
+
+    res.locals.notificationsNonLues = 0;
+    if (res.locals.currentUser && req.session.apiCookie) {
+        try {
+            const { data } = await apiClient(req).get('/notifications/non-lues/nombre');
+            res.locals.notificationsNonLues = data.nombre;
+        } catch { /* pas bloquant : l'en-tête s'affiche juste sans le badge */ }
+    }
+
     next();
 });
 
@@ -78,6 +89,8 @@ app.use('/parametres', parametreRoutes);
 app.use('/diagnostic', diagnosticRoutes);
 app.use('/journal', journalRoutes);
 app.use('/statistiques', statistiqueRoutes);
+app.use('/notifications', notificationRoutes);
+app.use('/tickets', ticketRoutes);
 
 // 404
 app.use((req, res) => {

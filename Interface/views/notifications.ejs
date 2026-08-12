@@ -1,0 +1,48 @@
+<%- include('partials/header') %>
+
+<div class="entete-page">
+    <h1><i class="bi bi-bell"></i> Notifications</h1>
+    <% if (notifications.some(function(n) { return !n.lu; })) { %>
+        <form action="/notifications/toutes-lues" method="POST">
+            <button type="submit" class="btn btn-gris btn-petit">Tout marquer comme lu</button>
+        </form>
+    <% } %>
+</div>
+
+<% if (!notifications.length) { %>
+    <div class="carte vide">Aucune notification pour l'instant.</div>
+<% } else { %>
+    <div class="carte" style="max-width:700px; padding:0;">
+        <% notifications.forEach(function(n, i) { %>
+            <form action="/notifications/<%= n.id %>/lue" method="POST"
+                  style="border-bottom:<%= i < notifications.length - 1 ? '1px solid var(--gris-bordure)' : 'none' %>;">
+                <button type="submit" style="width:100%; text-align:left; border:none; background:<%= n.lu ? 'transparent' : '#f0f6ff' %>; padding:14px 16px; cursor:pointer; display:flex; gap:10px; align-items:flex-start;">
+                    <span style="font-size:18px; line-height:1;">
+                        <% if (n.type === 'alerte') { %>⚠️<% } else if (n.type === 'succes') { %>✅<% } else { %>ℹ️<% } %>
+                    </span>
+                    <span style="flex:1;">
+                        <span style="display:block; font-size:14px; color:var(--gris-fonce, #333); <%= n.lu ? '' : 'font-weight:600;' %>"><%= n.message %></span>
+                        <span style="display:block; font-size:12px; color:var(--gris); margin-top:2px;">
+                            <%= new Date(n.createdAt).toLocaleString('fr-FR') %>
+                            <% if (!n.lu) { %> · <strong>non lue</strong><% } %>
+                        </span>
+                    </span>
+                </button>
+            </form>
+        <% }) %>
+    </div>
+
+    <% if (totalPages > 1) { %>
+        <div style="display:flex; gap:8px; margin-top:14px; align-items:center;">
+            <% if (page > 1) { %>
+                <a href="/notifications?page=<%= page - 1 %>" class="btn btn-gris btn-petit">← Précédent</a>
+            <% } %>
+            <span style="color:var(--gris); font-size:13px;">Page <%= page %> / <%= totalPages %></span>
+            <% if (page < totalPages) { %>
+                <a href="/notifications?page=<%= page + 1 %>" class="btn btn-gris btn-petit">Suivant →</a>
+            <% } %>
+        </div>
+    <% } %>
+<% } %>
+
+<%- include('partials/footer') %>

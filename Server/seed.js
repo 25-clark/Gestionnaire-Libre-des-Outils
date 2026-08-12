@@ -13,15 +13,36 @@ const { hacher } = require('./utils/motDePasse');
 
 async function seed() {
     try {
-        console.log('🔧 Désactivation des contraintes de clé étrangère...');
-        await sequelize.query('SET FOREIGN_KEY_CHECKS = 0');
+        // On désactive les FK, on vide TOUTES les tables existantes, puis on
+        // réactive les FK — le tout dans UNE SEULE transaction, pour forcer
+        // Sequelize à garder la même connexion MySQL du début à la fin.
+        // (Sans ça, sequelize.query() et sequelize.sync() peuvent piocher deux
+        // connexions différentes dans le pool : le "SET FOREIGN_KEY_CHECKS=0"
+        // passé sur l'une ne s'applique pas à l'autre, d'où l'erreur
+        // ER_ROW_IS_REFERENCED_2 au DROP TABLE malgré la désactivation.)
+        console.log('🔧 Suppression des tables existantes...');
+        const transactionSuppression = await sequelize.transaction();
+        try {
+            await sequelize.query('SET FOREIGN_KEY_CHECKS = 0', { transaction: transactionSuppression });
 
-        console.log('🔄 Synchronisation de la base de données...');
-        await sequelize.sync({ force: true });
+            const tables = await sequelize.getQueryInterface().showAllTables({ transaction: transactionSuppression });
+            for (const table of tables) {
+                const nomTable = typeof table === 'string' ? table : table.tableName;
+                await sequelize.query(`DROP TABLE IF EXISTS \`${nomTable}\``, { transaction: transactionSuppression });
+            }
+
+            await sequelize.query('SET FOREIGN_KEY_CHECKS = 1', { transaction: transactionSuppression });
+            await transactionSuppression.commit();
+        } catch (errSuppression) {
+            await transactionSuppression.rollback().catch(() => {});
+            throw errSuppression;
+        }
+
+        console.log('🔄 Création des tables...');
+        // La base est maintenant vide : un sync() simple (sans force) suffit à
+        // tout créer, sans aucun DROP donc aucun risque de conflit de FK.
+        await sequelize.sync();
         console.log('✅ Base de données synchronisée');
-
-        console.log('🔧 Réactivation des contraintes de clé étrangère...');
-        await sequelize.query('SET FOREIGN_KEY_CHECKS = 1');
 
         // ---------- Rôles ----------
         const permissionsCompletes = {
@@ -30,7 +51,8 @@ async function seed() {
             activites: { read: true, create: true, update: true, delete: true },
             sous_activites: { read: true, create: true, update: true, delete: true },
             outils: { read: true, create: true, update: true, delete: true },
-            acces: { read: true, create: true, update: true, delete: true }
+            acces: { read: true, create: true, update: true, delete: true },
+            tickets: { read: true, create: true, update: true, delete: true }
         };
 
         const roles = await Role.bulkCreate([
@@ -44,7 +66,10 @@ async function seed() {
                     activites: { read: true, create: false, update: false, delete: false },
                     sous_activites: { read: true, create: false, update: false, delete: false },
                     outils: { read: true, create: true, update: true, delete: false },
-                    acces: { read: true, create: false, update: false, delete: false }
+                    acces: { read: true, create: false, update: false, delete: false },
+                    // Un agent peut ouvrir des tickets, se les assigner et les
+                    // traiter (changer statut/priorité), mais pas les supprimer.
+                    tickets: { read: true, create: true, update: true, delete: false }
                 }
             },
             {
@@ -56,7 +81,10 @@ async function seed() {
                     activites: { read: true, create: false, update: false, delete: false },
                     sous_activites: { read: true, create: false, update: false, delete: false },
                     outils: { read: true, create: false, update: false, delete: false },
-                    acces: { read: true, create: false, update: false, delete: false }
+                    acces: { read: true, create: false, update: false, delete: false },
+                    // Un invité peut signaler un problème (ouvrir un ticket) et
+                    // discuter dessus, mais pas le réassigner ni le supprimer.
+                    tickets: { read: true, create: true, update: false, delete: false }
                 }
             }
         ]);

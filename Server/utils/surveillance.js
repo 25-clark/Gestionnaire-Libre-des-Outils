@@ -2,6 +2,7 @@ const { Op } = require('sequelize');
 const { Outil, Parametre, OutilHistoriqueStatut } = require('../models');
 const { pingSimple } = require('./ping');
 const { consigner } = require('./journal');
+const { notifier } = require('./notification');
 
 let cycleEnCours = false;
 let minuteur = null;
@@ -66,6 +67,17 @@ async function verifierUnOutil(outil) {
                 id_ressource: outil.id,
                 libelle: `Outil "${outil.nom}" passé ${enLigne ? 'en ligne 🟢' : 'hors ligne 🔴'} (${outil.adresse})`
             });
+
+            // On ne notifie que le passage hors ligne (c'est ce qui nécessite
+            // une action), pas le retour en ligne, pour ne pas noyer le
+            // propriétaire de notifications à chaque va-et-vient.
+            if (!enLigne && outil.id_user) {
+                await notifier({
+                    id_user: outil.id_user,
+                    type: 'alerte',
+                    message: `Votre outil "${outil.nom}" (${outil.adresse}) ne répond plus.`
+                });
+            }
         }
     }
 

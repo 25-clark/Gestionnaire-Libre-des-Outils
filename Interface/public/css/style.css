@@ -77,6 +77,31 @@ a:hover { text-decoration: underline; }
     font-size: 14px;
 }
 
+.lien-notifications {
+    position: relative;
+    color: var(--blanc);
+    font-size: 18px;
+    text-decoration: none;
+    opacity: 0.9;
+    line-height: 1;
+    display: inline-flex;
+}
+.lien-notifications:hover { opacity: 1; }
+.badge-notif {
+    position: absolute;
+    top: -7px;
+    right: -9px;
+    background: var(--rouge, #c0392b);
+    color: var(--blanc);
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 3px 5px;
+    border-radius: 10px;
+    min-width: 8px;
+    text-align: center;
+}
+
 .badge-role {
     background: var(--orange);
     color: var(--blanc);
@@ -86,6 +111,24 @@ a:hover { text-decoration: underline; }
     font-weight: 600;
     text-transform: uppercase;
 }
+
+.badge-statut, .badge-priorite {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.badge-statut-ouvert { background: #fdecea; color: var(--rouge, #c0392b); }
+.badge-statut-en_cours { background: #fff4e0; color: var(--orange-fonce, #c4611c); }
+.badge-statut-resolu { background: #eafaf1; color: #1e8449; }
+.badge-statut-ferme { background: var(--gris-clair); color: var(--gris); }
+
+.badge-priorite-basse { background: var(--gris-clair); color: var(--gris); }
+.badge-priorite-normale { background: #e8f0fb; color: var(--bleu-fonce, #1e5fa8); }
+.badge-priorite-haute { background: #fff4e0; color: var(--orange-fonce, #c4611c); }
+.badge-priorite-urgente { background: #fdecea; color: var(--rouge, #c0392b); }
 
 .recherche-topbar {
     display: flex;
@@ -154,7 +197,7 @@ a:hover { text-decoration: underline; }
 .contenu-menu-deroulant {
     display: none;
     position: absolute;
-    top: calc(100% - 5px);
+    top: calc(100% - 7px);
     left: 0;
     background: var(--blanc);
     border-radius: var(--rayon);

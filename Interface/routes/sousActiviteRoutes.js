@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { requireLogin, peutFaire } = require('../middlewares/requireLogin');
 const { apiClient } = require('../config/api');
+const { envoyerCsv } = require('../utils/csv');
 
 router.use(requireLogin);
 
@@ -181,6 +182,59 @@ router.post('/:id/supprimer', async (req, res, next) => {
             return res.redirect(`/sous-activites/${sousActivite.id_parent}`);
         }
         res.redirect(`/activites/${sousActivite.id_activite}`);
+    } catch (err) { next(err); }
+});
+
+// ---------- Exports (Outils / Archives) ----------
+
+const COLONNES_OUTILS = [
+    { cle: 'nom', libelle: 'Nom' },
+    { cle: 'adresse', libelle: 'Adresse' },
+    { cle: 'statut', libelle: 'Statut réseau' },
+    { cle: 'proprietaire', libelle: 'Propriétaire' },
+    { cle: 'actif', libelle: 'Actif' }
+];
+
+function outilVersLigne(o) {
+    const statuts = { en_ligne: 'En ligne', hors_ligne: 'Hors ligne', inconnu: 'Inconnu' };
+    return {
+        nom: o.nom,
+        adresse: o.adresse || '',
+        statut: o.adresse ? (statuts[o.dernier_statut] || 'Inconnu') : '—',
+        proprietaire: o.Utilisateur ? `${o.Utilisateur.prenom} ${o.Utilisateur.nom}` : '',
+        actif: o.active ? 'Oui' : 'Non (archivé)'
+    };
+}
+
+router.get('/:id/outils/export.csv', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const { data: sousActivite } = await api.get(`/sous-activites/${req.params.id}`);
+        const resp = await api.get(`/outils?id_sous_activite=${req.params.id}`);
+        const archives = req.query.onglet === 'archives';
+        const outils = resp.data.filter(o => o.active !== archives);
+
+        envoyerCsv(res, `${archives ? 'archives' : 'outils'}-${sousActivite.nom}.csv`, COLONNES_OUTILS, outils.map(outilVersLigne));
+    } catch (err) { next(err); }
+});
+
+router.get('/:id/outils/export-pdf', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const { data: sousActivite } = await api.get(`/sous-activites/${req.params.id}`);
+        const resp = await api.get(`/outils?id_sous_activite=${req.params.id}`);
+        const archives = req.query.onglet === 'archives';
+        const outils = resp.data.filter(o => o.active !== archives);
+        const lignes = outils.map(outilVersLigne);
+
+        res.render('impression', {
+            titre: `${archives ? 'Archives' : 'Outils'} — ${sousActivite.nom}`,
+            sousTitre: null,
+            dateGeneration: new Date().toLocaleString('fr-FR'),
+            colonnes: COLONNES_OUTILS.map(c => c.libelle),
+            lignes: lignes.map(l => COLONNES_OUTILS.map(c => l[c.cle])),
+            autoImprimer: false
+        });
     } catch (err) { next(err); }
 });
 

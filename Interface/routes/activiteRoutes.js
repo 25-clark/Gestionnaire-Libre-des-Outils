@@ -3,6 +3,7 @@ const router = express.Router();
 const { requireLogin, peutFaire } = require('../middlewares/requireLogin');
 const { uploadLogo } = require('../middlewares/upload');
 const { apiClient } = require('../config/api');
+const { envoyerCsv } = require('../utils/csv');
 
 router.use(requireLogin);
 
@@ -113,6 +114,107 @@ router.post('/:id/supprimer', async (req, res, next) => {
     } catch (err) {
         next(err);
     }
+});
+
+// ---------- Exports (Outils / Archives / Utilisateurs) ----------
+
+const COLONNES_OUTILS = [
+    { cle: 'nom', libelle: 'Nom' },
+    { cle: 'adresse', libelle: 'Adresse' },
+    { cle: 'statut', libelle: 'Statut réseau' },
+    { cle: 'proprietaire', libelle: 'Propriétaire' },
+    { cle: 'sousActivites', libelle: 'Sous-activités' },
+    { cle: 'actif', libelle: 'Actif' }
+];
+
+function outilVersLigne(o) {
+    const statuts = { en_ligne: 'En ligne', hors_ligne: 'Hors ligne', inconnu: 'Inconnu' };
+    return {
+        nom: o.nom,
+        adresse: o.adresse || '',
+        statut: o.adresse ? (statuts[o.dernier_statut] || 'Inconnu') : '—',
+        proprietaire: o.Utilisateur ? `${o.Utilisateur.prenom} ${o.Utilisateur.nom}` : '',
+        sousActivites: (o.sousActivites || []).map(sa => sa.nom).join(', '),
+        actif: o.active ? 'Oui' : 'Non (archivé)'
+    };
+}
+
+const COLONNES_UTILISATEURS = [
+    { cle: 'matricule', libelle: 'Matricule' },
+    { cle: 'nom', libelle: 'Nom' },
+    { cle: 'prenom', libelle: 'Prénom' },
+    { cle: 'role', libelle: 'Rôle' },
+    { cle: 'derniereConnexion', libelle: 'Dernière connexion' }
+];
+
+function utilisateurVersLigne(u) {
+    return {
+        matricule: u.matricule,
+        nom: u.nom,
+        prenom: u.prenom,
+        role: u.Role ? u.Role.nom : '',
+        derniereConnexion: u.derniere_connexion ? new Date(u.derniere_connexion).toLocaleString('fr-FR') : 'Jamais'
+    };
+}
+
+router.get('/:id/outils/export.csv', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const { data: activite } = await api.get(`/activites/${req.params.id}`);
+        const resp = await api.get(`/outils?id_activite=${req.params.id}`);
+        const archives = req.query.onglet === 'archives';
+        const outils = resp.data.filter(o => o.active !== archives);
+
+        envoyerCsv(res, `${archives ? 'archives' : 'outils'}-${activite.abbreviation || activite.nom}.csv`, COLONNES_OUTILS, outils.map(outilVersLigne));
+    } catch (err) { next(err); }
+});
+
+router.get('/:id/outils/export-pdf', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const { data: activite } = await api.get(`/activites/${req.params.id}`);
+        const resp = await api.get(`/outils?id_activite=${req.params.id}`);
+        const archives = req.query.onglet === 'archives';
+        const outils = resp.data.filter(o => o.active !== archives);
+        const lignes = outils.map(outilVersLigne);
+
+        res.render('impression', {
+            titre: `${archives ? 'Archives' : 'Outils'} — ${activite.nom}`,
+            sousTitre: null,
+            dateGeneration: new Date().toLocaleString('fr-FR'),
+            colonnes: COLONNES_OUTILS.map(c => c.libelle),
+            lignes: lignes.map(l => COLONNES_OUTILS.map(c => l[c.cle])),
+            autoImprimer: false
+        });
+    } catch (err) { next(err); }
+});
+
+router.get('/:id/utilisateurs/export.csv', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const { data: activite } = await api.get(`/activites/${req.params.id}`);
+        const resp = await api.get(`/utilisateurs?id_activite=${req.params.id}`);
+
+        envoyerCsv(res, `utilisateurs-${activite.abbreviation || activite.nom}.csv`, COLONNES_UTILISATEURS, resp.data.map(utilisateurVersLigne));
+    } catch (err) { next(err); }
+});
+
+router.get('/:id/utilisateurs/export-pdf', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const { data: activite } = await api.get(`/activites/${req.params.id}`);
+        const resp = await api.get(`/utilisateurs?id_activite=${req.params.id}`);
+        const lignes = resp.data.map(utilisateurVersLigne);
+
+        res.render('impression', {
+            titre: `Utilisateurs — ${activite.nom}`,
+            sousTitre: null,
+            dateGeneration: new Date().toLocaleString('fr-FR'),
+            colonnes: COLONNES_UTILISATEURS.map(c => c.libelle),
+            lignes: lignes.map(l => COLONNES_UTILISATEURS.map(c => l[c.cle])),
+            autoImprimer: false
+        });
+    } catch (err) { next(err); }
 });
 
 module.exports = router;

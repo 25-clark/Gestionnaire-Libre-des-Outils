@@ -1,6 +1,7 @@
 const { UtilisateurActivite, UtilisateurSousActivite, Utilisateur, Activite, SousActivite } = require('../models');
 const { normaliserPermissions } = require('../middlewares/auth');
 const { consigner } = require('../utils/journal');
+const { notifier } = require('../utils/notification');
 
 // Renvoie l'accès avec ses permissions garanties sous forme d'objet JS
 // (et non une chaîne JSON), quel que soit ce que renvoie le driver MySQL.
@@ -51,6 +52,15 @@ async function accorderAccesActivite(req, res, next) {
             id_ressource: acces.id,
             libelle: `Accès de ${accesComplet.Utilisateur.prenom} ${accesComplet.Utilisateur.nom} sur l'activité "${accesComplet.Activite.nom}" ${cree ? 'accordé' : 'modifié'}`
         });
+
+        if (cree) {
+            await notifier({
+                id_user: accesComplet.Utilisateur.id,
+                type: 'succes',
+                message: `On vous a accordé un accès sur l'activité "${accesComplet.Activite.nom}".`,
+                lien: `/activites/${accesComplet.Activite.id}`
+            });
+        }
 
         res.status(cree ? 201 : 200).json(serialiserAcces(acces));
     } catch (err) { next(err); }
@@ -110,6 +120,15 @@ async function accorderAccesSousActivite(req, res, next) {
             id_ressource: acces.id,
             libelle: `Accès de ${accesComplet.Utilisateur.prenom} ${accesComplet.Utilisateur.nom} sur la sous-activité "${accesComplet.SousActivite.nom}" ${cree ? 'accordé' : 'modifié'}`
         });
+
+        if (cree) {
+            await notifier({
+                id_user: accesComplet.Utilisateur.id,
+                type: 'succes',
+                message: `On vous a accordé un accès sur la sous-activité "${accesComplet.SousActivite.nom}".`,
+                lien: `/sous-activites/${accesComplet.SousActivite.id}`
+            });
+        }
 
         res.status(cree ? 201 : 200).json(serialiserAcces(acces));
     } catch (err) { next(err); }

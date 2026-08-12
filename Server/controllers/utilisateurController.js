@@ -2,6 +2,7 @@ const { Utilisateur, Role, Activite, Outil, Parametre, Journal, sequelize } = re
 const { isAdmin, getIdsActivitesAccessibles } = require('../middlewares/auth');
 const { hacher } = require('../utils/motDePasse');
 const { consigner } = require('../utils/journal');
+const { notifier } = require('../utils/notification');
 
 // Renvoie le mot de passe par défaut configuré dans les réglages généraux
 // (créé automatiquement s'il n'existe pas encore).
@@ -149,6 +150,12 @@ async function reinitialiserMotDePasse(req, res, next) {
             ressource: 'utilisateur',
             id_ressource: utilisateur.id,
             libelle: `Mot de passe de ${utilisateur.prenom} ${utilisateur.nom} (${utilisateur.matricule}) réinitialisé par ${req.currentUser.prenom} ${req.currentUser.nom}`
+        });
+
+        await notifier({
+            id_user: utilisateur.id,
+            type: 'alerte',
+            message: 'Votre mot de passe a été réinitialisé par un administrateur. Vous devrez le changer à votre prochaine connexion.'
         });
 
         res.json({ message: 'Mot de passe réinitialisé à la valeur par défaut.' });

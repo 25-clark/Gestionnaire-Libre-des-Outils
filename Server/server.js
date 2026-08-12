@@ -18,6 +18,8 @@ const parametreRoutes = require('./routes/parametreRoutes');
 const diagnosticRoutes = require('./routes/diagnosticRoutes');
 const journalRoutes = require('./routes/journalRoutes');
 const statistiqueRoutes = require('./routes/statistiqueRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const ticketRoutes = require('./routes/ticketRoutes');
 
 const app = express();
 
@@ -57,6 +59,8 @@ app.use('/api/parametres', parametreRoutes);
 app.use('/api/diagnostic', diagnosticRoutes);
 app.use('/api/journal', journalRoutes);
 app.use('/api/statistiques', statistiqueRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/tickets', ticketRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 

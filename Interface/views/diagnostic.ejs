@@ -36,4 +36,41 @@
     </div>
 <% } %>
 
+<div class="entete-page" style="margin-top:28px;">
+    <h2 style="font-size:16px; color:var(--bleu-fonce); margin:0;">📡 État du parc réseau</h2>
+    <div style="display:flex; gap:8px;">
+        <a href="/diagnostic/export.csv" class="btn btn-gris btn-petit">⬇️ CSV</a>
+        <a href="/diagnostic/export-pdf" target="_blank" class="btn btn-gris btn-petit">🖨️ PDF</a>
+    </div>
+</div>
+
+<% if (!parc.length) { %>
+    <div class="carte vide">Aucun outil avec une adresse renseignée pour l'instant.</div>
+<% } else { %>
+    <div class="carte" style="max-width:800px;">
+        <table class="tableau">
+            <thead><tr><th>Nom</th><th>Adresse</th><th>Statut</th><th>Dernière vérification</th><th></th></tr></thead>
+            <tbody>
+            <% parc.forEach(function(o) { %>
+                <tr>
+                    <td><%= o.nom %></td>
+                    <td><code><%= o.adresse %></code></td>
+                    <td>
+                        <% if (o.dernier_statut === 'en_ligne') { %>🟢 En ligne
+                        <% } else if (o.dernier_statut === 'hors_ligne') { %>🔴 Hors ligne
+                        <% } else { %>⚪ Inconnu<% } %>
+                    </td>
+                    <td style="color:var(--gris); font-size:13px;">
+                        <%= o.derniere_verification ? new Date(o.derniere_verification).toLocaleString('fr-FR') : 'Jamais' %>
+                    </td>
+                    <td style="text-align:right;">
+                        <a href="/diagnostic?cible=<%= encodeURIComponent(o.adresse) %>" class="btn btn-gris btn-petit">Tester</a>
+                    </td>
+                </tr>
+            <% }) %>
+            </tbody>
+        </table>
+    </div>
+<% } %>
+
 <%- include('partials/footer') %>

@@ -36,4 +36,11 @@ const uploadOutilImage = multer({
     limits: { fileSize: 3 * 1024 * 1024 }
 });
 
-module.exports = { uploadLogo, uploadOutilImage };
+// Plusieurs images à la fois (jusqu'à 6), pour illustrer un ticket.
+const uploadTicketImages = multer({
+    storage: makeStorage('tickets'),
+    fileFilter: filtreImage,
+    limits: { fileSize: 3 * 1024 * 1024, files: 6 }
+});
+
+module.exports = { uploadLogo, uploadOutilImage, uploadTicketImages };

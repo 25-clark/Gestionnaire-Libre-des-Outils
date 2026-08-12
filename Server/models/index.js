@@ -12,6 +12,10 @@ const OutilSousActivite = require('./OutilSousActivite')(sequelize);
 const Parametre = require('./Parametre')(sequelize);
 const Journal = require('./Journal')(sequelize);
 const OutilHistoriqueStatut = require('./OutilHistoriqueStatut')(sequelize);
+const Notification = require('./Notification')(sequelize);
+const Ticket = require('./Ticket')(sequelize);
+const TicketMessage = require('./TicketMessage')(sequelize);
+const TicketImage = require('./TicketImage')(sequelize);
 
 // ========================= ASSOCIATIONS =========================
 
@@ -120,6 +124,22 @@ OutilSousActivite.belongsTo(SousActivite, { foreignKey: 'id_sous_activite' });
 Outil.hasMany(OutilHistoriqueStatut, { foreignKey: 'id_outil', as: 'historiqueStatuts' });
 OutilHistoriqueStatut.belongsTo(Outil, { foreignKey: 'id_outil' });
 
+// ---- Ticket : liens optionnels vers Outil / Activite / SousActivite ----
+Ticket.belongsTo(Outil, { foreignKey: 'id_outil' });
+Ticket.belongsTo(Activite, { foreignKey: 'id_activite' });
+Ticket.belongsTo(SousActivite, { foreignKey: 'id_sous_activite' });
+Ticket.belongsTo(Utilisateur, { foreignKey: 'id_createur', as: 'Createur' });
+Ticket.belongsTo(Utilisateur, { foreignKey: 'id_assigne', as: 'Assigne' });
+
+// ---- Ticket <-> TicketMessage (fil de discussion / messagerie) ----
+Ticket.hasMany(TicketMessage, { foreignKey: 'id_ticket', as: 'messages' });
+TicketMessage.belongsTo(Ticket, { foreignKey: 'id_ticket' });
+TicketMessage.belongsTo(Utilisateur, { foreignKey: 'id_user', as: 'Auteur' });
+
+// ---- Ticket <-> TicketImage (images jointes à l'ouverture) ----
+Ticket.hasMany(TicketImage, { foreignKey: 'id_ticket', as: 'images' });
+TicketImage.belongsTo(Ticket, { foreignKey: 'id_ticket' });
+
 module.exports = {
     sequelize,
     Role,
@@ -133,5 +153,9 @@ module.exports = {
     OutilSousActivite,
     Parametre,
     Journal,
-    OutilHistoriqueStatut
+    OutilHistoriqueStatut,
+    Notification,
+    Ticket,
+    TicketMessage,
+    TicketImage
 };

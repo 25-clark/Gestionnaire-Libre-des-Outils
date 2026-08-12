@@ -1,24 +1,28 @@
 const { Journal } = require('../models');
 const { Op } = require('sequelize');
 
+function construireWhere(query) {
+    const where = {};
+    if (query.ressource) where.ressource = query.ressource;
+    if (query.action) where.action = query.action;
+    if (query.q) {
+        const terme = `%${query.q.trim()}%`;
+        where[Op.or] = [
+            { libelle: { [Op.like]: terme } },
+            { matricule_user: { [Op.like]: terme } },
+            { nom_user: { [Op.like]: terme } }
+        ];
+    }
+    return where;
+}
+
 // Liste paginée, la plus récente en premier. Filtres optionnels : ressource,
 // action, q (recherche dans le libellé/matricule).
 async function getAll(req, res, next) {
     try {
         const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
         const parPage = 50;
-        const where = {};
-
-        if (req.query.ressource) where.ressource = req.query.ressource;
-        if (req.query.action) where.action = req.query.action;
-        if (req.query.q) {
-            const terme = `%${req.query.q.trim()}%`;
-            where[Op.or] = [
-                { libelle: { [Op.like]: terme } },
-                { matricule_user: { [Op.like]: terme } },
-                { nom_user: { [Op.like]: terme } }
-            ];
-        }
+        const where = construireWhere(req.query);
 
         const { rows, count } = await Journal.findAndCountAll({
             where,
@@ -36,4 +40,18 @@ async function getAll(req, res, next) {
     } catch (err) { next(err); }
 }
 
-module.exports = { getAll };
+// Pour l'export CSV/PDF : mêmes filtres, mais TOUTES les lignes (plafonnées
+// à 5000 par sécurité, largement suffisant pour un export ponctuel).
+async function getTout(req, res, next) {
+    try {
+        const where = construireWhere(req.query);
+        const evenements = await Journal.findAll({
+            where,
+            order: [['createdAt', 'DESC']],
+            limit: 5000
+        });
+        res.json({ evenements });
+    } catch (err) { next(err); }
+}
+
+module.exports = { getAll, getTout };

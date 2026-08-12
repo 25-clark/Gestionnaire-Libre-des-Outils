@@ -12,5 +12,6 @@ router.use((req, res, next) => {
 });
 
 router.get('/', journalController.getAll);
+router.get('/tout', journalController.getTout);
 
 module.exports = router;

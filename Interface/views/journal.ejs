@@ -1,6 +1,12 @@
 <%- include('partials/header') %>
 
-<div class="entete-page"><h1>📜 Journal d'événements</h1></div>
+<div class="entete-page">
+    <h1>📜 Journal d'événements</h1>
+    <div style="display:flex; gap:8px;">
+        <a href="/journal/export.csv?q=<%= encodeURIComponent(q) %>&ressource=<%= ressource %>&action=<%= action %>" class="btn btn-gris btn-petit">⬇️ CSV</a>
+        <a href="/journal/export-pdf?q=<%= encodeURIComponent(q) %>&ressource=<%= ressource %>&action=<%= action %>" target="_blank" class="btn btn-gris btn-petit">🖨️ PDF</a>
+    </div>
+</div>
 <p style="color:var(--gris); font-size:14px; margin-top:-10px;"><%= total %> événement(s) au total.</p>
 
 <div class="carte" style="max-width:900px;">

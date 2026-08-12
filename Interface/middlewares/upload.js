@@ -18,5 +18,6 @@ function makeStorage(sousDossier) {
 
 const uploadLogo = multer({ storage: makeStorage('logos') });
 const uploadOutilImage = multer({ storage: makeStorage('outils') });
+const uploadTicketImages = multer({ storage: makeStorage('tickets'), limits: { files: 6 } });
 
-module.exports = { uploadLogo, uploadOutilImage };
+module.exports = { uploadLogo, uploadOutilImage, uploadTicketImages };

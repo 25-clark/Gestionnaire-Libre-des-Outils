@@ -33,6 +33,9 @@
                             <%- include('statut-reseau', { o: o, retour: retour }) %>
                         </td>
                         <td style="text-align:right; white-space:nowrap;">
+                            <% if (peut('tickets', 'create')) { %>
+                                <a href="/tickets/nouveau?id_outil=<%= o.id %>" class="btn btn-gris btn-petit" title="Signaler un problème sur cet outil">🎫 Signaler</a>
+                            <% } %>
                             <% if (o.adresse) { %>
                                 <a href="/diagnostic?cible=<%= encodeURIComponent(o.adresse) %>" class="btn btn-gris btn-petit" title="Tester la connectivité de <%= o.adresse %>">🩺 Tester</a>
                             <% } %>
@@ -88,6 +91,9 @@
                             <span></span>
                         <% } %>
                         <div style="display:flex; gap:4px;">
+                            <% if (peut('tickets', 'create')) { %>
+                                <a href="/tickets/nouveau?id_outil=<%= o.id %>" class="btn btn-gris btn-petit" title="Signaler un problème">🎫</a>
+                            <% } %>
                             <% if (o.adresse) { %>
                                 <a href="/diagnostic?cible=<%= encodeURIComponent(o.adresse) %>" class="btn btn-gris btn-petit" title="Tester la connectivité">🩺</a>
                             <% } %>
@@ -136,8 +142,11 @@
                             <% } %>
                         </div>
                     <% } %>
-                    <% if (o.adresse || peut('outils', 'update') || peut('outils', 'delete')) { %>
+                    <% if (o.adresse || peut('outils', 'update') || peut('outils', 'delete') || peut('tickets', 'create')) { %>
                         <div class="actions-vignette">
+                            <% if (peut('tickets', 'create')) { %>
+                                <a href="/tickets/nouveau?id_outil=<%= o.id %>" title="Signaler un problème">🎫</a>
+                            <% } %>
                             <% if (o.adresse) { %>
                                 <a href="/diagnostic?cible=<%= encodeURIComponent(o.adresse) %>" title="Tester la connectivité">🩺</a>
                             <% } %>

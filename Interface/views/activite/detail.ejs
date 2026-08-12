@@ -80,12 +80,17 @@
     <% if (typeof mdpReinitialise !== 'undefined' && mdpReinitialise) { %>
         <div class="message-succes">Mot de passe réinitialisé à la valeur par défaut. L'utilisateur devra le changer à sa prochaine connexion.</div>
     <% } %>
-    <% if (peut('utilisateurs', 'create')) { %>
-        <div class="entete-page">
-            <span></span>
+    <div class="entete-page">
+        <% if (peut('utilisateurs', 'create')) { %>
             <a href="/utilisateurs/nouveau?id_activite=<%= activite.id %>" class="btn btn-accent">+ Nouvel utilisateur</a>
+        <% } else { %>
+            <span></span>
+        <% } %>
+        <div style="display:flex; gap:8px;">
+            <a href="/activites/<%= activite.id %>/utilisateurs/export.csv" class="btn btn-gris btn-petit">⬇️ CSV</a>
+            <a href="/activites/<%= activite.id %>/utilisateurs/export-pdf" target="_blank" class="btn btn-gris btn-petit">🖨️ PDF</a>
         </div>
-    <% } %>
+    </div>
 
     <% if (!utilisateurs.length) { %>
         <div class="carte vide">Aucun utilisateur rattaché à cette activité.</div>
@@ -130,20 +135,31 @@
 <% } %>
 
 <% if (onglet === 'outils') { %>
-    <% if (peut('outils', 'create')) { %>
-        <div class="entete-page">
-            <span></span>
+    <div class="entete-page">
+        <% if (peut('outils', 'create')) { %>
             <a href="/outils/nouveau?id_activite=<%= activite.id %>" class="btn btn-accent">+ Nouvel outil</a>
+        <% } else { %>
+            <span></span>
+        <% } %>
+        <div style="display:flex; gap:8px;">
+            <a href="/activites/<%= activite.id %>/outils/export.csv?onglet=outils" class="btn btn-gris btn-petit">⬇️ CSV</a>
+            <a href="/activites/<%= activite.id %>/outils/export-pdf?onglet=outils" target="_blank" class="btn btn-gris btn-petit">🖨️ PDF</a>
         </div>
-    <% } %>
+    </div>
 
     <%- include('../partials/outils-vue', { outils: outils, retour: '/activites/' + activite.id + '?onglet=outils', messageVide: "Aucun outil actif pour l'instant." }) %>
 <% } %>
 
 <% if (onglet === 'archives') { %>
-    <p style="color:var(--gris); font-size:13px; margin-top:-10px;">
-        Outils désactivés de cette activité. Réactivez-les pour les faire réapparaître dans l'onglet "Outils".
-    </p>
+    <div class="entete-page">
+        <p style="color:var(--gris); font-size:13px; margin:0;">
+            Outils désactivés de cette activité. Réactivez-les pour les faire réapparaître dans l'onglet "Outils".
+        </p>
+        <div style="display:flex; gap:8px;">
+            <a href="/activites/<%= activite.id %>/outils/export.csv?onglet=archives" class="btn btn-gris btn-petit">⬇️ CSV</a>
+            <a href="/activites/<%= activite.id %>/outils/export-pdf?onglet=archives" target="_blank" class="btn btn-gris btn-petit">🖨️ PDF</a>
+        </div>
+    </div>
     <%- include('../partials/outils-vue', { outils: outils, retour: '/activites/' + activite.id + '?onglet=archives', messageVide: 'Aucun outil archivé.' }) %>
 <% } %>
 

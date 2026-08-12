@@ -1,0 +1,89 @@
+<%- include('../partials/header') %>
+
+<div class="entete-page">
+    <h1>🎫 Tickets</h1>
+    <div style="display:flex; gap:8px;">
+        <a href="/tickets/export.csv?statut=<%= statut %>&priorite=<%= priorite %>&id_createur=<%= id_createur %>&id_assigne=<%= id_assigne %>" class="btn btn-gris btn-petit">⬇️ CSV</a>
+        <a href="/tickets/export-pdf?statut=<%= statut %>&priorite=<%= priorite %>&id_createur=<%= id_createur %>&id_assigne=<%= id_assigne %>" target="_blank" class="btn btn-gris btn-petit">🖨️ PDF</a>
+        <% if (peut('tickets', 'create')) { %>
+            <a href="/tickets/nouveau" class="btn btn-accent">+ Nouveau ticket</a>
+        <% } %>
+    </div>
+</div>
+
+<div class="carte" style="margin-bottom:16px;">
+    <form action="/tickets" method="GET" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+        <div>
+            <label for="statut">Statut</label>
+            <select id="statut" name="statut">
+                <option value="">— Tous —</option>
+                <% Object.keys(LIBELLES_STATUT).forEach(function(s) { %>
+                    <option value="<%= s %>" <%= statut === s ? 'selected' : '' %>><%= LIBELLES_STATUT[s] %></option>
+                <% }) %>
+            </select>
+        </div>
+        <div>
+            <label for="priorite">Priorité</label>
+            <select id="priorite" name="priorite">
+                <option value="">— Toutes —</option>
+                <% Object.keys(LIBELLES_PRIORITE).forEach(function(p) { %>
+                    <option value="<%= p %>" <%= priorite === p ? 'selected' : '' %>><%= LIBELLES_PRIORITE[p] %></option>
+                <% }) %>
+            </select>
+        </div>
+        <div>
+            <label for="id_createur">Créé par</label>
+            <select id="id_createur" name="id_createur">
+                <option value="">— Tout le monde —</option>
+                <% if (currentUser) { %><option value="<%= currentUser.id %>" <%= String(id_createur) === String(currentUser.id) ? 'selected' : '' %>>Moi</option><% } %>
+                <% utilisateurs.forEach(function(u) { %>
+                    <option value="<%= u.id %>" <%= String(id_createur) === String(u.id) ? 'selected' : '' %>><%= u.prenom %> <%= u.nom %></option>
+                <% }) %>
+            </select>
+        </div>
+        <div>
+            <label for="id_assigne">Assigné à</label>
+            <select id="id_assigne" name="id_assigne">
+                <option value="">— Tout le monde —</option>
+                <% if (currentUser) { %><option value="<%= currentUser.id %>" <%= String(id_assigne) === String(currentUser.id) ? 'selected' : '' %>>Moi</option><% } %>
+                <% utilisateurs.forEach(function(u) { %>
+                    <option value="<%= u.id %>" <%= String(id_assigne) === String(u.id) ? 'selected' : '' %>><%= u.prenom %> <%= u.nom %></option>
+                <% }) %>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primaire">Filtrer</button>
+        <% if (statut || priorite || id_createur || id_assigne) { %>
+            <a href="/tickets" class="btn btn-gris">Réinitialiser</a>
+        <% } %>
+    </form>
+</div>
+
+<% if (!tickets.length) { %>
+    <div class="carte vide">Aucun ticket ne correspond à ces filtres.</div>
+<% } else { %>
+    <div class="carte">
+        <table class="tableau">
+            <thead><tr><th>#</th><th>Titre</th><th>Statut</th><th>Priorité</th><th>Lié à</th><th>Assigné</th><th>Ouvert le</th></tr></thead>
+            <tbody>
+            <% tickets.forEach(function(t) { %>
+                <tr>
+                    <td>#<%= t.id %></td>
+                    <td><a href="/tickets/<%= t.id %>"><%= t.titre %></a></td>
+                    <td><span class="badge-statut badge-statut-<%= t.statut %>"><%= LIBELLES_STATUT[t.statut] %></span></td>
+                    <td><span class="badge-priorite badge-priorite-<%= t.priorite %>"><%= LIBELLES_PRIORITE[t.priorite] %></span></td>
+                    <td style="font-size:13px; color:var(--gris);">
+                        <% if (t.Outil) { %>🔧 <%= t.Outil.nom %>
+                        <% } else if (t.SousActivite) { %>📂 <%= t.SousActivite.nom %>
+                        <% } else if (t.Activite) { %>📁 <%= t.Activite.nom %>
+                        <% } else { %>—<% } %>
+                    </td>
+                    <td style="font-size:13px;"><%= t.Assigne ? t.Assigne.prenom + ' ' + t.Assigne.nom : '—' %></td>
+                    <td style="font-size:13px; color:var(--gris); white-space:nowrap;"><%= new Date(t.createdAt).toLocaleString('fr-FR') %></td>
+                </tr>
+            <% }) %>
+            </tbody>
+        </table>
+    </div>
+<% } %>
+
+<%- include('../partials/footer') %>

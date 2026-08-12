@@ -39,12 +39,21 @@
         <% if (peut('outils', 'read')) { %>
             <a href="/diagnostic">Diagnostic réseau</a>
         <% } %>
+        <% if (peut('tickets', 'read')) { %>
+            <a href="/tickets">Tickets</a>
+        <% } %>
     </nav>
     <form action="/recherche" method="GET" class="recherche-topbar">
         <input type="text" name="q" placeholder="Rechercher une activité, un outil, un utilisateur..." value="<%= typeof q !== 'undefined' ? q : '' %>">
         <button type="submit" title="Rechercher"><i class="bi bi-search"></i></button>
     </form>
     <div class="utilisateur">
+        <a href="/notifications" class="lien-notifications" title="Notifications">
+            <i class="bi bi-bell"></i>
+            <% if (notificationsNonLues > 0) { %>
+                <span class="badge-notif"><%= notificationsNonLues > 9 ? '9+' : notificationsNonLues %></span>
+            <% } %>
+        </a>
         <span><%= currentUser.prenom %> <%= currentUser.nom %></span>
         <% if (currentUser.Role) { %>
             <span class="badge-role"><%= currentUser.Role.abbreviation %></span>

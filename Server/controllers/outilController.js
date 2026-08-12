@@ -1,5 +1,6 @@
 const { Outil, Utilisateur, Activite, SousActivite, OutilHistoriqueStatut } = require('../models');
 const { isAdmin, getIdsActivitesAccessibles } = require('../middlewares/auth');
+const { getPerimetreAcces } = require('../utils/perimetre');
 const { consigner } = require('../utils/journal');
 const { verifierUnOutil } = require('../utils/surveillance');
 
@@ -21,6 +22,19 @@ async function getAll(req, res, next) {
         ];
 
         let outils = await Outil.findAll({ include, order: [['nom', 'ASC']] });
+
+        // Périmètre : sans filtre id_activite/id_sous_activite explicite (donc
+        // pour un listing global, comme la recherche ou l'export réseau), un
+        // non-admin ne doit voir QUE les outils rattachés à une activité/
+        // sous-activité qu'il a le droit de voir — sinon la liste "toutes
+        // activités confondues" fuitait tout le parc, même hors permission.
+        if (!isAdmin(req.currentUser)) {
+            const { activiteIds, sousActiviteIds } = await getPerimetreAcces(req.currentUser);
+            outils = outils.filter(o =>
+                o.activites.some(a => activiteIds.has(a.id)) ||
+                o.sousActivites.some(sa => sousActiviteIds.has(sa.id))
+            );
+        }
 
         // Filtres optionnels : ?id_activite=1 ou ?id_sous_activite=2 ou ?id_user=3
         if (req.query.id_activite) {
