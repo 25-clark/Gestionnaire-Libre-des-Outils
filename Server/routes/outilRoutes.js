@@ -77,6 +77,21 @@ function checkAccesOutilExistant(niveau) {
     };
 }
 
+// Pour partager un outil existant vers une nouvelle activité/sous-activité :
+// il faut l'accès "write" sur la destination (comme pour en créer un là-bas).
+async function checkAccesDestinationPartage(req, res, next) {
+    try {
+        const { id_activite, id_sous_activite } = req.body;
+        const idsActivites = id_activite ? [id_activite] : [];
+        const idsSousActivites = id_sous_activite ? [id_sous_activite] : [];
+
+        if (await aAccesSurEmplacements(req.currentUser, idsActivites, idsSousActivites, 'write')) {
+            return next();
+        }
+        return res.status(403).json({ message: "Vous n'avez pas accès en écriture à la destination choisie." });
+    } catch (err) { next(err); }
+}
+
 router.get('/', checkPermission('outils', 'read'), outilController.getAll);
 router.get('/:id', checkPermission('outils', 'read'), outilController.getById);
 router.get('/:id/historique-statut', checkPermission('outils', 'read'), checkAccesOutilExistant('read'), outilController.historiqueStatut);
@@ -84,5 +99,25 @@ router.post('/', checkPermission('outils', 'create'), uploadOutilImage.single('i
 router.patch('/:id/toggle-active', checkPermission('outils', 'update'), checkAccesOutilExistant('write'), outilController.toggleActive);
 router.post('/:id/verifier-statut', checkPermission('outils', 'update'), checkAccesOutilExistant('write'), outilController.verifierStatut);
 router.delete('/:id', checkPermission('outils', 'delete'), checkAccesOutilExistant('delete'), outilController.remove);
+
+// Partage : ajouter/retirer un emplacement (activité/sous-activité) sans
+// dupliquer l'outil — nécessite l'accès "write" sur l'outil ET sur la
+// destination choisie.
+router.post('/:id/partager',
+    checkPermission('partage', 'create'),
+    checkAccesOutilExistant('write'),
+    checkAccesDestinationPartage,
+    outilController.partager
+);
+router.post('/:id/retirer-partage/activite/:idActivite',
+    checkPermission('partage', 'delete'),
+    checkAccesOutilExistant('write'),
+    outilController.retirerPartageActivite
+);
+router.post('/:id/retirer-partage/sous-activite/:idSousActivite',
+    checkPermission('partage', 'delete'),
+    checkAccesOutilExistant('write'),
+    outilController.retirerPartageSousActivite
+);
 
 module.exports = router;

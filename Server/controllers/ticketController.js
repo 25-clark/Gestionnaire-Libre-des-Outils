@@ -74,6 +74,12 @@ async function getAll(req, res, next) {
         if (req.query.assignes === '1') tickets = tickets.filter(t => t.id_assigne === req.currentUser.id);
         if (req.query.id_createur) tickets = tickets.filter(t => t.id_createur === parseInt(req.query.id_createur, 10));
         if (req.query.id_assigne) tickets = tickets.filter(t => t.id_assigne === parseInt(req.query.id_assigne, 10));
+        if (req.query.q) {
+            const terme = req.query.q.trim().toLowerCase();
+            tickets = tickets.filter(t =>
+                t.titre.toLowerCase().includes(terme) || t.description.toLowerCase().includes(terme)
+            );
+        }
         if (req.query.id_outil) tickets = tickets.filter(t => t.id_outil === parseInt(req.query.id_outil, 10));
 
         res.json(tickets);

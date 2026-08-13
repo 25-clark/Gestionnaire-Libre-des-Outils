@@ -142,4 +142,55 @@ async function remove(req, res, next) {
     } catch (err) { next(err); }
 }
 
-module.exports = { getAll, getById, create, update, remove };
+// Copie une sous-activité ET tous ses descendants vers une autre
+// destination (activité, ou sous-activité comme nouveau parent). Contrairement
+// au partage d'outil, il s'agit d'une VRAIE copie (nouveaux id, indépendante
+// ensuite) : une sous-activité n'a qu'un seul parent possible dans l'arbre,
+// donc pas de partage "en direct" possible comme pour les outils.
+async function copier(req, res, next) {
+    try {
+        const source = await SousActivite.findByPk(req.params.id);
+        if (!source) return res.status(404).json({ message: 'Sous-activité introuvable.' });
+
+        const { id_activite_destination, id_parent_destination } = req.body;
+        if (!id_activite_destination) {
+            return res.status(400).json({ message: 'Choisissez une activité de destination.' });
+        }
+
+        if (id_parent_destination) {
+            const parentDest = await SousActivite.findByPk(id_parent_destination);
+            if (!parentDest || parentDest.id_activite !== parseInt(id_activite_destination, 10)) {
+                return res.status(400).json({ message: 'La sous-activité parente ne correspond pas à cette activité.' });
+            }
+        }
+
+        async function copierRecursif(sousActiviteSource, idParentCopie) {
+            const copie = await SousActivite.create({
+                nom: sousActiviteSource.nom,
+                id_activite: id_activite_destination,
+                id_parent: idParentCopie
+            });
+
+            const enfants = await SousActivite.findAll({ where: { id_parent: sousActiviteSource.id } });
+            for (const enfant of enfants) {
+                await copierRecursif(enfant, copie.id);
+            }
+
+            return copie;
+        }
+
+        const racineCopiee = await copierRecursif(source, id_parent_destination || null);
+
+        await consigner({
+            user: req.currentUser,
+            action: 'partage',
+            ressource: 'sous_activite',
+            id_ressource: racineCopiee.id,
+            libelle: `Sous-activité "${source.nom}" copiée avec ses descendants (nouvelle copie indépendante, id #${racineCopiee.id})`
+        });
+
+        res.status(201).json(racineCopiee);
+    } catch (err) { next(err); }
+}
+
+module.exports = { getAll, getById, create, update, remove, copier };

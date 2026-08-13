@@ -155,6 +155,30 @@
         <% } %>
     <% } %>
 
+    <% if (peut('tickets', 'read')) { %>
+        <h2 style="font-size:16px; color:var(--bleu-fonce); margin:24px 0 10px;">🎫 Tickets</h2>
+        <% if (!tickets.length) { %>
+            <div class="carte vide">Aucun ticket ne correspond à « <%= q %> ».</div>
+        <% } else { %>
+            <div class="carte">
+                <table class="tableau">
+                    <thead><tr><th>#</th><th>Titre</th><th>Statut</th><th>Assigné</th><th></th></tr></thead>
+                    <tbody>
+                    <% tickets.forEach(function(t) { %>
+                        <tr>
+                            <td>#<%= t.id %></td>
+                            <td><%= t.titre %></td>
+                            <td><span class="badge-statut badge-statut-<%= t.statut %>"><%= t.statut %></span></td>
+                            <td><%= t.Assigne ? t.Assigne.prenom + ' ' + t.Assigne.nom : '—' %></td>
+                            <td style="text-align:right;"><a href="/tickets/<%= t.id %>" class="btn btn-gris btn-petit">Voir</a></td>
+                        </tr>
+                    <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        <% } %>
+    <% } %>
+
 <% } %>
 
 <%- include('partials/footer') %>

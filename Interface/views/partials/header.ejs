@@ -22,10 +22,10 @@
         <% if (peut('acces', 'read')) itemsSecurite.push({ href: '/acces', label: 'Accès' }); %>
         <% if (currentUser.Role && currentUser.Role.abbreviation === 'ADMIN') { %>
             <% itemsSecurite.push({ href: '/parametres', label: 'Réglages généraux' }); %>
-            <% itemsSecurite.push({ href: '/journal', label: "Journal d'événements" }); %>
             <% itemsSecurite.push({ href: '/statistiques', label: 'Statistiques' }); %>
         <% } %>
-        <% itemsSecurite.push({ href: '/changer-mot-de-passe', label: 'Changer mon mot de passe' }); %>
+        <% if (peut('journal', 'read')) itemsSecurite.push({ href: '/journal', label: "Journal d'événements" }); %>
+        <% if (peut('profil', 'read')) itemsSecurite.push({ href: '/changer-mot-de-passe', label: 'Changer mon mot de passe' }); %>
         <% if (itemsSecurite.length) { %>
             <div class="menu-deroulant">
                 <button type="button" class="lien-menu-deroulant">Sécurité ▾</button>
@@ -36,7 +36,7 @@
                 </div>
             </div>
         <% } %>
-        <% if (peut('outils', 'read')) { %>
+        <% if (peut('diagnostic', 'read')) { %>
             <a href="/diagnostic">Diagnostic réseau</a>
         <% } %>
         <% if (peut('tickets', 'read')) { %>
@@ -44,16 +44,18 @@
         <% } %>
     </nav>
     <form action="/recherche" method="GET" class="recherche-topbar">
-        <input type="text" name="q" placeholder="Rechercher une activité, un outil, un utilisateur..." value="<%= typeof q !== 'undefined' ? q : '' %>">
+        <input type="text" name="q" placeholder="Rechercher une activité, un outil, un ticket, un utilisateur..." value="<%= typeof q !== 'undefined' ? q : '' %>">
         <button type="submit" title="Rechercher"><i class="bi bi-search"></i></button>
     </form>
     <div class="utilisateur">
-        <a href="/notifications" class="lien-notifications" title="Notifications">
-            <i class="bi bi-bell"></i>
-            <% if (notificationsNonLues > 0) { %>
-                <span class="badge-notif"><%= notificationsNonLues > 9 ? '9+' : notificationsNonLues %></span>
-            <% } %>
-        </a>
+        <% if (peut('notifications', 'read')) { %>
+            <a href="/notifications" class="lien-notifications" title="Notifications">
+                <i class="bi bi-bell"></i>
+                <% if (notificationsNonLues > 0) { %>
+                    <span class="badge-notif"><%= notificationsNonLues > 9 ? '9+' : notificationsNonLues %></span>
+                <% } %>
+            </a>
+        <% } %>
         <span><%= currentUser.prenom %> <%= currentUser.nom %></span>
         <% if (currentUser.Role) { %>
             <span class="badge-role"><%= currentUser.Role.abbreviation %></span>

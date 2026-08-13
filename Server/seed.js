@@ -52,7 +52,14 @@ async function seed() {
             sous_activites: { read: true, create: true, update: true, delete: true },
             outils: { read: true, create: true, update: true, delete: true },
             acces: { read: true, create: true, update: true, delete: true },
-            tickets: { read: true, create: true, update: true, delete: true }
+            tickets: { read: true, create: true, update: true, delete: true },
+            diagnostic: { read: true, create: true, update: true, delete: true },
+            notifications: { read: true, create: true, update: true, delete: true },
+            export: { read: true, create: true, update: true, delete: true },
+            profil: { read: true, create: true, update: true, delete: true },
+            partage: { read: true, create: true, update: true, delete: true },
+            journal: { read: true, create: true, update: true, delete: true },
+            onglets: { outils: true, archives: true, sous_activites: true, utilisateurs: true }
         };
 
         const roles = await Role.bulkCreate([
@@ -69,7 +76,16 @@ async function seed() {
                     acces: { read: true, create: false, update: false, delete: false },
                     // Un agent peut ouvrir des tickets, se les assigner et les
                     // traiter (changer statut/priorité), mais pas les supprimer.
-                    tickets: { read: true, create: true, update: true, delete: false }
+                    tickets: { read: true, create: true, update: true, delete: false },
+                    diagnostic: { read: true, create: true, update: false, delete: false },
+                    notifications: { read: true, create: true, update: true, delete: true },
+                    export: { read: true, create: true, update: false, delete: false },
+                    profil: { read: true, create: true, update: true, delete: false },
+                    // Un agent peut partager un outil qu'il possède/gère,
+                    // mais pas révoquer le partage d'un autre.
+                    partage: { read: true, create: true, update: false, delete: false },
+                    journal: { read: false, create: false, update: false, delete: false },
+                    onglets: { outils: true, archives: true, sous_activites: true, utilisateurs: true }
                 }
             },
             {
@@ -84,14 +100,23 @@ async function seed() {
                     acces: { read: true, create: false, update: false, delete: false },
                     // Un invité peut signaler un problème (ouvrir un ticket) et
                     // discuter dessus, mais pas le réassigner ni le supprimer.
-                    tickets: { read: true, create: true, update: false, delete: false }
+                    tickets: { read: true, create: true, update: false, delete: false },
+                    diagnostic: { read: true, create: false, update: false, delete: false },
+                    notifications: { read: true, create: true, update: true, delete: true },
+                    export: { read: false, create: false, update: false, delete: false },
+                    profil: { read: true, create: true, update: true, delete: false },
+                    partage: { read: false, create: false, update: false, delete: false },
+                    journal: { read: false, create: false, update: false, delete: false },
+                    // Un invité ne voit ni l'onglet Utilisateurs ni Archives
+                    // par défaut, pour rester centré sur les outils du quotidien.
+                    onglets: { outils: true, archives: false, sous_activites: true, utilisateurs: false }
                 }
             }
         ]);
         console.log('✅ Rôles créés');
 
         // ---------- Paramètres généraux ----------
-        const MOT_DE_PASSE_DEFAUT = 'Bienvenue123';
+        const MOT_DE_PASSE_DEFAUT = 'GLO@2026';
         await Parametre.create({
             nom_entreprise: null,
             mot_de_passe_defaut: MOT_DE_PASSE_DEFAUT,

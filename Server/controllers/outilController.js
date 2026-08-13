@@ -150,6 +150,14 @@ async function remove(req, res, next) {
         if (!outil) return res.status(404).json({ message: 'Outil introuvable.' });
 
         const nomOutil = outil.nom;
+
+        // On retire explicitement tous les partages (liens vers des
+        // activités/sous-activités) avant de supprimer l'outil : garantit que
+        // "si l'outil original est effacé, les partages le sont aussi", et
+        // évite une éventuelle erreur de contrainte de clé étrangère si la
+        // base ne cascade pas la suppression automatiquement.
+        await outil.setActivites([]);
+        await outil.setSousActivites([]);
         await outil.destroy();
 
         await consigner({
@@ -157,10 +165,91 @@ async function remove(req, res, next) {
             action: 'suppression',
             ressource: 'outil',
             id_ressource: req.params.id,
-            libelle: `Outil "${nomOutil}" supprimé`
+            libelle: `Outil "${nomOutil}" supprimé (et tous ses partages)`
         });
 
         res.json({ message: 'Outil supprimé.' });
+    } catch (err) { next(err); }
+}
+
+// ---------- Partage : rattacher un outil déjà existant à une activité ou
+// sous-activité SUPPLÉMENTAIRE, sans dupliquer l'outil (c'est le même outil,
+// juste visible à plusieurs endroits — via les tables pivot déjà en place). ----------
+
+async function partager(req, res, next) {
+    try {
+        const outil = await Outil.findByPk(req.params.id);
+        if (!outil) return res.status(404).json({ message: 'Outil introuvable.' });
+
+        const { id_activite, id_sous_activite } = req.body;
+        if (!id_activite && !id_sous_activite) {
+            return res.status(400).json({ message: 'Choisissez une activité ou une sous-activité de destination.' });
+        }
+
+        if (id_activite) await outil.addActivite(id_activite);
+        if (id_sous_activite) await outil.addSousActivite(id_sous_activite);
+
+        const outilComplet = await Outil.findByPk(outil.id, {
+            include: [
+                { model: Utilisateur },
+                { model: Activite, as: 'activites' },
+                { model: SousActivite, as: 'sousActivites' }
+            ]
+        });
+
+        const cible = id_sous_activite
+            ? outilComplet.sousActivites.find(sa => sa.id === parseInt(id_sous_activite, 10))
+            : outilComplet.activites.find(a => a.id === parseInt(id_activite, 10));
+
+        await consigner({
+            user: req.currentUser,
+            action: 'partage',
+            ressource: 'outil',
+            id_ressource: outil.id,
+            libelle: `Outil "${outil.nom}" partagé sur ${id_sous_activite ? 'la sous-activité' : "l'activité"} "${cible ? cible.nom : '?'}"`
+        });
+
+        res.status(201).json(outilComplet);
+    } catch (err) { next(err); }
+}
+
+// Retire un seul emplacement de partage (l'outil lui-même n'est pas
+// supprimé, ni ses autres emplacements).
+async function retirerPartageActivite(req, res, next) {
+    try {
+        const outil = await Outil.findByPk(req.params.id);
+        if (!outil) return res.status(404).json({ message: 'Outil introuvable.' });
+
+        await outil.removeActivite(req.params.idActivite);
+
+        await consigner({
+            user: req.currentUser,
+            action: 'partage',
+            ressource: 'outil',
+            id_ressource: outil.id,
+            libelle: `Partage de l'outil "${outil.nom}" retiré d'une activité`
+        });
+
+        res.json({ message: 'Partage retiré.' });
+    } catch (err) { next(err); }
+}
+
+async function retirerPartageSousActivite(req, res, next) {
+    try {
+        const outil = await Outil.findByPk(req.params.id);
+        if (!outil) return res.status(404).json({ message: 'Outil introuvable.' });
+
+        await outil.removeSousActivite(req.params.idSousActivite);
+
+        await consigner({
+            user: req.currentUser,
+            action: 'partage',
+            ressource: 'outil',
+            id_ressource: outil.id,
+            libelle: `Partage de l'outil "${outil.nom}" retiré d'une sous-activité`
+        });
+
+        res.json({ message: 'Partage retiré.' });
     } catch (err) { next(err); }
 }
 
@@ -200,4 +289,4 @@ async function historiqueStatut(req, res, next) {
     } catch (err) { next(err); }
 }
 
-module.exports = { getAll, getById, create, toggleActive, remove, verifierStatut, historiqueStatut };
+module.exports = { getAll, getById, create, toggleActive, remove, verifierStatut, historiqueStatut, partager, retirerPartageActivite, retirerPartageSousActivite };

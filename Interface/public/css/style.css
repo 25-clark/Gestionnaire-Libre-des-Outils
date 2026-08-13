@@ -143,7 +143,7 @@ a:hover { text-decoration: underline; }
 .recherche-topbar input {
     background: transparent !important;
     border: none !important;
-    color: var(--blanc);
+    color: rgba(255,255,255) !important;
     font-size: 13px;
     padding: 7px 0;
     width: 100%;

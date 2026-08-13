@@ -1,6 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const { requireLogin, peutFaire } = require('../middlewares/requireLogin');
+
+function exigerExport(req, res, next) {
+    if (!peutFaire(req.session.user, 'export', 'read')) {
+        return res.status(403).render('erreur', { titre: 'Accès refusé', message: "Vous n'avez pas le droit d'exporter." });
+    }
+    next();
+}
 const { apiClient } = require('../config/api');
 const { envoyerCsv } = require('../utils/csv');
 
@@ -76,12 +83,19 @@ router.get('/:id', async (req, res, next) => {
         const api = apiClient(req);
         const user = req.session.user;
 
-        const ongletsAutorises = ['outils', 'archives'];
-        if (peutFaire(user, 'sous_activites', 'read')) ongletsAutorises.push('sous-activites');
-        if (peutFaire(user, 'acces', 'read')) ongletsAutorises.push('utilisateurs');
+        // Un onglet n'apparaît que si le rôle a À LA FOIS la permission CRUD
+        // de la ressource concernée ET l'onglet coché dans "Onglets visibles"
+        // (rôles/permissions) — les deux se combinent, l'un ne remplace pas l'autre.
+        const ongletsAutorises = [];
+        if (peutFaire(user, 'onglets', 'outils')) ongletsAutorises.push('outils');
+        if (peutFaire(user, 'onglets', 'archives')) ongletsAutorises.push('archives');
+        if (peutFaire(user, 'onglets', 'sous_activites') && peutFaire(user, 'sous_activites', 'read')) ongletsAutorises.push('sous-activites');
+        // Sur une sous-activité, "Utilisateurs" = accès particuliers (acces.read), pas utilisateurs.read.
+        if (peutFaire(user, 'onglets', 'utilisateurs') && peutFaire(user, 'acces', 'read')) ongletsAutorises.push('utilisateurs');
+        if (!ongletsAutorises.length) ongletsAutorises.push('outils');
 
-        let onglet = req.query.onglet || 'outils';
-        if (!ongletsAutorises.includes(onglet)) onglet = 'outils';
+        let onglet = req.query.onglet || ongletsAutorises[0];
+        if (!ongletsAutorises.includes(onglet)) onglet = ongletsAutorises[0];
 
         const { data: sousActivite } = await api.get(`/sous-activites/${req.params.id}`);
         const [{ data: activite }, ancetres] = await Promise.all([
@@ -206,7 +220,7 @@ function outilVersLigne(o) {
     };
 }
 
-router.get('/:id/outils/export.csv', async (req, res, next) => {
+router.get('/:id/outils/export.csv', exigerExport, async (req, res, next) => {
     try {
         const api = apiClient(req);
         const { data: sousActivite } = await api.get(`/sous-activites/${req.params.id}`);
@@ -218,7 +232,7 @@ router.get('/:id/outils/export.csv', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-router.get('/:id/outils/export-pdf', async (req, res, next) => {
+router.get('/:id/outils/export-pdf', exigerExport, async (req, res, next) => {
     try {
         const api = apiClient(req);
         const { data: sousActivite } = await api.get(`/sous-activites/${req.params.id}`);
@@ -236,6 +250,62 @@ router.get('/:id/outils/export-pdf', async (req, res, next) => {
             autoImprimer: false
         });
     } catch (err) { next(err); }
+});
+
+// ---------- Copier (avec descendants) vers une autre activité/sous-activité ----------
+
+router.get('/:id/copier', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const { data: sousActivite } = await api.get(`/sous-activites/${req.params.id}`);
+        const { data: activites } = await api.get('/activites');
+
+        const id_activite_destination = req.query.id_activite_destination || '';
+        let sousActivitesDisponibles = [];
+        if (id_activite_destination) {
+            const resp = await api.get(`/sous-activites?id_activite=${id_activite_destination}`);
+            sousActivitesDisponibles = resp.data;
+        }
+
+        res.render('sousActivite/copier', {
+            titre: `Copier — ${sousActivite.nom}`,
+            sousActivite,
+            activites,
+            sousActivitesDisponibles,
+            id_activite_destination,
+            erreur: null,
+            succes: req.query.succes === '1'
+        });
+    } catch (err) { next(err); }
+});
+
+router.post('/:id/copier', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        await api.post(`/sous-activites/${req.params.id}/copier`, {
+            id_activite_destination: req.body.id_activite_destination,
+            id_parent_destination: req.body.id_parent_destination || null
+        });
+        res.redirect(`/sous-activites/${req.params.id}/copier?succes=1`);
+    } catch (err) {
+        try {
+            const api = apiClient(req);
+            const { data: sousActivite } = await api.get(`/sous-activites/${req.params.id}`);
+            const { data: activites } = await api.get('/activites');
+            let sousActivitesDisponibles = [];
+            if (req.body.id_activite_destination) {
+                const resp = await api.get(`/sous-activites?id_activite=${req.body.id_activite_destination}`);
+                sousActivitesDisponibles = resp.data;
+            }
+            res.render('sousActivite/copier', {
+                titre: `Copier — ${sousActivite.nom}`,
+                sousActivite, activites, sousActivitesDisponibles,
+                id_activite_destination: req.body.id_activite_destination || '',
+                erreur: err.response?.data?.message || 'Erreur lors de la copie.',
+                succes: false
+            });
+        } catch (err2) { next(err2); }
+    }
 });
 
 module.exports = router;

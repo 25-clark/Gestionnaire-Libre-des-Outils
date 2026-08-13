@@ -3,8 +3,10 @@
 <div class="entete-page">
     <h1>🎫 Tickets</h1>
     <div style="display:flex; gap:8px;">
+        <% if (peut('export', 'read')) { %>
         <a href="/tickets/export.csv?statut=<%= statut %>&priorite=<%= priorite %>&id_createur=<%= id_createur %>&id_assigne=<%= id_assigne %>" class="btn btn-gris btn-petit">⬇️ CSV</a>
         <a href="/tickets/export-pdf?statut=<%= statut %>&priorite=<%= priorite %>&id_createur=<%= id_createur %>&id_assigne=<%= id_assigne %>" target="_blank" class="btn btn-gris btn-petit">🖨️ PDF</a>
+        <% } %>
         <% if (peut('tickets', 'create')) { %>
             <a href="/tickets/nouveau" class="btn btn-accent">+ Nouveau ticket</a>
         <% } %>

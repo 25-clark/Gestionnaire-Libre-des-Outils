@@ -5,6 +5,13 @@ const { requireLogin, peutFaire, estAdmin } = require('../middlewares/requireLog
 const { envoyerCsv } = require('../utils/csv');
 const { uploadTicketImages } = require('../middlewares/upload');
 
+function exigerExport(req, res, next) {
+    if (!peutFaire(req.session.user, 'export', 'read')) {
+        return res.status(403).render('erreur', { titre: 'Accès refusé', message: "Vous n'avez pas le droit d'exporter." });
+    }
+    next();
+}
+
 router.use(requireLogin);
 
 const LIBELLES_STATUT = { ouvert: 'Ouvert', en_cours: 'En cours', resolu: 'Résolu', ferme: 'Fermé' };
@@ -81,14 +88,14 @@ async function recupererTicketsFiltres(req) {
     return data;
 }
 
-router.get('/export.csv', async (req, res, next) => {
+router.get('/export.csv', exigerExport, async (req, res, next) => {
     try {
         const tickets = await recupererTicketsFiltres(req);
         envoyerCsv(res, 'tickets.csv', COLONNES_TICKETS, tickets.map(ticketVersLigne));
     } catch (err) { next(err); }
 });
 
-router.get('/export-pdf', async (req, res, next) => {
+router.get('/export-pdf', exigerExport, async (req, res, next) => {
     try {
         const tickets = await recupererTicketsFiltres(req);
         const lignes = tickets.map(ticketVersLigne);

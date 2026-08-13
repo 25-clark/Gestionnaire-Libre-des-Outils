@@ -10,7 +10,19 @@
     sous_activites: 'Sous-activités',
     outils: 'Outils',
     acces: 'Accès',
-    tickets: 'Tickets'
+    tickets: 'Tickets',
+    diagnostic: 'Diagnostic réseau',
+    notifications: 'Notifications',
+    export: 'Export et impression',
+    profil: 'Mon profil',
+    partage: 'Partage (outils / sous-activités)',
+    journal: "Journal d'événements"
+};
+var libellesOnglets = {
+    outils: 'Outils',
+    archives: 'Archives',
+    sous_activites: 'Sous-activités',
+    utilisateurs: 'Utilisateurs'
 };
 var libellesActions = { read: 'Lire', create: 'Créer', update: 'Modifier', delete: 'Supprimer' };
 %>
@@ -52,6 +64,21 @@ var libellesActions = { read: 'Lire', create: 'Créer', update: 'Modifier', dele
             <% }) %>
             </tbody>
         </table>
+
+        <label style="margin-top:18px;">Onglets visibles dans une activité / sous-activité</label>
+        <p style="color:var(--gris); font-size:13px; margin-top:-6px;">
+            Contrôle uniquement quels onglets apparaissent dans la navbar d'une page activité/sous-activité —
+            ce que le rôle peut y faire reste régi par les permissions ci-dessus (Outils, Accès...).
+        </p>
+        <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px;">
+            <% onglets.forEach(function(o) { %>
+                <% var coche = role && role.permissions && role.permissions.onglets && role.permissions.onglets[o]; %>
+                <label style="display:flex; align-items:center; gap:6px; font-weight:400;">
+                    <input type="checkbox" name="onglet_<%= o %>" <%= coche ? 'checked' : '' %>>
+                    <%= libellesOnglets[o] %>
+                </label>
+            <% }) %>
+        </div>
 
         <div class="actions-form">
             <button type="submit" class="btn btn-primaire">Enregistrer</button>

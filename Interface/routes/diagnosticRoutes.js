@@ -1,10 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const { apiClient } = require('../config/api');
-const { requireLogin } = require('../middlewares/requireLogin');
+const { requireLogin, peutFaire } = require('../middlewares/requireLogin');
 const { envoyerCsv } = require('../utils/csv');
 
+function exigerExport(req, res, next) {
+    if (!peutFaire(req.session.user, 'export', 'read')) {
+        return res.status(403).render('erreur', { titre: 'Accès refusé', message: "Vous n'avez pas le droit d'exporter." });
+    }
+    next();
+}
+
 router.use(requireLogin);
+router.use((req, res, next) => {
+    if (!peutFaire(req.session.user, 'diagnostic', 'read')) {
+        return res.status(403).render('erreur', { titre: 'Accès refusé', message: "Vous n'avez pas accès au diagnostic réseau." });
+    }
+    next();
+});
 
 router.get('/', async (req, res, next) => {
     try {
@@ -102,14 +115,14 @@ function parcVersLigne(o) {
     };
 }
 
-router.get('/export.csv', async (req, res, next) => {
+router.get('/export.csv', exigerExport, async (req, res, next) => {
     try {
         const parc = await recupererParc(req);
         envoyerCsv(res, 'parc-reseau.csv', COLONNES_PARC, parc.map(parcVersLigne));
     } catch (err) { next(err); }
 });
 
-router.get('/export-pdf', async (req, res, next) => {
+router.get('/export-pdf', exigerExport, async (req, res, next) => {
     try {
         const parc = await recupererParc(req);
         const lignes = parc.map(parcVersLigne);

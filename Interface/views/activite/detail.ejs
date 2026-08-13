@@ -23,12 +23,16 @@
 </div>
 
 <div class="onglets">
-    <a class="onglet <%= onglet === 'outils' ? 'actif' : '' %>" href="/activites/<%= activite.id %>?onglet=outils">Outils</a>
-    <a class="onglet <%= onglet === 'archives' ? 'actif' : '' %>" href="/activites/<%= activite.id %>?onglet=archives">Archives</a>
-    <% if (peut('sous_activites', 'read')) { %>
+    <% if (peut('onglets', 'outils')) { %>
+        <a class="onglet <%= onglet === 'outils' ? 'actif' : '' %>" href="/activites/<%= activite.id %>?onglet=outils">Outils</a>
+    <% } %>
+    <% if (peut('onglets', 'archives')) { %>
+        <a class="onglet <%= onglet === 'archives' ? 'actif' : '' %>" href="/activites/<%= activite.id %>?onglet=archives">Archives</a>
+    <% } %>
+    <% if (peut('onglets', 'sous_activites') && peut('sous_activites', 'read')) { %>
         <a class="onglet <%= onglet === 'sous-activites' ? 'actif' : '' %>" href="/activites/<%= activite.id %>?onglet=sous-activites">Sous-activités</a>
     <% } %>
-    <% if (peut('utilisateurs', 'read')) { %>
+    <% if (peut('onglets', 'utilisateurs') && peut('utilisateurs', 'read')) { %>
         <a class="onglet <%= onglet === 'utilisateurs' ? 'actif' : '' %>" href="/activites/<%= activite.id %>?onglet=utilisateurs">Utilisateurs</a>
     <% } %>
 </div>
@@ -87,8 +91,10 @@
             <span></span>
         <% } %>
         <div style="display:flex; gap:8px;">
+            <% if (peut('export', 'read')) { %>
             <a href="/activites/<%= activite.id %>/utilisateurs/export.csv" class="btn btn-gris btn-petit">⬇️ CSV</a>
             <a href="/activites/<%= activite.id %>/utilisateurs/export-pdf" target="_blank" class="btn btn-gris btn-petit">🖨️ PDF</a>
+            <% } %>
         </div>
     </div>
 
@@ -142,8 +148,10 @@
             <span></span>
         <% } %>
         <div style="display:flex; gap:8px;">
+            <% if (peut('export', 'read')) { %>
             <a href="/activites/<%= activite.id %>/outils/export.csv?onglet=outils" class="btn btn-gris btn-petit">⬇️ CSV</a>
             <a href="/activites/<%= activite.id %>/outils/export-pdf?onglet=outils" target="_blank" class="btn btn-gris btn-petit">🖨️ PDF</a>
+            <% } %>
         </div>
     </div>
 
@@ -156,8 +164,10 @@
             Outils désactivés de cette activité. Réactivez-les pour les faire réapparaître dans l'onglet "Outils".
         </p>
         <div style="display:flex; gap:8px;">
+            <% if (peut('export', 'read')) { %>
             <a href="/activites/<%= activite.id %>/outils/export.csv?onglet=archives" class="btn btn-gris btn-petit">⬇️ CSV</a>
             <a href="/activites/<%= activite.id %>/outils/export-pdf?onglet=archives" target="_blank" class="btn btn-gris btn-petit">🖨️ PDF</a>
+            <% } %>
         </div>
     </div>
     <%- include('../partials/outils-vue', { outils: outils, retour: '/activites/' + activite.id + '?onglet=archives', messageVide: 'Aucun outil archivé.' }) %>

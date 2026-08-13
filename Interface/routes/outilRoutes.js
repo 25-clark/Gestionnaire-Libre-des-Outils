@@ -93,4 +93,77 @@ router.post('/:id/supprimer', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
+// ---------- Partage : rattacher un outil existant à une activité/sous-activité
+// supplémentaire, sans le dupliquer. ----------
+
+router.get('/:id/partager', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const { data: outil } = await api.get(`/outils/${req.params.id}`);
+        const { data: activites } = await api.get('/activites');
+
+        const id_activite = req.query.id_activite || '';
+        let sousActivites = [];
+        if (id_activite) {
+            const resp = await api.get(`/sous-activites?id_activite=${id_activite}`);
+            sousActivites = resp.data;
+        }
+
+        res.render('outil/partager', {
+            titre: `Partager — ${outil.nom}`,
+            outil,
+            activites,
+            sousActivites,
+            id_activite,
+            retour: req.query.retour || '/',
+            erreur: null
+        });
+    } catch (err) { next(err); }
+});
+
+router.post('/:id/partager', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        await api.post(`/outils/${req.params.id}/partager`, {
+            id_activite: req.body.id_sous_activite ? null : (req.body.id_activite || null),
+            id_sous_activite: req.body.id_sous_activite || null
+        });
+        res.redirect(`/outils/${req.params.id}/partager?retour=${encodeURIComponent(req.body.retour || '/')}`);
+    } catch (err) {
+        try {
+            const api = apiClient(req);
+            const { data: outil } = await api.get(`/outils/${req.params.id}`);
+            const { data: activites } = await api.get('/activites');
+            let sousActivites = [];
+            if (req.body.id_activite) {
+                const resp = await api.get(`/sous-activites?id_activite=${req.body.id_activite}`);
+                sousActivites = resp.data;
+            }
+            res.render('outil/partager', {
+                titre: `Partager — ${outil.nom}`,
+                outil, activites, sousActivites,
+                id_activite: req.body.id_activite || '',
+                retour: req.body.retour || '/',
+                erreur: err.response?.data?.message || 'Erreur lors du partage.'
+            });
+        } catch (err2) { next(err2); }
+    }
+});
+
+router.post('/:id/retirer-partage/activite/:idActivite', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        await api.post(`/outils/${req.params.id}/retirer-partage/activite/${req.params.idActivite}`);
+        res.redirect(`/outils/${req.params.id}/partager?retour=${encodeURIComponent(req.body.retour || '/')}`);
+    } catch (err) { next(err); }
+});
+
+router.post('/:id/retirer-partage/sous-activite/:idSousActivite', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        await api.post(`/outils/${req.params.id}/retirer-partage/sous-activite/${req.params.idSousActivite}`);
+        res.redirect(`/outils/${req.params.id}/partager?retour=${encodeURIComponent(req.body.retour || '/')}`);
+    } catch (err) { next(err); }
+});
+
 module.exports = router;

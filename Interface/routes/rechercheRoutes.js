@@ -16,6 +16,7 @@ router.get('/', async (req, res, next) => {
         let outils = [];
         let archives = [];
         let utilisateurs = [];
+        let tickets = [];
 
         // Chaque catégorie n'est cherchée que si le rôle de l'utilisateur a le
         // droit de lecture correspondant. Le Server applique en plus son
@@ -47,6 +48,14 @@ router.get('/', async (req, res, next) => {
                     api.get(`/utilisateurs?q=${encodeURIComponent(q)}`).then(resp => { utilisateurs = resp.data; })
                 );
             }
+            if (peutFaire(user, 'tickets', 'read')) {
+                // Le Server filtre déjà par visibilité réelle du ticket
+                // (créateur, assigné, ou périmètre accessible) — cf.
+                // utilisateurPeutVoirTicket dans ticketController.js.
+                appels.push(
+                    api.get(`/tickets?q=${encodeURIComponent(q)}`).then(resp => { tickets = resp.data; })
+                );
+            }
 
             await Promise.all(appels);
         }
@@ -58,7 +67,8 @@ router.get('/', async (req, res, next) => {
             sousActivites,
             outils,
             archives,
-            utilisateurs
+            utilisateurs,
+            tickets
         });
     } catch (err) { next(err); }
 });

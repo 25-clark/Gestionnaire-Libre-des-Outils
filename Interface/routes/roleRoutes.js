@@ -5,8 +5,15 @@ const { apiClient } = require('../config/api');
 
 router.use(requireLogin);
 
-const RESSOURCES = ['utilisateurs', 'roles', 'activites', 'sous_activites', 'outils', 'acces'];
+const RESSOURCES = [
+    'utilisateurs', 'roles', 'activites', 'sous_activites', 'outils', 'acces',
+    'tickets', 'diagnostic', 'notifications', 'export', 'profil', 'partage', 'journal'
+];
 const ACTIONS = ['read', 'create', 'update', 'delete'];
+// Onglets visibles dans une page activité/sous-activité — indépendant du
+// CRUD ci-dessus : contrôle uniquement si l'onglet apparaît dans la navbar,
+// pas ce qu'on a le droit d'y faire (ça reste régi par outils/*, acces/*...).
+const ONGLETS = ['outils', 'archives', 'sous_activites', 'utilisateurs'];
 
 router.get('/', async (req, res, next) => {
     try {
@@ -23,6 +30,7 @@ router.get('/nouveau', (req, res) => {
         role: null,
         ressources: RESSOURCES,
         actions: ACTIONS,
+        onglets: ONGLETS,
         erreur: null
     });
 });
@@ -43,6 +51,7 @@ router.post('/', async (req, res, next) => {
             role: req.body,
             ressources: RESSOURCES,
             actions: ACTIONS,
+            onglets: ONGLETS,
             erreur: err.response?.data?.message || 'Erreur lors de la création.'
         });
     }
@@ -60,6 +69,7 @@ router.get('/:id/modifier', async (req, res, next) => {
             role,
             ressources: RESSOURCES,
             actions: ACTIONS,
+            onglets: ONGLETS,
             erreur: null
         });
     } catch (err) { next(err); }
@@ -96,6 +106,12 @@ function construirePermissions(body) {
             permissions[ressource][action] = body[`perm_${ressource}_${action}`] === 'on';
         }
     }
+
+    permissions.onglets = {};
+    for (const onglet of ONGLETS) {
+        permissions.onglets[onglet] = body[`onglet_${onglet}`] === 'on';
+    }
+
     return permissions;
 }
 

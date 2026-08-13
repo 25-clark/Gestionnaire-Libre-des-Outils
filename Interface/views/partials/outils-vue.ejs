@@ -35,6 +35,9 @@
                         <td style="text-align:right; white-space:nowrap;">
                             <% if (peut('tickets', 'create')) { %>
                                 <a href="/tickets/nouveau?id_outil=<%= o.id %>" class="btn btn-gris btn-petit" title="Signaler un problème sur cet outil">🎫 Signaler</a>
+                            <% if (peut('partage', 'create') || peut('partage', 'delete')) { %>
+                                <a href="/outils/<%= o.id %>/partager?retour=<%= encodeURIComponent(retour) %>" class="btn btn-gris btn-petit" title="Partager cet outil">🔗 Partager</a>
+                            <% } %>
                             <% } %>
                             <% if (o.adresse) { %>
                                 <a href="/diagnostic?cible=<%= encodeURIComponent(o.adresse) %>" class="btn btn-gris btn-petit" title="Tester la connectivité de <%= o.adresse %>">🩺 Tester</a>
@@ -93,6 +96,9 @@
                         <div style="display:flex; gap:4px;">
                             <% if (peut('tickets', 'create')) { %>
                                 <a href="/tickets/nouveau?id_outil=<%= o.id %>" class="btn btn-gris btn-petit" title="Signaler un problème">🎫</a>
+                                <% if (peut('partage', 'create') || peut('partage', 'delete')) { %>
+                                    <a href="/outils/<%= o.id %>/partager?retour=<%= encodeURIComponent(retour) %>" class="btn btn-gris btn-petit" title="Partager cet outil">🔗</a>
+                                <% } %>
                             <% } %>
                             <% if (o.adresse) { %>
                                 <a href="/diagnostic?cible=<%= encodeURIComponent(o.adresse) %>" class="btn btn-gris btn-petit" title="Tester la connectivité">🩺</a>
@@ -146,6 +152,9 @@
                         <div class="actions-vignette">
                             <% if (peut('tickets', 'create')) { %>
                                 <a href="/tickets/nouveau?id_outil=<%= o.id %>" title="Signaler un problème">🎫</a>
+                            <% if (peut('partage', 'create') || peut('partage', 'delete')) { %>
+                                <a href="/outils/<%= o.id %>/partager?retour=<%= encodeURIComponent(retour) %>" title="Partager cet outil">🔗</a>
+                            <% } %>
                             <% } %>
                             <% if (o.adresse) { %>
                                 <a href="/diagnostic?cible=<%= encodeURIComponent(o.adresse) %>" title="Tester la connectivité">🩺</a>

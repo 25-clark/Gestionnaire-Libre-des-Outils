@@ -1,13 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const { apiClient } = require('../config/api');
-const { requireLogin, estAdmin } = require('../middlewares/requireLogin');
+const { requireLogin, peutFaire } = require('../middlewares/requireLogin');
 const { envoyerCsv } = require('../utils/csv');
+
+function exigerExport(req, res, next) {
+    if (!peutFaire(req.session.user, 'export', 'read')) {
+        return res.status(403).render('erreur', { titre: 'Accès refusé', message: "Vous n'avez pas le droit d'exporter." });
+    }
+    next();
+}
 
 router.use(requireLogin);
 router.use((req, res, next) => {
-    if (!estAdmin(req.session.user)) {
-        return res.status(403).render('erreur', { titre: 'Accès refusé', message: "Réservé à l'administrateur." });
+    if (!peutFaire(req.session.user, 'journal', 'read')) {
+        return res.status(403).render('erreur', { titre: 'Accès refusé', message: "Vous n'avez pas accès au journal d'événements." });
     }
     next();
 });
@@ -57,14 +64,14 @@ async function recupererLignesJournal(req) {
     }));
 }
 
-router.get('/export.csv', async (req, res, next) => {
+router.get('/export.csv', exigerExport, async (req, res, next) => {
     try {
         const lignes = await recupererLignesJournal(req);
         envoyerCsv(res, 'journal-evenements.csv', COLONNES_JOURNAL, lignes);
     } catch (err) { next(err); }
 });
 
-router.get('/export-pdf', async (req, res, next) => {
+router.get('/export-pdf', exigerExport, async (req, res, next) => {
     try {
         const lignes = await recupererLignesJournal(req);
         res.render('impression', {

@@ -39,8 +39,10 @@
 <div class="entete-page" style="margin-top:28px;">
     <h2 style="font-size:16px; color:var(--bleu-fonce); margin:0;">📡 État du parc réseau</h2>
     <div style="display:flex; gap:8px;">
-        <a href="/diagnostic/export.csv" class="btn btn-gris btn-petit">⬇️ CSV</a>
-        <a href="/diagnostic/export-pdf" target="_blank" class="btn btn-gris btn-petit">🖨️ PDF</a>
+        <% if (peut('export', 'read')) { %>
+            <a href="/diagnostic/export.csv" class="btn btn-gris btn-petit">⬇️ CSV</a>
+            <a href="/diagnostic/export-pdf" target="_blank" class="btn btn-gris btn-petit">🖨️ PDF</a>
+        <% } %>
     </div>
 </div>
 

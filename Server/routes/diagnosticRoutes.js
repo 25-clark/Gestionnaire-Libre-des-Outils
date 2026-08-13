@@ -4,9 +4,9 @@ const diagnosticController = require('../controllers/diagnosticController');
 const { requireAuth, checkPermission } = require('../middlewares/auth');
 
 router.use(requireAuth);
-// Rattaché à la permission "outils" : si on peut voir les outils, on peut
-// tester leur accessibilité réseau.
-router.use(checkPermission('outils', 'read'));
+// Ressource dédiée "diagnostic", indépendante de "outils" — un rôle peut
+// voir les outils sans forcément avoir le droit de sonder le réseau.
+router.use(checkPermission('diagnostic', 'read'));
 
 router.get('/ping', diagnosticController.ping);
 router.get('/traceroute', diagnosticController.traceroute);

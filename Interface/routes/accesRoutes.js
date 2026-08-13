@@ -15,14 +15,57 @@ router.get('/', async (req, res, next) => {
             api.get('/activites')
         ]);
 
+        // Sous-activités de l'activité sélectionnée dans le formulaire
+        // d'octroi (rechargé via GET quand l'activité change) : le menu
+        // "Sous-activité précise" ne s'affiche que si cette activité en a.
+        const id_activite = req.query.id_activite || '';
+        let sousActivitesDisponibles = [];
+        if (id_activite) {
+            const resp = await api.get(`/sous-activites?id_activite=${id_activite}`);
+            sousActivitesDisponibles = resp.data;
+        }
+
         res.locals.page = 'acces';
         res.render('acces/liste', {
             titre: 'Accès particuliers',
             accesActivites: accesActivites.data,
             accesSousActivites: accesSousActivites.data,
             utilisateurs: utilisateurs.data,
-            activites: activites.data
+            activites: activites.data,
+            sousActivitesDisponibles,
+            id_activite,
+            id_user_selectionne: req.query.id_user || ''
         });
+    } catch (err) { next(err); }
+});
+
+// Formulaire unique d'octroi : dispatch selon qu'une sous-activité précise
+// a été choisie ou non (le champ id_sous_activite n'apparaît/n'est envoyé
+// que si l'activité sélectionnée en a — cf. acces/liste.ejs).
+router.post('/', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const permissions = {
+            read: true,
+            write: req.body.write === 'on',
+            delete: req.body.delete === 'on'
+        };
+
+        if (req.body.id_sous_activite) {
+            await api.post('/acces/sous-activites', {
+                id_user: req.body.id_user,
+                id_sous_activite: req.body.id_sous_activite,
+                permissions
+            });
+        } else {
+            await api.post('/acces/activites', {
+                id_user: req.body.id_user,
+                id_activite: req.body.id_activite,
+                permissions
+            });
+        }
+
+        res.redirect('/acces');
     } catch (err) { next(err); }
 });
 

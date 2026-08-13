@@ -1,6 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const { requireLogin, peutFaire } = require('../middlewares/requireLogin');
+
+// Garde-fou serveur en plus du bouton masqué côté vue : empêche d'atteindre
+// une URL d'export directement sans la permission "export".
+function exigerExport(req, res, next) {
+    if (!peutFaire(req.session.user, 'export', 'read')) {
+        return res.status(403).render('erreur', { titre: 'Accès refusé', message: "Vous n'avez pas le droit d'exporter." });
+    }
+    next();
+}
 const { uploadLogo } = require('../middlewares/upload');
 const { apiClient } = require('../config/api');
 const { envoyerCsv } = require('../utils/csv');
@@ -37,12 +46,18 @@ router.get('/:id', async (req, res, next) => {
         const api = apiClient(req);
         const user = req.session.user;
 
-        const ongletsAutorises = ['outils', 'archives'];
-        if (peutFaire(user, 'sous_activites', 'read')) ongletsAutorises.push('sous-activites');
-        if (peutFaire(user, 'utilisateurs', 'read')) ongletsAutorises.push('utilisateurs');
+        // Un onglet n'apparaît que si le rôle a À LA FOIS la permission CRUD
+        // de la ressource concernée ET l'onglet coché dans "Onglets visibles"
+        // (rôles/permissions) — les deux se combinent, l'un ne remplace pas l'autre.
+        const ongletsAutorises = [];
+        if (peutFaire(user, 'onglets', 'outils')) ongletsAutorises.push('outils');
+        if (peutFaire(user, 'onglets', 'archives')) ongletsAutorises.push('archives');
+        if (peutFaire(user, 'onglets', 'sous_activites') && peutFaire(user, 'sous_activites', 'read')) ongletsAutorises.push('sous-activites');
+        if (peutFaire(user, 'onglets', 'utilisateurs') && peutFaire(user, 'utilisateurs', 'read')) ongletsAutorises.push('utilisateurs');
+        if (!ongletsAutorises.length) ongletsAutorises.push('outils'); // filet de sécurité : jamais une page totalement vide
 
-        let onglet = req.query.onglet || 'outils';
-        if (!ongletsAutorises.includes(onglet)) onglet = 'outils';
+        let onglet = req.query.onglet || ongletsAutorises[0];
+        if (!ongletsAutorises.includes(onglet)) onglet = ongletsAutorises[0];
 
         const { data: activite } = await api.get(`/activites/${req.params.id}`);
 
@@ -157,7 +172,7 @@ function utilisateurVersLigne(u) {
     };
 }
 
-router.get('/:id/outils/export.csv', async (req, res, next) => {
+router.get('/:id/outils/export.csv', exigerExport, async (req, res, next) => {
     try {
         const api = apiClient(req);
         const { data: activite } = await api.get(`/activites/${req.params.id}`);
@@ -169,7 +184,7 @@ router.get('/:id/outils/export.csv', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-router.get('/:id/outils/export-pdf', async (req, res, next) => {
+router.get('/:id/outils/export-pdf', exigerExport, async (req, res, next) => {
     try {
         const api = apiClient(req);
         const { data: activite } = await api.get(`/activites/${req.params.id}`);
@@ -189,7 +204,7 @@ router.get('/:id/outils/export-pdf', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-router.get('/:id/utilisateurs/export.csv', async (req, res, next) => {
+router.get('/:id/utilisateurs/export.csv', exigerExport, async (req, res, next) => {
     try {
         const api = apiClient(req);
         const { data: activite } = await api.get(`/activites/${req.params.id}`);
@@ -199,7 +214,7 @@ router.get('/:id/utilisateurs/export.csv', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
-router.get('/:id/utilisateurs/export-pdf', async (req, res, next) => {
+router.get('/:id/utilisateurs/export-pdf', exigerExport, async (req, res, next) => {
     try {
         const api = apiClient(req);
         const { data: activite } = await api.get(`/activites/${req.params.id}`);
