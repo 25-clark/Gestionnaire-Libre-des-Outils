@@ -16,19 +16,20 @@
 <header class="topbar">
     <a href="/" class="logo"><img src="/favicon-32x32.png" alt="favicon"><span><%= nomEntreprise ? nomEntreprise : 'Gestionnaire' %></span></a>
     <nav>
-        <a href="/">Tableau de bord</a>
+        <a href="/">Accueil</a>
         <% var itemsSecurite = []; %>
         <% if (peut('roles', 'read')) itemsSecurite.push({ href: '/roles', label: 'Rôles' }); %>
         <% if (peut('acces', 'read')) itemsSecurite.push({ href: '/acces', label: 'Accès' }); %>
         <% if (currentUser.Role && currentUser.Role.abbreviation === 'ADMIN') { %>
             <% itemsSecurite.push({ href: '/parametres', label: 'Réglages généraux' }); %>
             <% itemsSecurite.push({ href: '/statistiques', label: 'Statistiques' }); %>
+            <% itemsSecurite.push({ href: '/ldap', label: 'LDAP' }); %>
         <% } %>
         <% if (peut('journal', 'read')) itemsSecurite.push({ href: '/journal', label: "Journal d'événements" }); %>
         <% if (peut('profil', 'read')) itemsSecurite.push({ href: '/changer-mot-de-passe', label: 'Changer mon mot de passe' }); %>
         <% if (itemsSecurite.length) { %>
             <div class="menu-deroulant">
-                <button type="button" class="lien-menu-deroulant">Sécurité ▾</button>
+                <button type="button" class="lien-menu-deroulant">Réglages ▾</button>
                 <div class="contenu-menu-deroulant">
                     <% itemsSecurite.forEach(function(item) { %>
                         <a href="<%= item.href %>"><%= item.label %></a>

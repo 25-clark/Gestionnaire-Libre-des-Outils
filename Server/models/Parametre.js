@@ -64,7 +64,28 @@ module.exports = (sequelize) => {
             type: DataTypes.INTEGER,
             allowNull: false,
             defaultValue: 5
-        }
+        },
+        // ---- LDAP (voir utils/ldap.js) ----
+        // ldap_bind_password : stocké en clair, comme mot_de_passe_defaut —
+        // c'est un secret de service (compte technique), pas un mot de passe
+        // utilisateur. Un vrai coffre-fort de secrets serait préférable en
+        // production, mais hors de portée ici sans dépendance supplémentaire.
+        ldap_actif: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+        ldap_url: { type: DataTypes.STRING, allowNull: true },
+        ldap_bind_dn: { type: DataTypes.STRING, allowNull: true },
+        ldap_bind_password: { type: DataTypes.STRING, allowNull: true },
+        ldap_base_dn_utilisateurs: { type: DataTypes.STRING, allowNull: true },
+        ldap_filtre_utilisateurs: { type: DataTypes.STRING, allowNull: true, defaultValue: '(objectClass=person)' },
+        ldap_attribut_matricule: { type: DataTypes.STRING, allowNull: true, defaultValue: 'uid' },
+        ldap_attribut_nom: { type: DataTypes.STRING, allowNull: true, defaultValue: 'sn' },
+        ldap_attribut_prenom: { type: DataTypes.STRING, allowNull: true, defaultValue: 'givenName' },
+        ldap_role_par_defaut: { type: DataTypes.STRING, allowNull: true },
+        ldap_base_dn_groupes: { type: DataTypes.STRING, allowNull: true },
+        ldap_filtre_groupes: { type: DataTypes.STRING, allowNull: true, defaultValue: '(objectClass=groupOfNames)' },
+        ldap_attribut_groupe_nom: { type: DataTypes.STRING, allowNull: true, defaultValue: 'cn' },
+        // Sous-groupes recherchés SOUS le DN de chaque groupe importé comme
+        // activité, pour devenir ses sous-activités.
+        ldap_filtre_sous_groupes: { type: DataTypes.STRING, allowNull: true, defaultValue: '(objectClass=groupOfNames)' }
     }, {
         tableName: 'parametres',
         timestamps: true,

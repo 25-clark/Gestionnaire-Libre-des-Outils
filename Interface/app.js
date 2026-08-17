@@ -19,6 +19,7 @@ const journalRoutes = require('./routes/journalRoutes');
 const statistiqueRoutes = require('./routes/statistiqueRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
+const ldapRoutes = require('./routes/ldapRoutes');
 
 const app = express();
 
@@ -91,6 +92,7 @@ app.use('/journal', journalRoutes);
 app.use('/statistiques', statistiqueRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/tickets', ticketRoutes);
+app.use('/ldap', ldapRoutes);
 
 // 404
 app.use((req, res) => {

@@ -14,13 +14,13 @@
         <label for="nom_entreprise">Nom de l'entreprise</label>
         <input type="text" id="nom_entreprise" name="nom_entreprise" value="<%= parametre.nom_entreprise || '' %>"
                placeholder="Laisser vide pour afficher « Gestionnaire Outils »">
-        <p style="color:var(--gris); font-size:13px; margin-top:-6px;">
+        <p style="color:var(--gris); font-size:13px; margin-top:-2px;">
             S'affiche à la place de « Gestionnaire Outils » dans l'en-tête et la page de connexion.
         </p>
 
         <label for="mot_de_passe_defaut">Mot de passe par défaut</label>
         <input type="password" id="mot_de_passe_defaut" name="mot_de_passe_defaut" value="<%= parametre.mot_de_passe_defaut %>" minlength="6" required>
-        <p style="color:var(--gris); font-size:13px; margin-top:-6px;">
+        <p style="color:var(--gris); font-size:13px; margin-top:-2px;">
             Attribué à chaque nouvel utilisateur, et lors d'une réinitialisation de mot de passe.
             L'utilisateur devra le changer à sa première connexion. Le modifier ici ne change pas
             les mots de passe déjà personnalisés. Doit respecter la politique ci-dessous.
@@ -59,7 +59,7 @@
         <label for="session_duree_heures">Durée avant déconnexion automatique (heures)</label>
         <input type="number" id="session_duree_heures" name="session_duree_heures" min="1" max="168"
                value="<%= parametre.session_duree_heures %>" style="max-width:120px;">
-        <p style="color:var(--gris); font-size:13px; margin-top:-6px;">
+        <p style="color:var(--gris); font-size:13px; margin-top:-2px;">
             S'applique à partir de la prochaine connexion (les sessions déjà ouvertes gardent leur durée actuelle).
         </p>
 
@@ -78,7 +78,7 @@
         <label for="surveillance_intervalle_minutes">Intervalle entre deux vérifications (minutes)</label>
         <input type="number" id="surveillance_intervalle_minutes" name="surveillance_intervalle_minutes" min="1" max="1440"
                value="<%= parametre.surveillance_intervalle_minutes %>" style="max-width:120px;">
-        <p style="color:var(--gris); font-size:13px; margin-top:-6px;">
+        <p style="color:var(--gris); font-size:13px; margin-top:-2px;">
             S'applique au prochain cycle (pas besoin de redémarrer le serveur).
         </p>
 

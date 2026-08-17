@@ -17,6 +17,9 @@
     "mysql2": "^3.11.0",
     "sequelize": "^6.37.3"
   },
+  "optionalDependencies": {
+    "ldapjs": "^3.0.7"
+  },
   "devDependencies": {
     "nodemon": "^3.1.4"
   }

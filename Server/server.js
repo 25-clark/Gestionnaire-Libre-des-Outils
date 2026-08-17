@@ -20,6 +20,7 @@ const journalRoutes = require('./routes/journalRoutes');
 const statistiqueRoutes = require('./routes/statistiqueRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
+const ldapRoutes = require('./routes/ldapRoutes');
 
 const app = express();
 
@@ -61,6 +62,7 @@ app.use('/api/journal', journalRoutes);
 app.use('/api/statistiques', statistiqueRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/tickets', ticketRoutes);
+app.use('/api/ldap', ldapRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
