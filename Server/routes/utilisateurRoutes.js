@@ -19,4 +19,8 @@ router.post('/:id/reinitialiser-mdp', (req, res, next) => {
     next();
 }, utilisateurController.reinitialiserMotDePasse);
 
+// Mise à jour du profil (champs enrichis + préférences) — l'utilisateur peut
+// modifier son propre profil ; un admin peut modifier celui de n'importe qui.
+router.put('/:id/profil', utilisateurController.updateProfil);
+
 module.exports = router;

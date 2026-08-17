@@ -34,6 +34,9 @@ router.post('/', async (req, res) => {
         body.surveillance_active = Array.isArray(body.surveillance_active)
             ? body.surveillance_active.includes('on')
             : body.surveillance_active === 'on';
+        body.credentials_actifs = Array.isArray(body.credentials_actifs)
+            ? body.credentials_actifs.includes('on')
+            : body.credentials_actifs === 'on';
 
         const api = apiClient(req);
         const { data: parametre } = await api.put('/parametres', body);

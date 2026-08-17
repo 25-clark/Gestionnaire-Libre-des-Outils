@@ -55,6 +55,14 @@ module.exports = (sequelize) => {
                 model: 'utilisateurs',
                 key: 'id'
             }
+        },
+        // Credentials de l'outil (login, mot de passe, champs libres).
+        // Format : [ { label, valeur } ] — les *valeurs* sont chiffrées AES-256-GCM
+        // au repos (voir utils/credentialsCrypto.js). Les libellés restent en clair.
+        credentials: {
+            type: DataTypes.JSON,
+            allowNull: true,
+            defaultValue: []
         }
     }, {
         tableName: 'outils',

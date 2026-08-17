@@ -1,19 +1,20 @@
 <%- include('../partials/header') %>
 
-<div class="fil-ariane"><a href="/">Accueil</a> <span class="sep">›</span> <%= titre %></div>
+<div class="fil-ariane"><a href="/">Tableau de bord</a> <span class="sep">›</span> <%= titre %></div>
 <div class="entete-page"><h1><%= titre %></h1></div>
 
-<div class="carte" style="max-width:520px;">
+<div class="carte" style="max-width:560px;">
     <% if (erreur) { %>
         <div class="message-erreur"><%= erreur %></div>
     <% } %>
     <p style="color:var(--gris); font-size:13px; margin-top:-4px;">
         En cas d'erreur de saisie, il faudra supprimer puis recréer l'outil (pas de modification possible,
-        seule l'activation/désactivation est permise).
+        seule l'activation/désactivation et les credentials sont modifiables).
     </p>
 
-    <form action="/outils" method="POST" enctype="multipart/form-data">
+    <form action="/outils" method="POST" enctype="multipart/form-data" id="form-outil">
         <input type="hidden" name="id_activite" value="<%= id_activite %>">
+        <input type="hidden" name="credentials" id="credentials-json" value="[]">
 
         <label for="nom">Nom de l'outil</label>
         <input type="text" id="nom" name="nom" required>
@@ -43,11 +44,53 @@
         <label for="image">Image (optionnel)</label>
         <input type="file" id="image" name="image" accept="image/*">
 
-        <div class="actions-form">
+        <% if (typeof credentialsActifs !== 'undefined' && credentialsActifs && peut('credentials', 'create')) { %>
+        <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
+        <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 6px;">🔑 Credentials (optionnel)</h2>
+        <p style="color:var(--gris); font-size:13px; margin-top:0;">
+            Identifiants de connexion à cet outil (login, mot de passe, clé API…). Ils pourront être copiés d’un clic à l’ouverture.
+        </p>
+        <div id="creds-liste" class="contacts-liste"></div>
+        <button type="button" class="btn-ajouter-contact" id="btn-ajouter-cred">+ Ajouter un champ</button>
+
+        <% } %>
+
+        <div class="actions-form" style="margin-top:18px;">
             <button type="submit" class="btn btn-primaire">Créer</button>
             <a href="<%= id_activite ? '/activites/' + id_activite + '?onglet=outils' : '/' %>" class="btn btn-gris">Annuler</a>
         </div>
     </form>
 </div>
+
+<script>
+(function () {
+    var liste = document.getElementById('creds-liste');
+    function ligne(label, valeur) {
+        var div = document.createElement('div');
+        div.className = 'contact-ligne';
+        div.innerHTML =
+            '<input type="text" class="cred-label" placeholder="Libellé (ex. Login)" value="' + (label || '') + '" style="flex:1;">' +
+            '<input type="text" class="cred-valeur" placeholder="Valeur" value="' + (valeur || '') + '" style="flex:1.2;">' +
+            '<button type="button" class="btn-retirer" title="Retirer">&times;</button>';
+        div.querySelector('.btn-retirer').onclick = function () { div.remove(); };
+        liste.appendChild(div);
+    }
+    document.getElementById('btn-ajouter-cred').onclick = function () { ligne('', ''); };
+    // Deux champs par défaut
+    ligne('Login', '');
+    ligne('Mot de passe', '');
+
+    document.getElementById('form-outil').addEventListener('submit', function () {
+        var rows = liste.querySelectorAll('.contact-ligne');
+        var creds = [];
+        rows.forEach(function (row) {
+            var label = (row.querySelector('.cred-label').value || '').trim();
+            var valeur = (row.querySelector('.cred-valeur').value || '').trim();
+            if (label || valeur) creds.push({ label: label || 'Champ', valeur: valeur });
+        });
+        document.getElementById('credentials-json').value = JSON.stringify(creds);
+    });
+})();
+</script>
 
 <%- include('../partials/footer') %>

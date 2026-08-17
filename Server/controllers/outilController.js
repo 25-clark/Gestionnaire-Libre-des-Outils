@@ -1,8 +1,27 @@
-const { Outil, Utilisateur, Activite, SousActivite, OutilHistoriqueStatut } = require('../models');
+const { Outil, Utilisateur, Activite, SousActivite, OutilHistoriqueStatut, Parametre } = require('../models');
 const { isAdmin, getIdsActivitesAccessibles } = require('../middlewares/auth');
 const { getPerimetreAcces } = require('../utils/perimetre');
 const { consigner } = require('../utils/journal');
 const { verifierUnOutil } = require('../utils/surveillance');
+const { chiffrerCredentials, dechiffrerOutil, dechiffrerOutils } = require('../utils/credentialsCrypto');
+
+async function credentialsAutorises(user) {
+    const [p] = await Parametre.findOrCreate({ where: { id: 1 }, defaults: {} });
+    if (!p.credentials_actifs) return false;
+    if (isAdmin(user)) return true;
+    const perms = user.Role && user.Role.permissions
+        ? (typeof user.Role.permissions === 'string' ? JSON.parse(user.Role.permissions || '{}') : user.Role.permissions)
+        : {};
+    return !!(perms.credentials && perms.credentials.read);
+}
+
+function masquerCredentials(obj) {
+    if (!obj) return obj;
+    const json = typeof obj.toJSON === 'function' ? obj.toJSON() : { ...obj };
+    json.credentials = [];
+    return json;
+}
+
 
 async function getAll(req, res, next) {
     try {
@@ -51,7 +70,8 @@ async function getAll(req, res, next) {
             outils = outils.filter(o => o.nom.toLowerCase().includes(terme));
         }
 
-        res.json(outils);
+        const peutVoirCreds = await credentialsAutorises(req.currentUser);
+        res.json(peutVoirCreds ? dechiffrerOutils(outils) : outils.map(masquerCredentials));
     } catch (err) { next(err); }
 }
 
@@ -65,7 +85,8 @@ async function getById(req, res, next) {
             ]
         });
         if (!outil) return res.status(404).json({ message: 'Outil introuvable.' });
-        res.json(outil);
+        const peutVoirCreds = await credentialsAutorises(req.currentUser);
+        res.json(peutVoirCreds ? dechiffrerOutil(outil) : masquerCredentials(outil));
     } catch (err) { next(err); }
 }
 
@@ -84,7 +105,26 @@ async function create(req, res, next) {
 
         const image = req.file ? `/uploads/outils/${req.file.filename}` : (req.body.image || null);
 
-        const outil = await Outil.create({ nom, lien: lien || null, adresse: adresse || null, image, id_user });
+        let credentials = [];
+        if (req.body.credentials && await credentialsAutorises(req.currentUser)) {
+            // create also needs create permission ideally - admin or credentials.create
+            try {
+                credentials = typeof req.body.credentials === 'string'
+                    ? JSON.parse(req.body.credentials)
+                    : req.body.credentials;
+            } catch (_) { credentials = []; }
+            if (!Array.isArray(credentials)) credentials = [];
+            credentials = chiffrerCredentials(credentials);
+        }
+
+        const outil = await Outil.create({
+            nom,
+            lien: lien || null,
+            adresse: adresse || null,
+            image,
+            id_user,
+            credentials
+        });
 
         // activites / sousActivites : tableau d'ids (JSON stringifié si envoyé en multipart)
         const idsActivites = normaliserListe(activites);
@@ -109,7 +149,7 @@ async function create(req, res, next) {
             libelle: `Outil "${nom}" créé`
         });
 
-        res.status(201).json(outilComplet);
+        res.status(201).json(dechiffrerOutil(outilComplet));
     } catch (err) { next(err); }
 }
 
@@ -289,4 +329,41 @@ async function historiqueStatut(req, res, next) {
     } catch (err) { next(err); }
 }
 
-module.exports = { getAll, getById, create, toggleActive, remove, verifierStatut, historiqueStatut, partager, retirerPartageActivite, retirerPartageSousActivite };
+
+// Mise à jour des credentials uniquement (exception à la règle « pas de
+// modification » : les identifiants évoluent souvent sans recréer l'outil).
+async function updateCredentials(req, res, next) {
+    try {
+        const outil = await Outil.findByPk(req.params.id);
+        if (!outil) return res.status(404).json({ message: 'Outil introuvable.' });
+
+        let credentials = req.body.credentials;
+        if (typeof credentials === 'string') {
+            try { credentials = JSON.parse(credentials); } catch (_) { credentials = []; }
+        }
+        if (!Array.isArray(credentials)) credentials = [];
+        credentials = chiffrerCredentials(credentials);
+
+        await outil.update({ credentials });
+
+        await consigner({
+            user: req.currentUser,
+            action: 'modification',
+            ressource: 'outil',
+            id_ressource: outil.id,
+            libelle: `Credentials de l'outil "${outil.nom}" mis à jour (${credentials.length} champ(s))`
+        });
+
+        const { Utilisateur, Activite, SousActivite } = require('../models');
+        const fresh = await Outil.findByPk(outil.id, {
+            include: [
+                { model: Utilisateur },
+                { model: Activite, as: 'activites' },
+                { model: SousActivite, as: 'sousActivites' }
+            ]
+        });
+        res.json(dechiffrerOutil(fresh));
+    } catch (err) { next(err); }
+}
+
+module.exports = { getAll, getById, create, toggleActive, remove, verifierStatut, historiqueStatut, partager, retirerPartageActivite, retirerPartageSousActivite, updateCredentials };

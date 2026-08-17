@@ -124,6 +124,13 @@ async function login(req, res, next) {
 
         const userSansMdp = user.toJSON();
         delete userSansMdp.mot_de_passe;
+        // Normaliser preferences (JSON parfois string selon MySQL)
+        if (userSansMdp.preferences && typeof userSansMdp.preferences === 'string') {
+            try { userSansMdp.preferences = JSON.parse(userSansMdp.preferences); } catch { userSansMdp.preferences = { theme: 'clair', langue: 'fr' }; }
+        }
+        if (!userSansMdp.preferences || typeof userSansMdp.preferences !== 'object') {
+            userSansMdp.preferences = { theme: 'clair', langue: 'fr' };
+        }
 
         return res.json({
             message: 'Connexion réussie.',

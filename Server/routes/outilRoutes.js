@@ -3,9 +3,27 @@ const router = express.Router();
 const outilController = require('../controllers/outilController');
 const { requireAuth, checkPermission, isAdmin, niveauAccesActivite, niveauAccesSousActivite } = require('../middlewares/auth');
 const { uploadOutilImage } = require('../middlewares/upload');
-const { Outil, Activite, SousActivite } = require('../models');
+const { Outil, Activite, SousActivite, Parametre } = require('../models');
 
 router.use(requireAuth);
+
+// Module credentials activé dans Réglages généraux ?
+async function credentialsModuleActif() {
+    const [p] = await Parametre.findOrCreate({ where: { id: 1 }, defaults: {} });
+    return !!p.credentials_actifs;
+}
+
+function exigerCredentialsActifs(req, res, next) {
+    credentialsModuleActif().then(actif => {
+        if (!actif) {
+            return res.status(403).json({
+                message: 'Les credentials sont désactivés dans les Réglages généraux.'
+            });
+        }
+        next();
+    }).catch(next);
+}
+
 
 // Un outil peut être rattaché à plusieurs activités/sous-activités à la fois
 // (many-to-many). Le niveau requis n'a donc pas un seul "id" à vérifier :
@@ -97,6 +115,18 @@ router.get('/:id', checkPermission('outils', 'read'), outilController.getById);
 router.get('/:id/historique-statut', checkPermission('outils', 'read'), checkAccesOutilExistant('read'), outilController.historiqueStatut);
 router.post('/', checkPermission('outils', 'create'), uploadOutilImage.single('image'), checkAccesCreationOutil, outilController.create);
 router.patch('/:id/toggle-active', checkPermission('outils', 'update'), checkAccesOutilExistant('write'), outilController.toggleActive);
+router.put('/:id/credentials',
+    exigerCredentialsActifs,
+    checkPermission('credentials', 'update'),
+    checkAccesOutilExistant('write'),
+    outilController.updateCredentials
+);
+router.get('/:id/credentials',
+    exigerCredentialsActifs,
+    checkPermission('credentials', 'read'),
+    checkAccesOutilExistant('read'),
+    outilController.getById
+);
 router.post('/:id/verifier-statut', checkPermission('outils', 'update'), checkAccesOutilExistant('write'), outilController.verifierStatut);
 router.delete('/:id', checkPermission('outils', 'delete'), checkAccesOutilExistant('delete'), outilController.remove);
 

@@ -6,6 +6,17 @@ const { notifier } = require('../utils/notification');
 
 // Renvoie le mot de passe par défaut configuré dans les réglages généraux
 // (créé automatiquement s'il n'existe pas encore).
+function normaliserPreferences(prefs) {
+    if (!prefs) return { theme: 'clair', langue: 'fr' };
+    if (typeof prefs === 'string') {
+        try { prefs = JSON.parse(prefs); } catch { return { theme: 'clair', langue: 'fr' }; }
+    }
+    if (typeof prefs !== 'object') return { theme: 'clair', langue: 'fr' };
+    const theme = ['clair', 'sombre', 'auto'].includes(prefs.theme) ? prefs.theme : 'clair';
+    const langue = ['fr', 'en'].includes(prefs.langue) ? prefs.langue : 'fr';
+    return { theme, langue };
+}
+
 async function motDePasseDefautActuel() {
     const [parametre] = await Parametre.findOrCreate({ where: { id: 1 }, defaults: {} });
     return parametre.mot_de_passe_defaut;
@@ -78,7 +89,9 @@ async function getById(req, res, next) {
             include: [{ model: Role }, { model: Activite }, { model: Outil }]
         });
         if (!utilisateur) return res.status(404).json({ message: 'Utilisateur introuvable.' });
-        res.json(utilisateur);
+        const json = utilisateur.toJSON();
+        json.preferences = normaliserPreferences(json.preferences);
+        res.json(json);
     } catch (err) { next(err); }
 }
 
@@ -182,4 +195,51 @@ async function remove(req, res, next) {
     } catch (err) { next(err); }
 }
 
-module.exports = { getAll, getById, create, remove, reinitialiserMotDePasse };
+
+
+
+// Mise à jour des champs de profil (email, téléphone, etc.) et préférences.
+// L'utilisateur peut modifier son propre profil ; un admin peut modifier
+// celui de n'importe quel utilisateur.
+async function updateProfil(req, res, next) {
+    try {
+        const { isAdmin } = require('../middlewares/auth');
+        const id = parseInt(req.params.id, 10);
+        if (req.currentUser.id !== id && !isAdmin(req.currentUser)) {
+            return res.status(403).json({ message: 'Vous ne pouvez modifier que votre propre profil.' });
+        }
+
+        const utilisateur = await Utilisateur.findByPk(id);
+        if (!utilisateur) return res.status(404).json({ message: 'Utilisateur introuvable.' });
+
+        const champs = ['email', 'telephone', 'fonction', 'adresse'];
+        const data = {};
+        for (const champ of champs) {
+            if (req.body[champ] !== undefined) data[champ] = req.body[champ] || null;
+        }
+        // autres_contacts : tableau de chaînes
+        if (req.body.autres_contacts !== undefined) {
+            let contacts = req.body.autres_contacts;
+            if (!Array.isArray(contacts)) {
+                contacts = contacts ? [String(contacts)] : [];
+            }
+            data.autres_contacts = contacts.map(x => String(x || '').trim()).filter(Boolean);
+        }
+        if (req.body.preferences && typeof req.body.preferences === 'object') {
+            const base = normaliserPreferences(utilisateur.preferences);
+            data.preferences = normaliserPreferences({ ...base, ...req.body.preferences });
+        }
+
+        await utilisateur.update(data);
+
+        const { Role } = require('../models');
+        const fresh = await Utilisateur.findByPk(id, {
+            include: [{ model: Role, attributes: ['id', 'nom', 'abbreviation', 'permissions'] }]
+        });
+        const json = fresh.toJSON();
+        json.preferences = normaliserPreferences(json.preferences);
+        res.json(json);
+    } catch (err) { next(err); }
+}
+
+module.exports = { getAll, getById, create, remove, reinitialiserMotDePasse, updateProfil };

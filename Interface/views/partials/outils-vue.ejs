@@ -20,7 +20,17 @@
                     <tr>
                         <td><% if (o.image) { %><img src="<%= o.image %>" class="miniature"><% } %></td>
                         <td><%= o.nom %></td>
-                        <td><% if (o.lien) { %><a href="<%= o.lien %>" target="_blank" rel="noopener">Ouvrir ↗</a><% } else { %>—<% } %></td>
+                        <td>
+                            <% if (o.lien) { %>
+                                <a href="<%= o.lien %>" target="_blank" rel="noopener" class="lien-ouvrir-outil"
+                                   data-creds='<%= JSON.stringify(o.credentials || []).replace(/'/g, "&#39;") %>'>Ouvrir ↗</a>
+                            <% } else { %>—<% } %>
+                            <% var hasCreds = o.credentials && (Array.isArray(o.credentials) ? o.credentials.length : true); %>
+                            <% if (credentialsActifs && peut('credentials', 'read')) { %>
+                                <a href="/outils/<%= o.id %>/credentials?retour=<%= encodeURIComponent(retour) %>"
+                                   class="btn btn-gris btn-petit" title="Credentials" style="margin-left:4px;">🔑</a>
+                            <% } %>
+                        </td>
                         <td><%= o.Utilisateur ? o.Utilisateur.prenom + ' ' + o.Utilisateur.nom : '—' %></td>
                         <td>
                             <% if (o.active) { %>
@@ -35,6 +45,9 @@
                         <td style="text-align:right; white-space:nowrap;">
                             <% if (peut('tickets', 'create')) { %>
                                 <a href="/tickets/nouveau?id_outil=<%= o.id %>" class="btn btn-gris btn-petit" title="Signaler un problème sur cet outil">🎫 Signaler</a>
+                                <% if (credentialsActifs && peut('credentials', 'read')) { %>
+                                <a href="/outils/<%= o.id %>/credentials?retour=<%= encodeURIComponent(retour) %>" class="btn btn-gris btn-petit" title="Credentials de l'outil">🔑 Credentials</a>
+                                <% } %>
                             <% if (peut('partage', 'create') || peut('partage', 'delete')) { %>
                                 <a href="/outils/<%= o.id %>/partager?retour=<%= encodeURIComponent(retour) %>" class="btn btn-gris btn-petit" title="Partager cet outil">🔗 Partager</a>
                             <% } %>
@@ -89,13 +102,16 @@
                     </div>
                     <div class="pied-carte">
                         <% if (o.lien) { %>
-                            <a href="<%= o.lien %>" target="_blank" rel="noopener" style="font-size:12px;">Ouvrir ↗</a>
+                            <a href="<%= o.lien %>" target="_blank" rel="noopener" style="font-size:12px;" class="lien-ouvrir-outil" data-creds='<%= JSON.stringify(o.credentials || []).replace(/'/g, "&#39;") %>'>Ouvrir ↗</a>
                         <% } else { %>
                             <span></span>
                         <% } %>
                         <div style="display:flex; gap:4px;">
                             <% if (peut('tickets', 'create')) { %>
                                 <a href="/tickets/nouveau?id_outil=<%= o.id %>" class="btn btn-gris btn-petit" title="Signaler un problème">🎫</a>
+                                <% if (credentialsActifs && peut('credentials', 'read')) { %>
+                                <a href="/outils/<%= o.id %>/credentials?retour=<%= encodeURIComponent(retour) %>" class="btn btn-gris btn-petit" title="Credentials">🔑</a>
+                                <% } %>
                                 <% if (peut('partage', 'create') || peut('partage', 'delete')) { %>
                                     <a href="/outils/<%= o.id %>/partager?retour=<%= encodeURIComponent(retour) %>" class="btn btn-gris btn-petit" title="Partager cet outil">🔗</a>
                                 <% } %>
@@ -152,6 +168,9 @@
                         <div class="actions-vignette">
                             <% if (peut('tickets', 'create')) { %>
                                 <a href="/tickets/nouveau?id_outil=<%= o.id %>" title="Signaler un problème">🎫</a>
+                                <% if (credentialsActifs && peut('credentials', 'read')) { %>
+                                <a href="/outils/<%= o.id %>/credentials?retour=<%= encodeURIComponent(retour) %>" title="Credentials">🔑</a>
+                                <% } %>
                             <% if (peut('partage', 'create') || peut('partage', 'delete')) { %>
                                 <a href="/outils/<%= o.id %>/partager?retour=<%= encodeURIComponent(retour) %>" title="Partager cet outil">🔗</a>
                             <% } %>
@@ -201,3 +220,22 @@
     })();
     </script>
 <% } %>
+
+<script>
+document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a.lien-ouvrir-outil');
+    if (!a) return;
+    var raw = a.getAttribute('data-creds');
+    if (!raw) return;
+    try {
+        var creds = JSON.parse(raw);
+        if (!Array.isArray(creds) || !creds.length) return;
+        var parts = creds.filter(function (c) { return c && c.valeur; })
+            .map(function (c) { return (c.label || 'Champ') + ' : ' + c.valeur; });
+        if (parts.length && typeof gloCopier === 'function') {
+            // Copie sans bloquer l'ouverture du lien
+            setTimeout(function () { gloCopier(parts.join('\n')); }, 50);
+        }
+    } catch (_) {}
+});
+</script>

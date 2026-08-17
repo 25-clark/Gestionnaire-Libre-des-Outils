@@ -69,6 +69,35 @@ module.exports = (sequelize) => {
         bloque_jusqu_a: {
             type: DataTypes.DATE,
             allowNull: true
+        },
+        // ---- Profil enrichi ----
+        email: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        telephone: {
+            type: DataTypes.STRING(30),
+            allowNull: true
+        },
+        autres_contacts: {
+            // Tableau de chaînes (ex. ["Teams: @jean", "Slack: #ops"])
+            type: DataTypes.JSON,
+            allowNull: true,
+            defaultValue: []
+        },
+        fonction: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        adresse: {
+            type: DataTypes.TEXT,
+            allowNull: true
+        },
+        // Préférences de compte (thème, langue, etc.) stockées en JSON
+        preferences: {
+            type: DataTypes.JSON,
+            allowNull: true,
+            defaultValue: { theme: 'clair', langue: 'fr' }
         }
     }, {
         tableName: 'utilisateurs',

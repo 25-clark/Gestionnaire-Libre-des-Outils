@@ -6,6 +6,7 @@ const path = require('path');
 
 const { sequelize } = require('./models');
 const { demarrerSurveillance } = require('./utils/surveillance');
+const { assurerColonnes } = require('./utils/assurerColonnes');
 
 const authRoutes = require('./routes/authRoutes');
 const roleRoutes = require('./routes/roleRoutes');
@@ -77,6 +78,9 @@ const PORT = process.env.PORT || 4000;
 sequelize.authenticate()
     .then(() => {
         console.log('Connexion à la base de données réussie.');
+        return assurerColonnes();
+    })
+    .then(() => {
         app.listen(PORT, () => {
             console.log(`Serveur GLO démarré sur http://localhost:${PORT}`);
             demarrerSurveillance();

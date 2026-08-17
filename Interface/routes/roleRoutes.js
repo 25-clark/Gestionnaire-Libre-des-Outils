@@ -7,7 +7,8 @@ router.use(requireLogin);
 
 const RESSOURCES = [
     'utilisateurs', 'roles', 'activites', 'sous_activites', 'outils', 'acces',
-    'tickets', 'diagnostic', 'notifications', 'export', 'profil', 'partage', 'journal'
+    'tickets', 'diagnostic', 'notifications', 'export', 'profil', 'partage', 'journal',
+    'credentials'
 ];
 const ACTIONS = ['read', 'create', 'update', 'delete'];
 // Onglets visibles dans une page activité/sous-activité — indépendant du
@@ -105,6 +106,12 @@ function construirePermissions(body) {
         for (const action of ACTIONS) {
             permissions[ressource][action] = body[`perm_${ressource}_${action}`] === 'on';
         }
+    }
+
+    // « read » sur les activités est toujours actif : c'est la clé d'accès
+    // à tout le reste (sous-activités, outils, etc.).
+    if (permissions.activites) {
+        permissions.activites.read = true;
     }
 
     permissions.onglets = {};

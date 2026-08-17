@@ -17,7 +17,10 @@ async function trouverOuCreer() {
 async function obtenirPublic(req, res, next) {
     try {
         const parametre = await trouverOuCreer();
-        res.json({ nom_entreprise: parametre.nom_entreprise });
+        res.json({
+            nom_entreprise: parametre.nom_entreprise,
+            credentials_actifs: !!parametre.credentials_actifs
+        });
     } catch (err) { next(err); }
 }
 
@@ -52,7 +55,8 @@ async function mettreAJour(req, res, next) {
             duree_blocage_minutes,
             session_duree_heures,
             surveillance_active,
-            surveillance_intervalle_minutes
+            surveillance_intervalle_minutes,
+            credentials_actifs
         } = req.body;
 
         const nouvelleLongueurMin = mdp_longueur_min !== undefined
@@ -90,7 +94,8 @@ async function mettreAJour(req, res, next) {
             surveillance_active: surveillance_active !== undefined ? !!surveillance_active : parametre.surveillance_active,
             surveillance_intervalle_minutes: surveillance_intervalle_minutes !== undefined
                 ? borner(surveillance_intervalle_minutes, 1, 1440, parametre.surveillance_intervalle_minutes)
-                : parametre.surveillance_intervalle_minutes
+                : parametre.surveillance_intervalle_minutes,
+            credentials_actifs: credentials_actifs !== undefined ? !!credentials_actifs : parametre.credentials_actifs
         });
 
         await consigner({

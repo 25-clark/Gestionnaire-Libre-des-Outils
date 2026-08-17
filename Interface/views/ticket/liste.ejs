@@ -2,7 +2,7 @@
 
 <div class="entete-page">
     <h1>🎫 Tickets</h1>
-    <div style="display:flex; gap:8px;">
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <% if (peut('export', 'read')) { %>
         <a href="/tickets/export.csv?statut=<%= statut %>&priorite=<%= priorite %>&id_createur=<%= id_createur %>&id_assigne=<%= id_assigne %>" class="btn btn-gris btn-petit">⬇️ CSV</a>
         <a href="/tickets/export-pdf?statut=<%= statut %>&priorite=<%= priorite %>&id_createur=<%= id_createur %>&id_assigne=<%= id_assigne %>" target="_blank" class="btn btn-gris btn-petit">🖨️ PDF</a>
@@ -13,59 +13,116 @@
     </div>
 </div>
 
+<%
+  var filtresActifs = [];
+  if (statut) filtresActifs.push({ cle: 'statut', libelle: 'Statut', valeur: LIBELLES_STATUT[statut] || statut });
+  if (priorite) filtresActifs.push({ cle: 'priorite', libelle: 'Priorité', valeur: LIBELLES_PRIORITE[priorite] || priorite });
+  if (id_createur) {
+    var uC = utilisateurs.find(function(u) { return String(u.id) === String(id_createur); });
+    var libC = (currentUser && String(id_createur) === String(currentUser.id)) ? 'Moi' : (uC ? (uC.prenom + ' ' + uC.nom) : ('#' + id_createur));
+    filtresActifs.push({ cle: 'id_createur', libelle: 'Créé par', valeur: libC });
+  }
+  if (id_assigne) {
+    var uA = utilisateurs.find(function(u) { return String(u.id) === String(id_assigne); });
+    var libA = (currentUser && String(id_assigne) === String(currentUser.id)) ? 'Moi' : (uA ? (uA.prenom + ' ' + uA.nom) : ('#' + id_assigne));
+    filtresActifs.push({ cle: 'id_assigne', libelle: 'Assigné à', valeur: libA });
+  }
+%>
+
 <div class="carte" style="margin-bottom:16px;">
-    <form action="/tickets" method="GET" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
-        <div>
-            <label for="statut">Statut</label>
-            <select id="statut" name="statut">
-                <option value="">— Tous —</option>
-                <% Object.keys(LIBELLES_STATUT).forEach(function(s) { %>
-                    <option value="<%= s %>" <%= statut === s ? 'selected' : '' %>><%= LIBELLES_STATUT[s] %></option>
-                <% }) %>
-            </select>
+    <form action="/tickets" method="GET" id="form-filtres-tickets" class="form-filtres-tickets">
+        <div class="filtres-selects">
+            <div>
+                <label for="statut">Statut</label>
+                <select id="statut" name="statut">
+                    <option value="">— Tous —</option>
+                    <% Object.keys(LIBELLES_STATUT).forEach(function(s) { %>
+                        <option value="<%= s %>" <%= statut === s ? 'selected' : '' %>><%= LIBELLES_STATUT[s] %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <div>
+                <label for="priorite">Priorité</label>
+                <select id="priorite" name="priorite">
+                    <option value="">— Toutes —</option>
+                    <% Object.keys(LIBELLES_PRIORITE).forEach(function(p) { %>
+                        <option value="<%= p %>" <%= priorite === p ? 'selected' : '' %>><%= LIBELLES_PRIORITE[p] %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <div>
+                <label for="id_createur">Créé par</label>
+                <select id="id_createur" name="id_createur">
+                    <option value="">— Tout le monde —</option>
+                    <% if (currentUser) { %><option value="<%= currentUser.id %>" <%= String(id_createur) === String(currentUser.id) ? 'selected' : '' %>>Moi</option><% } %>
+                    <% utilisateurs.forEach(function(u) { %>
+                        <option value="<%= u.id %>" <%= String(id_createur) === String(u.id) ? 'selected' : '' %>><%= u.prenom %> <%= u.nom %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <div>
+                <label for="id_assigne">Assigné à</label>
+                <select id="id_assigne" name="id_assigne">
+                    <option value="">— Tout le monde —</option>
+                    <% if (currentUser) { %><option value="<%= currentUser.id %>" <%= String(id_assigne) === String(currentUser.id) ? 'selected' : '' %>>Moi</option><% } %>
+                    <% utilisateurs.forEach(function(u) { %>
+                        <option value="<%= u.id %>" <%= String(id_assigne) === String(u.id) ? 'selected' : '' %>><%= u.prenom %> <%= u.nom %></option>
+                    <% }) %>
+                </select>
+            </div>
         </div>
-        <div>
-            <label for="priorite">Priorité</label>
-            <select id="priorite" name="priorite">
-                <option value="">— Toutes —</option>
-                <% Object.keys(LIBELLES_PRIORITE).forEach(function(p) { %>
-                    <option value="<%= p %>" <%= priorite === p ? 'selected' : '' %>><%= LIBELLES_PRIORITE[p] %></option>
-                <% }) %>
-            </select>
+
+        <div class="filtres-actions">
+            <button type="submit" class="btn btn-primaire" title="Appliquer tous les filtres sélectionnés">
+                <i class="bi bi-funnel"></i> Appliquer les filtres
+            </button>
+            <% if (filtresActifs.length) { %>
+                <a href="/tickets" class="btn btn-gris">Réinitialiser</a>
+            <% } %>
+            <button type="button" class="btn btn-gris" id="btn-sauvegarder-filtre" title="Enregistrer la combinaison actuelle dans le navigateur">
+                <i class="bi bi-bookmark-plus"></i> Sauvegarder ce filtre
+            </button>
         </div>
-        <div>
-            <label for="id_createur">Créé par</label>
-            <select id="id_createur" name="id_createur">
-                <option value="">— Tout le monde —</option>
-                <% if (currentUser) { %><option value="<%= currentUser.id %>" <%= String(id_createur) === String(currentUser.id) ? 'selected' : '' %>>Moi</option><% } %>
-                <% utilisateurs.forEach(function(u) { %>
-                    <option value="<%= u.id %>" <%= String(id_createur) === String(u.id) ? 'selected' : '' %>><%= u.prenom %> <%= u.nom %></option>
-                <% }) %>
-            </select>
-        </div>
-        <div>
-            <label for="id_assigne">Assigné à</label>
-            <select id="id_assigne" name="id_assigne">
-                <option value="">— Tout le monde —</option>
-                <% if (currentUser) { %><option value="<%= currentUser.id %>" <%= String(id_assigne) === String(currentUser.id) ? 'selected' : '' %>>Moi</option><% } %>
-                <% utilisateurs.forEach(function(u) { %>
-                    <option value="<%= u.id %>" <%= String(id_assigne) === String(u.id) ? 'selected' : '' %>><%= u.prenom %> <%= u.nom %></option>
-                <% }) %>
-            </select>
-        </div>
-        <button type="submit" class="btn btn-primaire">Filtrer</button>
-        <% if (statut || priorite || id_createur || id_assigne) { %>
-            <a href="/tickets" class="btn btn-gris">Réinitialiser</a>
-        <% } %>
     </form>
+
+    <% if (filtresActifs.length) { %>
+    <div class="filtres-actifs" style="margin-top:12px;">
+        <span style="font-size:13px; color:var(--gris); margin-right:6px;">Filtres actifs :</span>
+        <% filtresActifs.forEach(function(f) { %>
+            <span class="pastille-filtre">
+                <strong><%= f.libelle %></strong> : <%= f.valeur %>
+                <a href="#" class="retirer-filtre" data-cle="<%= f.cle %>" title="Retirer ce filtre">×</a>
+            </span>
+        <% }) %>
+    </div>
+    <% } %>
+
+    <div id="filtres-sauvegardes" class="filtres-sauvegardes" style="margin-top:12px; display:none;">
+        <span style="font-size:13px; color:var(--gris); margin-right:6px;">Mes filtres :</span>
+        <div id="liste-filtres-sauvegardes" style="display:inline-flex; flex-wrap:wrap; gap:6px;"></div>
+    </div>
 </div>
 
 <% if (!tickets.length) { %>
     <div class="carte vide">Aucun ticket ne correspond à ces filtres.</div>
 <% } else { %>
     <div class="carte">
-        <table class="tableau">
-            <thead><tr><th>#</th><th>Titre</th><th>Statut</th><th>Priorité</th><th>Lié à</th><th>Assigné</th><th>Ouvert le</th></tr></thead>
+        <p style="font-size:13px; color:var(--gris); margin:0 0 10px;">
+            <%= tickets.length %> ticket<%= tickets.length > 1 ? 's' : '' %>
+            <% if (filtresActifs.length) { %> (filtrés)<% } %>
+        </p>
+        <table class="tableau" id="table-tickets">
+            <thead>
+                <tr>
+                    <th data-no-sort="1">#</th>
+                    <th>Titre</th>
+                    <th>Statut</th>
+                    <th>Priorité</th>
+                    <th>Lié à</th>
+                    <th>Assigné</th>
+                    <th>Ouvert le</th>
+                </tr>
+            </thead>
             <tbody>
             <% tickets.forEach(function(t) { %>
                 <tr>
@@ -87,5 +144,172 @@
         </table>
     </div>
 <% } %>
+
+<style>
+.form-filtres-tickets .filtres-selects {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+.form-filtres-tickets .filtres-selects > div {
+    min-width: 140px;
+    flex: 1 1 140px;
+}
+.form-filtres-tickets .filtres-selects label {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 4px;
+    color: var(--gris);
+}
+.form-filtres-tickets .filtres-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    align-items: center;
+}
+.pastille-filtre {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bleu-clair);
+    color: var(--bleu-fonce);
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 12px;
+    margin: 2px 4px 2px 0;
+}
+.pastille-filtre .retirer-filtre {
+    color: var(--rouge);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1;
+}
+.pastille-filtre .retirer-filtre:hover { opacity: 0.7; }
+.btn-filtre-sauve {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--gris-clair);
+    border: 1px solid var(--gris-bordure);
+    border-radius: 16px;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--gris-fonce);
+}
+.btn-filtre-sauve:hover { background: var(--bleu-clair); border-color: var(--bleu); }
+.btn-filtre-sauve .suppr {
+    color: var(--rouge);
+    margin-left: 4px;
+    font-weight: 700;
+}
+</style>
+
+<script>
+(function () {
+    var STORAGE_KEY = 'glo_filtres_tickets';
+
+    function getSaved() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+        catch (_) { return []; }
+    }
+    function setSaved(list) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    }
+
+    function currentFilterParams() {
+        var form = document.getElementById('form-filtres-tickets');
+        var fd = new FormData(form);
+        var params = {};
+        ['statut', 'priorite', 'id_createur', 'id_assigne'].forEach(function (k) {
+            var v = fd.get(k);
+            if (v) params[k] = v;
+        });
+        return params;
+    }
+
+    function labelForSelect(id, value) {
+        var sel = document.getElementById(id);
+        if (!sel) return value;
+        for (var i = 0; i < sel.options.length; i++) {
+            if (sel.options[i].value === value) return sel.options[i].text;
+        }
+        return value;
+    }
+
+    function renderSaved() {
+        var list = getSaved();
+        var box = document.getElementById('filtres-sauvegardes');
+        var cont = document.getElementById('liste-filtres-sauvegardes');
+        if (!box || !cont) return;
+        cont.innerHTML = '';
+        if (!list.length) {
+            box.style.display = 'none';
+            return;
+        }
+        box.style.display = 'block';
+        list.forEach(function (item, idx) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn-filtre-sauve';
+            btn.title = 'Appliquer ce filtre';
+            var parts = [];
+            if (item.params.statut) parts.push(labelForSelect('statut', item.params.statut));
+            if (item.params.priorite) parts.push(labelForSelect('priorite', item.params.priorite));
+            if (item.params.id_createur) parts.push('Créé: ' + labelForSelect('id_createur', item.params.id_createur));
+            if (item.params.id_assigne) parts.push('Assigné: ' + labelForSelect('id_assigne', item.params.id_assigne));
+            btn.innerHTML = '<i class="bi bi-bookmark"></i> ' + (item.nom || parts.join(' · ') || 'Filtre') +
+                ' <span class="suppr" title="Supprimer">×</span>';
+            btn.addEventListener('click', function (e) {
+                if (e.target.classList.contains('suppr')) {
+                    e.stopPropagation();
+                    var next = getSaved();
+                    next.splice(idx, 1);
+                    setSaved(next);
+                    renderSaved();
+                    return;
+                }
+                // Appliquer : remplir les selects et soumettre
+                ['statut', 'priorite', 'id_createur', 'id_assigne'].forEach(function (k) {
+                    var sel = document.getElementById(k);
+                    if (sel) sel.value = item.params[k] || '';
+                });
+                document.getElementById('form-filtres-tickets').submit();
+            });
+            cont.appendChild(btn);
+        });
+    }
+
+    document.getElementById('btn-sauvegarder-filtre').addEventListener('click', function () {
+        var params = currentFilterParams();
+        if (!Object.keys(params).length) {
+            alert('Sélectionnez au moins un critère avant de sauvegarder.');
+            return;
+        }
+        var nom = prompt('Nom de ce filtre (optionnel) :', '');
+        if (nom === null) return;
+        var list = getSaved();
+        list.push({ nom: (nom || '').trim(), params: params, date: Date.now() });
+        setSaved(list);
+        renderSaved();
+    });
+
+    // Retirer un filtre individuel (pastille)
+    document.querySelectorAll('.retirer-filtre').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+            e.preventDefault();
+            var cle = a.getAttribute('data-cle');
+            var sel = document.getElementById(cle);
+            if (sel) sel.value = '';
+            document.getElementById('form-filtres-tickets').submit();
+        });
+    });
+
+    renderSaved();
+})();
+</script>
 
 <%- include('../partials/footer') %>

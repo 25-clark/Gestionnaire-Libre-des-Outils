@@ -10,7 +10,7 @@ router.get('/', requireLogin, async (req, res, next) => {
 
         res.locals.page = 'dashboard';
         res.render('dashboard', {
-            titre: 'Accueil',
+            titre: 'Tableau de bord',
             arborescence
         });
     } catch (err) {

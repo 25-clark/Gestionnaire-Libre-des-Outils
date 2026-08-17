@@ -16,7 +16,8 @@
     export: 'Export et impression',
     profil: 'Mon profil',
     partage: 'Partage (outils / sous-activités)',
-    journal: "Journal d'événements"
+    journal: "Journal d'événements",
+    credentials: 'Credentials (outils)'
 };
 var libellesOnglets = {
     outils: 'Outils',
@@ -56,8 +57,12 @@ var libellesActions = { read: 'Lire', create: 'Créer', update: 'Modifier', dele
                     <td><%= libellesRessources[ressource] %></td>
                     <% actions.forEach(function(action) { %>
                         <% var coche = role && role.permissions && role.permissions[ressource] && role.permissions[ressource][action]; %>
+                        <% var fige = (ressource === 'activites' && action === 'read'); %>
                         <td>
-                            <input type="checkbox" name="perm_<%= ressource %>_<%= action %>" <%= coche ? 'checked' : '' %>>
+                            <input type="checkbox" name="perm_<%= ressource %>_<%= action %>"
+                                   <%= (coche || fige) ? 'checked' : '' %>
+                                   <%= fige ? 'checked disabled' : '' %>>
+                            <% if (fige) { %><input type="hidden" name="perm_activites_read" value="on"><% } %>
                         </td>
                     <% }) %>
                 </tr>

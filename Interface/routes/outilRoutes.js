@@ -45,6 +45,7 @@ router.post('/', uploadOutilImage.single('image'), async (req, res, next) => {
             lien: req.body.lien,
             adresse: req.body.adresse,
             image,
+            credentials: req.body.credentials || '[]',
             activites: JSON.stringify(activites),
             sousActivites: JSON.stringify(sousActivites)
         });
@@ -166,4 +167,65 @@ router.post('/:id/retirer-partage/sous-activite/:idSousActivite', async (req, re
     } catch (err) { next(err); }
 });
 
+
+// ---------- Credentials d'un outil ----------
+router.get('/:id/credentials', async (req, res, next) => {
+    try {
+        // Module + permission (la source de vérité reste le Server)
+        const { peutFaire } = require('../middlewares/requireLogin');
+        if (!res.locals.credentialsActifs) {
+            return res.status(403).render('erreur', {
+                titre: 'Credentials désactivés',
+                message: 'Le module credentials est désactivé dans les Réglages généraux.'
+            });
+        }
+        if (!peutFaire(req.session.user, 'credentials', 'read')) {
+            return res.status(403).render('erreur', {
+                titre: 'Accès refusé',
+                message: "Vous n'avez pas la permission de consulter les credentials."
+            });
+        }
+        const api = apiClient(req);
+        const { data: outil } = await api.get(`/outils/${req.params.id}`);
+        res.render('outil/credentials', {
+            titre: `Credentials — ${outil.nom}`,
+            outil,
+            retour: req.query.retour || '/',
+            erreur: null,
+            succes: null
+        });
+    } catch (err) { next(err); }
+});
+
+router.post('/:id/credentials', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        let credentials = req.body.credentials || '[]';
+        if (typeof credentials === 'string') {
+            try { credentials = JSON.parse(credentials); } catch (_) { credentials = []; }
+        }
+        const { data: outil } = await api.put(`/outils/${req.params.id}/credentials`, { credentials });
+        res.render('outil/credentials', {
+            titre: `Credentials — ${outil.nom}`,
+            outil,
+            retour: req.body.retour || '/',
+            erreur: null,
+            succes: 'Credentials enregistrés.'
+        });
+    } catch (err) {
+        try {
+            const api = apiClient(req);
+            const { data: outil } = await api.get(`/outils/${req.params.id}`);
+            res.render('outil/credentials', {
+                titre: `Credentials — ${outil.nom}`,
+                outil,
+                retour: req.body.retour || '/',
+                erreur: err.response?.data?.message || 'Erreur lors de l\'enregistrement.',
+                succes: null
+            });
+        } catch (err2) { next(err2); }
+    }
+});
+
 module.exports = router;
+

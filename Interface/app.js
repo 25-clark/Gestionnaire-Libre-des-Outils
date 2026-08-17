@@ -39,20 +39,29 @@ app.use(session({
 }));
 
 const { peutFaire } = require('./middlewares/requireLogin');
+const { creerTraducteur, normaliserPreferences } = require('./utils/i18n');
 const { apiClient, apiClientAnonyme } = require('./config/api');
 
 // Petit cache en mémoire (30s) pour éviter d'appeler l'API à chaque requête
 // juste pour le nom de l'entreprise, affiché dans l'en-tête et le login.
-let cacheNomEntreprise = { valeur: null, expire: 0 };
-async function obtenirNomEntreprise() {
-    if (Date.now() < cacheNomEntreprise.expire) return cacheNomEntreprise.valeur;
+let cachePublic = { nom_entreprise: null, credentials_actifs: false, expire: 0 };
+async function obtenirParametresPublics() {
+    if (Date.now() < cachePublic.expire) return cachePublic;
     try {
         const { data } = await apiClientAnonyme().get('/parametres/public');
-        cacheNomEntreprise = { valeur: data.nom_entreprise, expire: Date.now() + 30000 };
+        cachePublic = {
+            nom_entreprise: data.nom_entreprise,
+            credentials_actifs: !!data.credentials_actifs,
+            expire: Date.now() + 30000
+        };
     } catch {
-        cacheNomEntreprise = { valeur: null, expire: Date.now() + 30000 };
+        cachePublic = { nom_entreprise: null, credentials_actifs: false, expire: Date.now() + 30000 };
     }
-    return cacheNomEntreprise.valeur;
+    return cachePublic;
+}
+async function obtenirNomEntreprise() {
+    const p = await obtenirParametresPublics();
+    return p.nom_entreprise;
 }
 
 // Rend l'utilisateur connecté disponible dans toutes les vues EJS, ainsi
@@ -63,7 +72,17 @@ app.use(async (req, res, next) => {
     res.locals.currentUser = req.session.user || null;
     res.locals.page = '';
     res.locals.peut = (resource, action) => peutFaire(res.locals.currentUser, resource, action);
-    res.locals.nomEntreprise = await obtenirNomEntreprise();
+    // Préférences compte (thème / langue)
+    const prefs = normaliserPreferences(res.locals.currentUser && res.locals.currentUser.preferences);
+    if (res.locals.currentUser) {
+        res.locals.currentUser.preferences = prefs;
+    }
+    res.locals.prefs = prefs;
+    res.locals.lang = prefs.langue;
+    res.locals.t = creerTraducteur(prefs.langue);
+    const pub = await obtenirParametresPublics();
+    res.locals.nomEntreprise = pub.nom_entreprise;
+    res.locals.credentialsActifs = pub.credentials_actifs;
     res.locals.nomApplication = res.locals.nomEntreprise || 'Gestionnaire Outils';
 
     res.locals.notificationsNonLues = 0;

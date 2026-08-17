@@ -85,7 +85,30 @@ module.exports = (sequelize) => {
         ldap_attribut_groupe_nom: { type: DataTypes.STRING, allowNull: true, defaultValue: 'cn' },
         // Sous-groupes recherchés SOUS le DN de chaque groupe importé comme
         // activité, pour devenir ses sous-activités.
-        ldap_filtre_sous_groupes: { type: DataTypes.STRING, allowNull: true, defaultValue: '(objectClass=groupOfNames)' }
+        ldap_filtre_sous_groupes: { type: DataTypes.STRING, allowNull: true, defaultValue: '(objectClass=groupOfNames)' },
+        // Active le module credentials sur les outils (désactivé par défaut).
+        // Sans ça, aucune UI ni API credentials n'est exposée, même avec les droits rôle.
+        credentials_actifs: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
+        },
+        // Ancien stockage global (non utilisé pour les credentials par outil)
+        credentials: {
+            type: DataTypes.JSON,
+            allowNull: true,
+            defaultValue: []
+        },
+        // Première installation terminée (CGU acceptées + choix LDAP/local)
+        installation_terminee: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
+        },
+        cgu_acceptees_le: {
+            type: DataTypes.DATE,
+            allowNull: true
+        }
     }, {
         tableName: 'parametres',
         timestamps: true,
