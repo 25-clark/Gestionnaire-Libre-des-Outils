@@ -1,52 +1,52 @@
 <%- include('partials/header') %>
 
 <div class="carte-login" style="margin: 40px auto;">
-    <h1 style="font-size:20px;">🔑 Changer mon mot de passe</h1>
+ <h1 style="font-size:20px;"><i class="bi bi-key"></i> Changer mon mot de passe</h1>
 
-    <% if (force) { %>
-        <p class="sous-titre" style="color:var(--orange);">
-            Vous utilisez encore le mot de passe par défaut. Vous devez le changer avant de continuer.
-        </p>
-    <% } else { %>
-        <p class="sous-titre">Choisissez un nouveau mot de passe.</p>
-    <% } %>
+ <% if (force) { %>
+ <p class="sous-titre" style="color:var(--orange);">
+ Vous utilisez encore le mot de passe par défaut. Vous devez le changer avant de continuer.
+ </p>
+ <% } else { %>
+ <p class="sous-titre">Choisissez un nouveau mot de passe.</p>
+ <% } %>
 
-    <% if (erreur) { %>
-        <div class="message-erreur"><%= erreur %></div>
-    <% } %>
+ <% if (erreur) { %>
+ <div class="message-erreur"><%= erreur %></div>
+ <% } %>
 
-    <form action="/changer-mot-de-passe" method="POST">
-        <label for="ancien_mot_de_passe"><%= force ? 'Mot de passe par défaut' : 'Mot de passe actuel' %></label>
-        <input type="password" id="ancien_mot_de_passe" name="ancien_mot_de_passe" required autofocus>
+ <form action="/changer-mot-de-passe" method="POST">
+ <label for="ancien_mot_de_passe"><%= force ? 'Mot de passe par défaut' : 'Mot de passe actuel' %></label>
+ <input type="password" id="ancien_mot_de_passe" name="ancien_mot_de_passe" required autofocus>
 
-        <label for="nouveau_mot_de_passe">Nouveau mot de passe</label>
-        <input type="password" id="nouveau_mot_de_passe" name="nouveau_mot_de_passe" minlength="6" required>
+ <label for="nouveau_mot_de_passe">Nouveau mot de passe</label>
+ <input type="password" id="nouveau_mot_de_passe" name="nouveau_mot_de_passe" minlength="6" required>
 
-        <label for="confirmation">Confirmer le nouveau mot de passe</label>
-        <input type="password" id="confirmation" required>
-        <p id="erreur-confirmation" style="color:var(--rouge, #c0392b); font-size:13px; display:none;">
-            Les deux mots de passe ne correspondent pas.
-        </p>
+ <label for="confirmation">Confirmer le nouveau mot de passe</label>
+ <input type="password" id="confirmation" required>
+ <p id="erreur-confirmation" style="color:var(--rouge, #c0392b); font-size:13px; display:none;">
+ Les deux mots de passe ne correspondent pas.
+ </p>
 
-        <button type="submit" class="btn btn-primaire">Valider</button>
-        <% if (!force) { %>
-            <a href="/" class="btn btn-gris" style="margin-top:8px; display:inline-block; text-align:center;">Annuler</a>
-        <% } %>
-    </form>
+ <button type="submit" class="btn btn-primaire">Valider</button>
+ <% if (!force) { %>
+ <a href="/" class="btn btn-gris" style="margin-top:8px; display:inline-block; text-align:center;">Annuler</a>
+ <% } %>
+ </form>
 </div>
 
 <script>
-    document.querySelector('form').addEventListener('submit', function (e) {
-        var nouveau = document.getElementById('nouveau_mot_de_passe').value;
-        var confirmation = document.getElementById('confirmation').value;
-        var erreur = document.getElementById('erreur-confirmation');
-        if (nouveau !== confirmation) {
-            e.preventDefault();
-            erreur.style.display = 'block';
-        } else {
-            erreur.style.display = 'none';
-        }
-    });
+ document.querySelector('form').addEventListener('submit', function (e) {
+ var nouveau = document.getElementById('nouveau_mot_de_passe').value;
+ var confirmation = document.getElementById('confirmation').value;
+ var erreur = document.getElementById('erreur-confirmation');
+ if (nouveau !== confirmation) {
+ e.preventDefault();
+ erreur.style.display = 'block';
+ } else {
+ erreur.style.display = 'none';
+ }
+ });
 </script>
 
 <%- include('partials/footer') %>

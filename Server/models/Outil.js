@@ -63,6 +63,24 @@ module.exports = (sequelize) => {
             type: DataTypes.JSON,
             allowNull: true,
             defaultValue: []
+        },
+        // Note de maintenance visible par les utilisateurs ayant accès à l'outil
+        note_maintenance: {
+            type: DataTypes.TEXT,
+            allowNull: true
+        },
+        // Fenêtre de dérangement / test (coupure ou latence annoncée)
+        derangement_debut: {
+            type: DataTypes.DATE,
+            allowNull: true
+        },
+        derangement_fin: {
+            type: DataTypes.DATE,
+            allowNull: true
+        },
+        derangement_message: {
+            type: DataTypes.STRING(500),
+            allowNull: true
         }
     }, {
         tableName: 'outils',

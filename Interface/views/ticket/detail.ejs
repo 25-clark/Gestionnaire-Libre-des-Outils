@@ -2,103 +2,128 @@
 
 <div class="fil-ariane"><a href="/tickets">Tickets</a> <span class="sep">›</span> #<%= ticket.id %></div>
 
+<% var sla = ticket.sla_statut || 'sans_sla'; %>
 <div class="entete-page">
-    <h1>🎫 #<%= ticket.id %> — <%= ticket.titre %></h1>
-    <% if (peut('tickets', 'delete')) { %>
-        <form action="/tickets/<%= ticket.id %>/supprimer" method="POST" class="form-inline"
-              onsubmit="return confirm('Supprimer ce ticket et tout son historique de messages ?');">
-            <button type="submit" class="btn btn-danger">Supprimer</button>
-        </form>
-    <% } %>
+ <h1><i class="bi bi-ticket-detailed"></i> #<%= ticket.id %> — <%= ticket.titre %></h1>
+ <% if (peut('tickets', 'delete')) { %>
+ <form action="/tickets/<%= ticket.id %>/supprimer" method="POST" class="form-inline"
+ onsubmit="return confirm('Supprimer ce ticket et tout son historique de messages ?');">
+ <button type="submit" class="btn btn-danger">Supprimer</button>
+ </form>
+ <% } %>
 </div>
 
-<div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px; align-items:flex-start;">
-    <div>
-        <div class="carte">
-            <p style="white-space:pre-wrap; margin:0 0 12px; font-size:14px;"><%= ticket.description %></p>
-
-            <% if (ticket.images && ticket.images.length) { %>
-                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
-                    <% ticket.images.forEach(function(img) { %>
-                        <a href="<%= img.chemin %>" target="_blank" rel="noopener">
-                            <img src="<%= img.chemin %>" alt="Image jointe" style="width:90px; height:90px; object-fit:cover; border-radius:var(--rayon); border:1px solid var(--gris-bordure);">
-                        </a>
-                    <% }) %>
-                </div>
+<div class="carte" style="margin-bottom:14px; padding:12px 16px;">
+    <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
+        <span>
+            <strong>SLA :</strong>
+            <% if (sla === 'depasse') { %><span class="badge-sla depasse"><i class="bi bi-exclamation-triangle"></i> Dépassé</span>
+            <% } else if (sla === 'bientot') { %><span class="badge-sla bientot"><i class="bi bi-hourglass-split"></i> Bientôt</span>
+            <% } else if (sla === 'ok') { %><span class="badge-sla ok"><i class="bi bi-check-circle"></i> Dans les délais</span>
+            <% } else { %>—<% } %>
+            <% if (ticket.sla_echeance) { %>
+                <span style="color:var(--gris); font-size:13px;"> · échéance <%= new Date(ticket.sla_echeance).toLocaleString('fr-FR') %></span>
             <% } %>
-
-            <p style="color:var(--gris); font-size:13px; margin:0;">
-                Ouvert par <strong><%= ticket.Createur ? ticket.Createur.prenom + ' ' + ticket.Createur.nom : '—' %></strong>
-                le <%= new Date(ticket.createdAt).toLocaleString('fr-FR') %>
-                <% if (ticket.Outil) { %> · Outil : <strong>🔧 <%= ticket.Outil.nom %></strong><% } %>
-                <% if (ticket.SousActivite) { %> · Sous-activité : <strong>📂 <%= ticket.SousActivite.nom %></strong><% } %>
-                <% if (ticket.Activite) { %> · Activité : <strong>📁 <%= ticket.Activite.nom %></strong><% } %>
-            </p>
-        </div>
-
-        <h2 style="font-size:16px; color:var(--bleu-fonce); margin:20px 0 10px;">💬 Discussion</h2>
-
-        <% if (!ticket.messages.length) { %>
-            <div class="carte vide">Aucun message pour l'instant.</div>
-        <% } else { %>
-            <div style="display:flex; flex-direction:column; gap:10px;">
-                <% ticket.messages.forEach(function(m) { %>
-                    <div class="carte" style="padding:12px 16px;">
-                        <p style="margin:0 0 6px; font-size:13px; color:var(--bleu-fonce); font-weight:600;">
-                            <%= m.Auteur ? m.Auteur.prenom + ' ' + m.Auteur.nom : 'Utilisateur supprimé' %>
-                            <span style="font-weight:400; color:var(--gris);"> · <%= new Date(m.createdAt).toLocaleString('fr-FR') %></span>
-                        </p>
-                        <p style="margin:0; font-size:14px; white-space:pre-wrap;"><%= m.contenu %></p>
-                    </div>
-                <% }) %>
-            </div>
+        </span>
+        <% if (ticket.escalade_le) { %>
+            <span class="badge-sla depasse"><i class="bi bi-arrow-up-circle"></i> Escaladé le <%= new Date(ticket.escalade_le).toLocaleString('fr-FR') %></span>
         <% } %>
-
-        <div class="carte" style="margin-top:14px;">
-            <form action="/tickets/<%= ticket.id %>/messages" method="POST">
-                <label for="contenu">Ajouter un message</label>
-                <textarea id="contenu" name="contenu" rows="3" required placeholder="Écrire une réponse..."></textarea>
-                <div class="actions-form">
-                    <button type="submit" class="btn btn-primaire">Envoyer</button>
-                </div>
+        <% if (peut('tickets', 'update') && ticket.statut !== 'resolu' && ticket.statut !== 'ferme') { %>
+            <form action="/tickets/<%= ticket.id %>/escalader" method="POST" style="margin:0;" onsubmit="return confirm('Escalader ce ticket vers un administrateur ?');">
+                <button type="submit" class="btn btn-gris btn-petit"><i class="bi bi-arrow-up-circle"></i> Escalader vers un admin</button>
             </form>
-        </div>
+        <% } %>
     </div>
+</div>
 
-    <div>
-        <div class="carte">
-            <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 12px;">Statut du ticket</h2>
-            <form action="/tickets/<%= ticket.id %>/modifier" method="POST">
-                <label for="statut">Statut</label>
-                <select id="statut" name="statut" onchange="this.form.submit()" <%= !(peut('tickets','update') || (currentUser && (ticket.id_createur === currentUser.id || (ticket.Assigne && ticket.Assigne.id === currentUser.id)))) ? 'disabled' : '' %>>
-                    <% Object.keys(LIBELLES_STATUT).forEach(function(s) { %>
-                        <option value="<%= s %>" <%= ticket.statut === s ? 'selected' : '' %>><%= LIBELLES_STATUT[s] %></option>
-                    <% }) %>
-                </select>
 
-                <label for="priorite">Priorité</label>
-                <select id="priorite" name="priorite" onchange="this.form.submit()" <%= !(peut('tickets','update') || (currentUser && (ticket.id_createur === currentUser.id || (ticket.Assigne && ticket.Assigne.id === currentUser.id)))) ? 'disabled' : '' %>>
-                    <% Object.keys(LIBELLES_PRIORITE).forEach(function(p) { %>
-                        <option value="<%= p %>" <%= ticket.priorite === p ? 'selected' : '' %>><%= LIBELLES_PRIORITE[p] %></option>
-                    <% }) %>
-                </select>
+<div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px; align-items:flex-start;">
+ <div>
+ <div class="carte">
+ <p style="white-space:pre-wrap; margin:0 0 12px; font-size:14px;"><%= ticket.description %></p>
 
-                <% if (utilisateurs.length) { %>
-                    <label for="id_assigne">Assigné à</label>
-                    <select id="id_assigne" name="id_assigne" onchange="this.form.submit()">
-                        <option value="">— Non assigné —</option>
-                        <% utilisateurs.forEach(function(u) { %>
-                            <option value="<%= u.id %>" <%= ticket.Assigne && ticket.Assigne.id === u.id ? 'selected' : '' %>><%= u.prenom %> <%= u.nom %></option>
-                        <% }) %>
-                    </select>
-                <% } else { %>
-                    <p style="font-size:13px; color:var(--gris); margin:10px 0 0;">
-                        Assigné à : <strong><%= ticket.Assigne ? ticket.Assigne.prenom + ' ' + ticket.Assigne.nom : 'Personne' %></strong>
-                    </p>
-                <% } %>
-            </form>
-        </div>
-    </div>
+ <% if (ticket.images && ticket.images.length) { %>
+ <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+ <% ticket.images.forEach(function(img) { %>
+ <a href="<%= img.chemin %>" target="_blank" rel="noopener">
+ <img src="<%= img.chemin %>" alt="Image jointe" style="width:90px; height:90px; object-fit:cover; border-radius:var(--rayon); border:1px solid var(--gris-bordure);">
+ </a>
+ <% }) %>
+ </div>
+ <% } %>
+
+ <p style="color:var(--gris); font-size:13px; margin:0;">
+ Ouvert par <strong><%= ticket.Createur ? ticket.Createur.prenom + ' ' + ticket.Createur.nom : '—' %></strong>
+ le <%= new Date(ticket.createdAt).toLocaleString('fr-FR') %>
+ <% if (ticket.Outil) { %> · Outil : <strong><i class="bi bi-tools"></i> <%= ticket.Outil.nom %></strong><% } %>
+ <% if (ticket.SousActivite) { %> · Sous-activité : <strong><i class="bi bi-folder2-open"></i> <%= ticket.SousActivite.nom %></strong><% } %>
+ <% if (ticket.Activite) { %> · Activité : <strong><i class="bi bi-folder"></i> <%= ticket.Activite.nom %></strong><% } %>
+ </p>
+ </div>
+
+ <h2 style="font-size:16px; color:var(--bleu-fonce); margin:20px 0 10px;"><i class="bi bi-chat-dots"></i> Discussion</h2>
+
+ <% if (!ticket.messages.length) { %>
+ <div class="carte vide">Aucun message pour l'instant.</div>
+ <% } else { %>
+ <div style="display:flex; flex-direction:column; gap:10px;">
+ <% ticket.messages.forEach(function(m) { %>
+ <div class="carte" style="padding:12px 16px;">
+ <p style="margin:0 0 6px; font-size:13px; color:var(--bleu-fonce); font-weight:600;">
+ <%= m.Auteur ? m.Auteur.prenom + ' ' + m.Auteur.nom : 'Utilisateur supprimé' %>
+ <span style="font-weight:400; color:var(--gris);"> · <%= new Date(m.createdAt).toLocaleString('fr-FR') %></span>
+ </p>
+ <p style="margin:0; font-size:14px; white-space:pre-wrap;"><%= m.contenu %></p>
+ </div>
+ <% }) %>
+ </div>
+ <% } %>
+
+ <div class="carte" style="margin-top:14px;">
+ <form action="/tickets/<%= ticket.id %>/messages" method="POST">
+ <label for="contenu">Ajouter un message</label>
+ <textarea id="contenu" name="contenu" rows="3" required placeholder="Écrire une réponse..."></textarea>
+ <div class="actions-form">
+ <button type="submit" class="btn btn-primaire">Envoyer</button>
+ </div>
+ </form>
+ </div>
+ </div>
+
+ <div>
+ <div class="carte">
+ <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 12px;">Statut du ticket</h2>
+ <form action="/tickets/<%= ticket.id %>/modifier" method="POST">
+ <label for="statut">Statut</label>
+ <select id="statut" name="statut" onchange="this.form.submit()" <%= !(peut('tickets','update') || (currentUser && (ticket.id_createur === currentUser.id || (ticket.Assigne && ticket.Assigne.id === currentUser.id)))) ? 'disabled' : '' %>>
+ <% Object.keys(LIBELLES_STATUT).forEach(function(s) { %>
+ <option value="<%= s %>" <%= ticket.statut === s ? 'selected' : '' %>><%= LIBELLES_STATUT[s] %></option>
+ <% }) %>
+ </select>
+
+ <label for="priorite">Priorité</label>
+ <select id="priorite" name="priorite" onchange="this.form.submit()" <%= !(peut('tickets','update') || (currentUser && (ticket.id_createur === currentUser.id || (ticket.Assigne && ticket.Assigne.id === currentUser.id)))) ? 'disabled' : '' %>>
+ <% Object.keys(LIBELLES_PRIORITE).forEach(function(p) { %>
+ <option value="<%= p %>" <%= ticket.priorite === p ? 'selected' : '' %>><%= LIBELLES_PRIORITE[p] %></option>
+ <% }) %>
+ </select>
+
+ <% if (utilisateurs.length) { %>
+ <label for="id_assigne">Assigné à</label>
+ <select id="id_assigne" name="id_assigne" onchange="this.form.submit()">
+ <option value="">— Non assigné —</option>
+ <% utilisateurs.forEach(function(u) { %>
+ <option value="<%= u.id %>" <%= ticket.Assigne && ticket.Assigne.id === u.id ? 'selected' : '' %>><%= u.prenom %> <%= u.nom %></option>
+ <% }) %>
+ </select>
+ <% } else { %>
+ <p style="font-size:13px; color:var(--gris); margin:10px 0 0;">
+ Assigné à : <strong><%= ticket.Assigne ? ticket.Assigne.prenom + ' ' + ticket.Assigne.nom : 'Personne' %></strong>
+ </p>
+ <% } %>
+ </form>
+ </div>
+ </div>
 </div>
 
 <%- include('../partials/footer') %>

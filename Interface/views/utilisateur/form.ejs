@@ -4,52 +4,52 @@
 <div class="entete-page"><h1><%= titre %></h1></div>
 
 <div class="carte" style="max-width:520px;">
-    <% if (erreur) { %>
-        <div class="message-erreur"><%= erreur %></div>
-    <% } %>
-    <p style="color:var(--gris); font-size:13px; margin-top:-4px;">
-        En cas d'erreur de saisie, il faudra supprimer puis recréer l'utilisateur (pas de modification possible).
-        Un mot de passe par défaut lui sera attribué (voir Réglages) ; il devra le changer à sa première connexion.
-    </p>
+ <% if (erreur) { %>
+ <div class="message-erreur"><%= erreur %></div>
+ <% } %>
+ <p style="color:var(--gris); font-size:13px; margin-top:-4px;">
+ En cas d'erreur de saisie, il faudra supprimer puis recréer l'utilisateur (pas de modification possible).
+ Un mot de passe par défaut lui sera attribué (voir Réglages) ; il devra le changer à sa première connexion.
+ </p>
 
-    <form action="/utilisateurs" method="POST">
-        <label for="matricule">Matricule</label>
-        <input type="text" id="matricule" name="matricule" placeholder="0000.prenom" required>
+ <form action="/utilisateurs" method="POST">
+ <label for="matricule">Matricule</label>
+ <input type="text" id="matricule" name="matricule" placeholder="0000.prenom" required>
 
-        <label for="nom">Nom</label>
-        <input type="text" id="nom" name="nom" required>
+ <label for="nom">Nom</label>
+ <input type="text" id="nom" name="nom" required>
 
-        <label for="prenom">Prénom</label>
-        <input type="text" id="prenom" name="prenom" required>
+ <label for="prenom">Prénom</label>
+ <input type="text" id="prenom" name="prenom" required>
 
-        <label for="id_role">Rôle</label>
-        <select id="id_role" name="id_role" required>
-            <option value="">— Choisir un rôle —</option>
-            <% roles.forEach(function(r) { %>
-                <option value="<%= r.id %>"><%= r.nom %></option>
-            <% }) %>
-        </select>
+ <label for="id_role">Rôle</label>
+ <select id="id_role" name="id_role" required>
+ <option value="">— Choisir un rôle —</option>
+ <% roles.forEach(function(r) { %>
+ <option value="<%= r.id %>"><%= r.nom %></option>
+ <% }) %>
+ </select>
 
-        <label>Activité principale</label>
-        <% if (activite) { %>
-            <input type="hidden" name="id_activite" value="<%= activite.id %>">
-            <p style="margin:4px 0 0; padding:9px 11px; background:var(--gris-clair); border-radius:var(--rayon); font-size:14px;">
-                <%= activite.nom %>
-            </p>
-        <% } else { %>
-            <select id="id_activite" name="id_activite">
-                <option value="">— Aucune —</option>
-                <% activites.forEach(function(a) { %>
-                    <option value="<%= a.id %>" <%= String(a.id) === String(id_activite) ? 'selected' : '' %>><%= a.nom %></option>
-                <% }) %>
-            </select>
-        <% } %>
+ <label>Activité principale</label>
+ <% if (activite) { %>
+ <input type="hidden" name="id_activite" value="<%= activite.id %>">
+ <p style="margin:4px 0 0; padding:9px 11px; background:var(--gris-clair); border-radius:var(--rayon); font-size:14px;">
+ <%= activite.nom %>
+ </p>
+ <% } else { %>
+ <select id="id_activite" name="id_activite">
+ <option value="">— Aucune —</option>
+ <% activites.forEach(function(a) { %>
+ <option value="<%= a.id %>" <%= String(a.id) === String(id_activite) ? 'selected' : '' %>><%= a.nom %></option>
+ <% }) %>
+ </select>
+ <% } %>
 
-        <div class="actions-form">
-            <button type="submit" class="btn btn-primaire">Créer</button>
-            <a href="<%= id_activite ? '/activites/' + id_activite + '?onglet=utilisateurs' : '/' %>" class="btn btn-gris">Annuler</a>
-        </div>
-    </form>
+ <div class="actions-form">
+ <button type="submit" class="btn btn-primaire">Créer</button>
+ <a href="<%= id_activite ? '/activites/' + id_activite + '?onglet=utilisateurs' : '/' %>" class="btn btn-gris">Annuler</a>
+ </div>
+ </form>
 </div>
 
 <%- include('../partials/footer') %>

@@ -12,20 +12,89 @@
 <% } %>
 
 <ul class="arbre-activites">
-    <% arborescence.forEach(function(activite) { %>
-        <li class="carte-activite">
-            <a href="/activites/<%= activite.id %>" style="text-decoration:none; color:inherit;">
-                <div class="entete-activite">
-                    <span class="icone-dossier">🗂️</span>
-                    <h2><%= activite.nom %></h2>
-                    <span class="abbreviation"><%= activite.abbreviation %></span>
-                </div>
-            </a>
-            <% if (peut('sous_activites', 'read')) { %>
-                <%- include('partials/arbre-sous-activites', { noeuds: activite.sousActivites, id_activite: activite.id }) %>
+    <% arborescence.forEach(function(activite) {
+        var sous = activite.sousActivites || [];
+        var aDesSous = sous.length > 0;
+        var plusieursSous = sous.length > 1;
+    %>
+    <li class="carte-activite<%= aDesSous ? ' a-sous-activites' : '' %>" data-activite-id="<%= activite.id %>">
+        <div class="entete-activite">
+            <% if (aDesSous) { %>
+                <button type="button"
+                        class="btn-collapse-activite"
+                        data-cible="sous-<%= activite.id %>"
+                        aria-expanded="<%= plusieursSous ? 'false' : 'true' %>"
+                        title="<%= plusieursSous ? 'Déplier les sous-activités' : 'Replier les sous-activités' %>">
+                    <i class="bi <%= plusieursSous ? 'bi-chevron-right' : 'bi-chevron-down' %>"></i>
+                </button>
+            <% } else { %>
+                <span class="btn-collapse-placeholder"></span>
             <% } %>
-        </li>
+            <a href="/activites/<%= activite.id %>" class="lien-entete-activite">
+                <span class="icone-dossier"><i class="bi bi-folder2"></i></span>
+                <h2><%= activite.nom %></h2>
+                <span class="abbreviation"><%= activite.abbreviation %></span>
+                <% if (aDesSous) { %>
+                    <span class="badge-nb-sous" title="Sous-activités"><%= sous.length %></span>
+                <% } %>
+            </a>
+        </div>
+        <% if (peut('sous_activites', 'read') && aDesSous) { %>
+            <div class="bloc-sous-activites<%= plusieursSous ? ' est-replie' : '' %>" id="sous-<%= activite.id %>">
+                <%- include('partials/arbre-sous-activites', { noeuds: sous, id_activite: activite.id }) %>
+            </div>
+        <% } %>
+    </li>
     <% }) %>
 </ul>
+
+<script>
+(function () {
+    var STORAGE_KEY = 'glo_dashboard_collapse';
+
+    function lireEtat() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+        catch (e) { return {}; }
+    }
+    function sauverEtat(etat) {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(etat)); } catch (e) {}
+    }
+
+    function appliquer(btn, ouvert) {
+        var cibleId = btn.getAttribute('data-cible');
+        var bloc = document.getElementById(cibleId);
+        var icon = btn.querySelector('i');
+        if (!bloc) return;
+        btn.setAttribute('aria-expanded', ouvert ? 'true' : 'false');
+        btn.title = ouvert ? 'Replier les sous-activités' : 'Déplier les sous-activités';
+        bloc.classList.toggle('est-replie', !ouvert);
+        if (icon) {
+            icon.classList.toggle('bi-chevron-down', ouvert);
+            icon.classList.toggle('bi-chevron-right', !ouvert);
+        }
+    }
+
+    var etat = lireEtat();
+    document.querySelectorAll('.btn-collapse-activite').forEach(function (btn) {
+        var li = btn.closest('.carte-activite');
+        var id = li && li.getAttribute('data-activite-id');
+        // Préférence mémorisée prioritaire ; sinon défaut = replié si plusieurs sous-activités
+        if (id && Object.prototype.hasOwnProperty.call(etat, id)) {
+            appliquer(btn, !!etat[id]);
+        }
+
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var ouvert = btn.getAttribute('aria-expanded') === 'true';
+            appliquer(btn, !ouvert);
+            if (id) {
+                etat[id] = !ouvert;
+                sauverEtat(etat);
+            }
+        });
+    });
+})();
+</script>
 
 <%- include('partials/footer') %>

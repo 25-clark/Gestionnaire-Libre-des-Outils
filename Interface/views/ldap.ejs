@@ -1,130 +1,130 @@
 <%- include('partials/header') %>
 
-<div class="entete-page"><h1>🗂️ Intégration LDAP</h1></div>
+<div class="entete-page"><h1><i class="bi bi-folder2"></i> Intégration LDAP</h1></div>
 
 <% if (!config.ldapjs_disponible) { %>
-    <div class="message-erreur" style="max-width:760px;">
-        Le module <code>ldapjs</code> n'est pas installé sur ce serveur. Exécutez
-        <code>npm install ldapjs</code> dans le dossier <code>Server/</code>, puis relancez le serveur pour
-        pouvoir tester la connexion et importer des données. La configuration ci-dessous peut déjà être
-        enregistrée en attendant.
-    </div>
+ <div class="message-erreur" style="max-width:760px;">
+ Le module <code>ldapjs</code> n'est pas installé sur ce serveur. Exécutez
+ <code>npm install ldapjs</code> dans le dossier <code>Server/</code>, puis relancez le serveur pour
+ pouvoir tester la connexion et importer des données. La configuration ci-dessous peut déjà être
+ enregistrée en attendant.
+ </div>
 <% } %>
 
 <% if (succes) { %>
-    <div class="message-succes">Configuration LDAP enregistrée.</div>
+ <div class="message-succes">Configuration LDAP enregistrée.</div>
 <% } %>
 <% if (erreur) { %>
-    <div class="message-erreur" style="max-width:760px;"><%= erreur %></div>
+ <div class="message-erreur" style="max-width:760px;"><%= erreur %></div>
 <% } %>
 
 <div class="carte" style="max-width:760px;">
-    <form action="/ldap" method="POST">
-        <div class="champ-case">
-            <input type="checkbox" id="ldap_actif" name="ldap_actif" <%= config.ldap_actif ? 'checked' : '' %>>
-            <label for="ldap_actif">Activer l'intégration LDAP</label>
-        </div>
+ <form action="/ldap" method="POST">
+ <div class="champ-case">
+ <input type="checkbox" id="ldap_actif" name="ldap_actif" <%= config.ldap_actif ? 'checked' : '' %>>
+ <label for="ldap_actif">Activer l'intégration LDAP</label>
+ </div>
 
-        <label for="ldap_url">URL du serveur</label>
-        <input type="text" id="ldap_url" name="ldap_url" value="<%= config.ldap_url || '' %>" placeholder="ldap://serveur.entreprise.local:389">
+ <label for="ldap_url">URL du serveur</label>
+ <input type="text" id="ldap_url" name="ldap_url" value="<%= config.ldap_url || '' %>" placeholder="ldap://serveur.entreprise.local:389">
 
-        <label for="ldap_bind_dn">DN du compte de service</label>
-        <input type="text" id="ldap_bind_dn" name="ldap_bind_dn" value="<%= config.ldap_bind_dn || '' %>" placeholder="cn=service-glo,ou=comptes,dc=entreprise,dc=local">
+ <label for="ldap_bind_dn">DN du compte de service</label>
+ <input type="text" id="ldap_bind_dn" name="ldap_bind_dn" value="<%= config.ldap_bind_dn || '' %>" placeholder="cn=service-glo,ou=comptes,dc=entreprise,dc=local">
 
-        <label for="ldap_bind_password">Mot de passe du compte de service</label>
-        <input type="password" id="ldap_bind_password" name="ldap_bind_password"
-               placeholder="<%= config.ldap_bind_password_defini ? '••••••••  (laisser vide pour ne pas le changer)' : 'Non défini' %>">
+ <label for="ldap_bind_password">Mot de passe du compte de service</label>
+ <input type="password" id="ldap_bind_password" name="ldap_bind_password"
+ placeholder="<%= config.ldap_bind_password_defini ? '•••••••• (laisser vide pour ne pas le changer)' : 'Non défini' %>">
 
-        <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:18px 0;">
-        <p style="color:var(--gris); font-size:13px; margin:0 0 10px;"><strong>Recherche des utilisateurs</strong></p>
+ <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:18px 0;">
+ <p style="color:var(--gris); font-size:13px; margin:0 0 10px;"><strong>Recherche des utilisateurs</strong></p>
 
-        <label for="ldap_base_dn_utilisateurs">Base de recherche (DN)</label>
-        <input type="text" id="ldap_base_dn_utilisateurs" name="ldap_base_dn_utilisateurs" value="<%= config.ldap_base_dn_utilisateurs || '' %>" placeholder="ou=utilisateurs,dc=entreprise,dc=local">
+ <label for="ldap_base_dn_utilisateurs">Base de recherche (DN)</label>
+ <input type="text" id="ldap_base_dn_utilisateurs" name="ldap_base_dn_utilisateurs" value="<%= config.ldap_base_dn_utilisateurs || '' %>" placeholder="ou=utilisateurs,dc=entreprise,dc=local">
 
-        <label for="ldap_filtre_utilisateurs">Filtre de recherche</label>
-        <input type="text" id="ldap_filtre_utilisateurs" name="ldap_filtre_utilisateurs" value="<%= config.ldap_filtre_utilisateurs || '' %>" placeholder="(objectClass=person)">
+ <label for="ldap_filtre_utilisateurs">Filtre de recherche</label>
+ <input type="text" id="ldap_filtre_utilisateurs" name="ldap_filtre_utilisateurs" value="<%= config.ldap_filtre_utilisateurs || '' %>" placeholder="(objectClass=person)">
 
-        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
-            <div>
-                <label for="ldap_attribut_matricule">Attribut → matricule</label>
-                <input type="text" id="ldap_attribut_matricule" name="ldap_attribut_matricule" value="<%= config.ldap_attribut_matricule || '' %>" placeholder="uid">
-            </div>
-            <div>
-                <label for="ldap_attribut_nom">Attribut → nom</label>
-                <input type="text" id="ldap_attribut_nom" name="ldap_attribut_nom" value="<%= config.ldap_attribut_nom || '' %>" placeholder="sn">
-            </div>
-            <div>
-                <label for="ldap_attribut_prenom">Attribut → prénom</label>
-                <input type="text" id="ldap_attribut_prenom" name="ldap_attribut_prenom" value="<%= config.ldap_attribut_prenom || '' %>" placeholder="givenName">
-            </div>
-        </div>
+ <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+ <div>
+ <label for="ldap_attribut_matricule">Attribut <i class="bi bi-arrow-right"></i> matricule</label>
+ <input type="text" id="ldap_attribut_matricule" name="ldap_attribut_matricule" value="<%= config.ldap_attribut_matricule || '' %>" placeholder="uid">
+ </div>
+ <div>
+ <label for="ldap_attribut_nom">Attribut <i class="bi bi-arrow-right"></i> nom</label>
+ <input type="text" id="ldap_attribut_nom" name="ldap_attribut_nom" value="<%= config.ldap_attribut_nom || '' %>" placeholder="sn">
+ </div>
+ <div>
+ <label for="ldap_attribut_prenom">Attribut <i class="bi bi-arrow-right"></i> prénom</label>
+ <input type="text" id="ldap_attribut_prenom" name="ldap_attribut_prenom" value="<%= config.ldap_attribut_prenom || '' %>" placeholder="givenName">
+ </div>
+ </div>
 
-        <label for="ldap_role_par_defaut">Rôle attribué aux nouveaux comptes importés</label>
-        <select id="ldap_role_par_defaut" name="ldap_role_par_defaut">
-            <option value="">— Premier rôle disponible —</option>
-            <% roles.forEach(function(r) { %>
-                <option value="<%= r.nom %>" <%= config.ldap_role_par_defaut === r.nom ? 'selected' : '' %>><%= r.nom %></option>
-            <% }) %>
-        </select>
+ <label for="ldap_role_par_defaut">Rôle attribué aux nouveaux comptes importés</label>
+ <select id="ldap_role_par_defaut" name="ldap_role_par_defaut">
+ <option value="">— Premier rôle disponible —</option>
+ <% roles.forEach(function(r) { %>
+ <option value="<%= r.nom %>" <%= config.ldap_role_par_defaut === r.nom ? 'selected' : '' %>><%= r.nom %></option>
+ <% }) %>
+ </select>
 
-        <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:18px 0;">
-        <p style="color:var(--gris); font-size:13px; margin:0 0 10px;">
-            <strong>Recherche des groupes</strong> (importés comme activités ; leurs sous-groupes directs comme sous-activités)
-        </p>
+ <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:18px 0;">
+ <p style="color:var(--gris); font-size:13px; margin:0 0 10px;">
+ <strong>Recherche des groupes</strong> (importés comme activités ; leurs sous-groupes directs comme sous-activités)
+ </p>
 
-        <label for="ldap_base_dn_groupes">Base de recherche (DN)</label>
-        <input type="text" id="ldap_base_dn_groupes" name="ldap_base_dn_groupes" value="<%= config.ldap_base_dn_groupes || '' %>" placeholder="ou=groupes,dc=entreprise,dc=local">
+ <label for="ldap_base_dn_groupes">Base de recherche (DN)</label>
+ <input type="text" id="ldap_base_dn_groupes" name="ldap_base_dn_groupes" value="<%= config.ldap_base_dn_groupes || '' %>" placeholder="ou=groupes,dc=entreprise,dc=local">
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-            <div>
-                <label for="ldap_filtre_groupes">Filtre (groupes racine → activités)</label>
-                <input type="text" id="ldap_filtre_groupes" name="ldap_filtre_groupes" value="<%= config.ldap_filtre_groupes || '' %>" placeholder="(objectClass=groupOfNames)">
-            </div>
-            <div>
-                <label for="ldap_filtre_sous_groupes">Filtre (sous-groupes → sous-activités)</label>
-                <input type="text" id="ldap_filtre_sous_groupes" name="ldap_filtre_sous_groupes" value="<%= config.ldap_filtre_sous_groupes || '' %>" placeholder="(objectClass=groupOfNames)">
-            </div>
-        </div>
+ <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+ <div>
+ <label for="ldap_filtre_groupes">Filtre (groupes racine <i class="bi bi-arrow-right"></i> activités)</label>
+ <input type="text" id="ldap_filtre_groupes" name="ldap_filtre_groupes" value="<%= config.ldap_filtre_groupes || '' %>" placeholder="(objectClass=groupOfNames)">
+ </div>
+ <div>
+ <label for="ldap_filtre_sous_groupes">Filtre (sous-groupes <i class="bi bi-arrow-right"></i> sous-activités)</label>
+ <input type="text" id="ldap_filtre_sous_groupes" name="ldap_filtre_sous_groupes" value="<%= config.ldap_filtre_sous_groupes || '' %>" placeholder="(objectClass=groupOfNames)">
+ </div>
+ </div>
 
-        <label for="ldap_attribut_groupe_nom">Attribut → nom du groupe</label>
-        <input type="text" id="ldap_attribut_groupe_nom" name="ldap_attribut_groupe_nom" value="<%= config.ldap_attribut_groupe_nom || '' %>" placeholder="cn">
+ <label for="ldap_attribut_groupe_nom">Attribut <i class="bi bi-arrow-right"></i> nom du groupe</label>
+ <input type="text" id="ldap_attribut_groupe_nom" name="ldap_attribut_groupe_nom" value="<%= config.ldap_attribut_groupe_nom || '' %>" placeholder="cn">
 
-        <div class="actions-form">
-            <button type="submit" class="btn btn-primaire">Enregistrer</button>
-        </div>
-    </form>
+ <div class="actions-form">
+ <button type="submit" class="btn btn-primaire">Enregistrer</button>
+ </div>
+ </form>
 </div>
 
 <div class="carte" style="max-width:760px; margin-top:16px;">
-    <h2 style="margin-top:0; font-size:15px; color:var(--bleu-fonce);">Test &amp; import</h2>
+ <h2 style="margin-top:0; font-size:15px; color:var(--bleu-fonce);">Test &amp; import</h2>
 
-    <form action="/ldap/tester" method="POST" class="form-inline" style="margin-bottom:10px;">
-        <button type="submit" class="btn btn-gris" <%= config.ldapjs_disponible ? '' : 'disabled' %>>🔌 Tester la connexion</button>
-    </form>
-    <% if (resultatTest) { %>
-        <div class="<%= resultatTest.ok ? 'message-succes' : 'message-erreur' %>"><%= resultatTest.message %></div>
-    <% } %>
+ <form action="/ldap/tester" method="POST" class="form-inline" style="margin-bottom:10px;">
+ <button type="submit" class="btn btn-gris" <%= config.ldapjs_disponible ? '' : 'disabled' %>><i class="bi bi-plug"></i> Tester la connexion</button>
+ </form>
+ <% if (resultatTest) { %>
+ <div class="<%= resultatTest.ok ? 'message-succes' : 'message-erreur' %>"><%= resultatTest.message %></div>
+ <% } %>
 
-    <form action="/ldap/importer-utilisateurs" method="POST" class="form-inline" style="margin:10px 0;">
-        <button type="submit" class="btn btn-gris" <%= config.ldapjs_disponible ? '' : 'disabled' %>>👤 Importer les utilisateurs</button>
-    </form>
-    <% if (resultatImportUtilisateurs) { %>
-        <div class="message-succes">
-            Import terminé : <%= resultatImportUtilisateurs.crees %> créé(s), <%= resultatImportUtilisateurs.misAJour %> mis à jour,
-            <%= resultatImportUtilisateurs.ignores %> ignoré(s) (sur <%= resultatImportUtilisateurs.total %> entrée(s) LDAP).
-            Les nouveaux comptes reçoivent le mot de passe par défaut et devront le changer à la première connexion.
-        </div>
-    <% } %>
+ <form action="/ldap/importer-utilisateurs" method="POST" class="form-inline" style="margin:10px 0;">
+ <button type="submit" class="btn btn-gris" <%= config.ldapjs_disponible ? '' : 'disabled' %>><i class="bi bi-person"></i>  Importer les utilisateurs</button>
+ </form>
+ <% if (resultatImportUtilisateurs) { %>
+ <div class="message-succes">
+ Import terminé : <%= resultatImportUtilisateurs.crees %> créé(s), <%= resultatImportUtilisateurs.misAJour %> mis à jour,
+ <%= resultatImportUtilisateurs.ignores %> ignoré(s) (sur <%= resultatImportUtilisateurs.total %> entrée(s) LDAP).
+ Les nouveaux comptes reçoivent le mot de passe par défaut et devront le changer à la première connexion.
+ </div>
+ <% } %>
 
-    <form action="/ldap/importer-activites" method="POST" class="form-inline">
-        <button type="submit" class="btn btn-gris" <%= config.ldapjs_disponible ? '' : 'disabled' %>>📁 Importer les activités et sous-activités</button>
-    </form>
-    <% if (resultatImportActivites) { %>
-        <div class="message-succes">
-            Import terminé : <%= resultatImportActivites.activitesCreees %> activité(s) créée(s) (<%= resultatImportActivites.activitesIgnorees %> déjà existante(s)),
-            <%= resultatImportActivites.sousActivitesCreees %> sous-activité(s) créée(s) (<%= resultatImportActivites.sousActivitesIgnorees %> déjà existante(s)).
-        </div>
-    <% } %>
+ <form action="/ldap/importer-activites" method="POST" class="form-inline">
+ <button type="submit" class="btn btn-gris" <%= config.ldapjs_disponible ? '' : 'disabled' %>><i class="bi bi-folder"></i> Importer les activités et sous-activités</button>
+ </form>
+ <% if (resultatImportActivites) { %>
+ <div class="message-succes">
+ Import terminé : <%= resultatImportActivites.activitesCreees %> activité(s) créée(s) (<%= resultatImportActivites.activitesIgnorees %> déjà existante(s)),
+ <%= resultatImportActivites.sousActivitesCreees %> sous-activité(s) créée(s) (<%= resultatImportActivites.sousActivitesIgnorees %> déjà existante(s)).
+ </div>
+ <% } %>
 </div>
 
 <%- include('partials/footer') %>

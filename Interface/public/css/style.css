@@ -983,3 +983,143 @@ body.theme-sombre a {
 body.theme-sombre .logo span {
     color: #fff;
 }
+
+/* Champs en lecture seule (profil : matricule, rôle, nom, prénom) */
+input.champ-lecture:disabled,
+select.champ-lecture:disabled,
+input.champ-lecture[readonly] {
+    background: var(--gris-clair) !important;
+    color: var(--gris-fonce);
+    cursor: not-allowed;
+    opacity: 1;
+    border-color: var(--gris-bordure);
+}
+body.theme-sombre input.champ-lecture:disabled,
+body.theme-sombre select.champ-lecture:disabled {
+    background: #1c2330 !important;
+    color: #9aa0a6;
+}
+
+/* Icônes dans les menus déroulants */
+.contenu-menu-deroulant a i {
+    margin-right: 6px;
+    opacity: 0.85;
+    width: 1.1em;
+    display: inline-block;
+    text-align: center;
+}
+
+/* Statuts réseau (icônes bootstrap) */
+.text-statut-ok { color: #2e7d32; font-size: 0.75em; vertical-align: middle; }
+.text-statut-ko { color: #c62828; font-size: 0.75em; vertical-align: middle; }
+.text-statut-na { color: #9aa0a6; font-size: 0.75em; vertical-align: middle; }
+.icone-dossier, .icone-dossier-petit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--bleu);
+    font-size: 1.4em;
+}
+.icone-dossier-petit { font-size: 1.1em; }
+.entete-page h1 .bi { margin-right: 6px; }
+
+/* SLA tickets */
+.badge-sla {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--gris-clair);
+    color: var(--gris-fonce);
+}
+.badge-sla.ok { background: #e8f5e9; color: #2e7d32; }
+.badge-sla.bientot { background: #fff8e1; color: #f57f17; }
+.badge-sla.depasse { background: #fdecea; color: #c62828; }
+.badge-derangement {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #fff3e0;
+    color: #e65100;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+/* Dashboard — collapse sous-activités */
+.carte-activite .entete-activite {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+}
+.carte-activite .lien-entete-activite {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+    text-decoration: none;
+    color: inherit;
+}
+.carte-activite .lien-entete-activite h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+.btn-collapse-activite {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--gris-bordure);
+    background: var(--blanc, #fff);
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--bleu-fonce);
+    transition: background 0.15s, border-color 0.15s;
+}
+.btn-collapse-activite:hover {
+    background: var(--bleu-clair);
+    border-color: var(--bleu);
+}
+.btn-collapse-placeholder {
+    width: 32px;
+    flex-shrink: 0;
+}
+.badge-nb-sous {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--bleu);
+    background: var(--bleu-clair);
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+.bloc-sous-activites {
+    overflow: hidden;
+    max-height: 2000px;
+    transition: max-height 0.25s ease, opacity 0.2s ease;
+    opacity: 1;
+}
+.bloc-sous-activites.est-replie {
+    max-height: 0 !important;
+    opacity: 0;
+    pointer-events: none;
+}
+body.theme-sombre .btn-collapse-activite {
+    background: #161b22;
+    border-color: #2d3544;
+    color: #8ab4f0;
+}
+body.theme-sombre .btn-collapse-activite:hover {
+    background: #1c2330;
+}

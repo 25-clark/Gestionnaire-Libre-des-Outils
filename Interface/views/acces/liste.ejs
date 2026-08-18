@@ -2,138 +2,138 @@
 
 <div class="entete-page"><h1>Accès particuliers</h1></div>
 <p style="color:var(--gris); font-size:14px; margin-top:-10px;">
-    Le <strong>rôle</strong> (page Rôles) définit ce qu'un utilisateur peut faire en général.
-    L'<strong>accès particulier</strong> ci-dessous définit où il peut le faire, en dehors de
-    son activité principale :
+ Le <strong>rôle</strong> (page Rôles) définit ce qu'un utilisateur peut faire en général.
+ L'<strong>accès particulier</strong> ci-dessous définit où il peut le faire, en dehors de
+ son activité principale :
 </p>
 <ul style="color:var(--gris); font-size:14px; margin-top:-6px; padding-left:20px;">
-    <li><strong>Lecture</strong> (toujours accordée) : voir l'activité/sous-activité sur le tableau de bord et y naviguer.</li>
-    <li><strong>Écriture</strong> : y créer/modifier des sous-activités, des outils, et modifier l'activité elle-même.</li>
-    <li><strong>Suppression</strong> : y supprimer des sous-activités ou des outils.</li>
+ <li><strong>Lecture</strong> (toujours accordée) : voir l'activité/sous-activité sur le tableau de bord et y naviguer.</li>
+ <li><strong>Écriture</strong> : y créer/modifier des sous-activités, des outils, et modifier l'activité elle-même.</li>
+ <li><strong>Suppression</strong> : y supprimer des sous-activités ou des outils.</li>
 </ul>
 <p style="color:var(--gris); font-size:14px; margin-top:-6px;">
-    Un accès accordé sur une activité entière couvre aussi toutes ses sous-activités ;
-    un accès accordé sur une sous-activité précise couvre elle et ses sous-activités enfants,
-    mais pas le reste de l'activité.
+ Un accès accordé sur une activité entière couvre aussi toutes ses sous-activités ;
+ un accès accordé sur une sous-activité précise couvre elle et ses sous-activités enfants,
+ mais pas le reste de l'activité.
 </p>
 
 <% if (peut('acces', 'create')) { %>
 <div class="carte" style="max-width:640px;">
-    <form action="/acces" method="POST">
-        <label for="id_user">Utilisateur</label>
-        <select id="id_user" name="id_user" required>
-            <option value="">— Choisir —</option>
-            <% utilisateurs.forEach(function(u) { %>
-                <option value="<%= u.id %>" <%= String(id_user_selectionne) === String(u.id) ? 'selected' : '' %>><%= u.prenom %> <%= u.nom %> (<%= u.matricule %>)</option>
-            <% }) %>
-        </select>
+ <form action="/acces" method="POST">
+ <label for="id_user">Utilisateur</label>
+ <select id="id_user" name="id_user" required>
+ <option value="">— Choisir —</option>
+ <% utilisateurs.forEach(function(u) { %>
+ <option value="<%= u.id %>" <%= String(id_user_selectionne) === String(u.id) ? 'selected' : '' %>><%= u.prenom %> <%= u.nom %> (<%= u.matricule %>)</option>
+ <% }) %>
+ </select>
 
-        <label for="id_activite">Activité</label>
-        <select id="id_activite" name="id_activite" required onchange="rechargerSousActivites()">
-            <option value="">— Choisir —</option>
-            <% activites.forEach(function(a) { %>
-                <option value="<%= a.id %>" <%= String(id_activite) === String(a.id) ? 'selected' : '' %>><%= a.nom %></option>
-            <% }) %>
-        </select>
+ <label for="id_activite">Activité</label>
+ <select id="id_activite" name="id_activite" required onchange="rechargerSousActivites()">
+ <option value="">— Choisir —</option>
+ <% activites.forEach(function(a) { %>
+ <option value="<%= a.id %>" <%= String(id_activite) === String(a.id) ? 'selected' : '' %>><%= a.nom %></option>
+ <% }) %>
+ </select>
 
-        <% if (id_activite && sousActivitesDisponibles.length) { %>
-            <label for="id_sous_activite">Sous-activité précise (optionnel)</label>
-            <select id="id_sous_activite" name="id_sous_activite">
-                <option value="">— Toute l'activité —</option>
-                <% sousActivitesDisponibles.forEach(function(sa) { %>
-                    <option value="<%= sa.id %>"><%= sa.nom %></option>
-                <% }) %>
-            </select>
-            <p style="color:var(--gris); font-size:12px; margin-top:-6px;">
-                Laisser sur « Toute l'activité » pour un accès qui couvre aussi ses sous-activités.
-            </p>
-        <% } %>
+ <% if (id_activite && sousActivitesDisponibles.length) { %>
+ <label for="id_sous_activite">Sous-activité précise (optionnel)</label>
+ <select id="id_sous_activite" name="id_sous_activite">
+ <option value="">— Toute l'activité —</option>
+ <% sousActivitesDisponibles.forEach(function(sa) { %>
+ <option value="<%= sa.id %>"><%= sa.nom %></option>
+ <% }) %>
+ </select>
+ <p style="color:var(--gris); font-size:12px; margin-top:-6px;">
+ Laisser sur « Toute l'activité » pour un accès qui couvre aussi ses sous-activités.
+ </p>
+ <% } %>
 
-        <div class="champ-case">
-            <input type="checkbox" id="write" name="write">
-            <label for="write">Autoriser l'écriture (création/modification)</label>
-        </div>
-        <div class="champ-case">
-            <input type="checkbox" id="delete" name="delete">
-            <label for="delete">Autoriser la suppression</label>
-        </div>
+ <div class="champ-case">
+ <input type="checkbox" id="write" name="write">
+ <label for="write">Autoriser l'écriture (création/modification)</label>
+ </div>
+ <div class="champ-case">
+ <input type="checkbox" id="delete" name="delete">
+ <label for="delete">Autoriser la suppression</label>
+ </div>
 
-        <div class="actions-form">
-            <button type="submit" class="btn btn-primaire">Accorder l'accès</button>
-        </div>
-    </form>
+ <div class="actions-form">
+ <button type="submit" class="btn btn-primaire">Accorder l'accès</button>
+ </div>
+ </form>
 </div>
 <script>
-    // On recharge simplement avec l'activité choisie : le serveur renvoie
-    // alors ses sous-activités (s'il y en a) pour affiner l'accès.
-    function rechargerSousActivites() {
-        var idActivite = document.getElementById('id_activite').value;
-        var idUser = document.getElementById('id_user').value;
-        var url = '/acces?id_activite=' + encodeURIComponent(idActivite);
-        if (idUser) url += '&id_user=' + encodeURIComponent(idUser);
-        window.location.href = url;
-    }
+ // On recharge simplement avec l'activité choisie : le serveur renvoie
+ // alors ses sous-activités (s'il y en a) pour affiner l'accès.
+ function rechargerSousActivites() {
+ var idActivite = document.getElementById('id_activite').value;
+ var idUser = document.getElementById('id_user').value;
+ var url = '/acces?id_activite=' + encodeURIComponent(idActivite);
+ if (idUser) url += '&id_user=' + encodeURIComponent(idUser);
+ window.location.href = url;
+ }
 </script>
 <% } %>
 
 <div class="carte">
-    <h2 style="margin-top:0; font-size:16px; color:var(--bleu-fonce);">Accès sur des activités</h2>
-    <% if (!accesActivites.length) { %>
-        <p class="vide">Aucun accès particulier accordé.</p>
-    <% } else { %>
-        <table class="tableau">
-            <thead><tr><th>Utilisateur</th><th>Activité</th><th>Niveau</th><th></th></tr></thead>
-            <tbody>
-            <% accesActivites.forEach(function(a) { %>
-                <tr>
-                    <td><%= a.Utilisateur ? a.Utilisateur.prenom + ' ' + a.Utilisateur.nom : '—' %></td>
-                    <td><%= a.Activite ? a.Activite.nom : '—' %></td>
-                    <td>
-                        <%= a.permissions && a.permissions.write ? 'Écriture' : 'Lecture' %><% if (a.permissions && a.permissions.delete) { %> + Suppression<% } %>
-                    </td>
-                    <td style="text-align:right;">
-                        <% if (peut('acces', 'delete')) { %>
-                            <form action="/acces/activites/<%= a.id %>/supprimer" method="POST" class="form-inline"
-                                  onsubmit="return confirm('Révoquer cet accès ?');">
-                                <button type="submit" class="btn btn-danger btn-petit">Révoquer</button>
-                            </form>
-                        <% } %>
-                    </td>
-                </tr>
-            <% }) %>
-            </tbody>
-        </table>
-    <% } %>
+ <h2 style="margin-top:0; font-size:16px; color:var(--bleu-fonce);">Accès sur des activités</h2>
+ <% if (!accesActivites.length) { %>
+ <p class="vide">Aucun accès particulier accordé.</p>
+ <% } else { %>
+ <table class="tableau">
+ <thead><tr><th>Utilisateur</th><th>Activité</th><th>Niveau</th><th></th></tr></thead>
+ <tbody>
+ <% accesActivites.forEach(function(a) { %>
+ <tr>
+ <td><%= a.Utilisateur ? a.Utilisateur.prenom + ' ' + a.Utilisateur.nom : '—' %></td>
+ <td><%= a.Activite ? a.Activite.nom : '—' %></td>
+ <td>
+ <%= a.permissions && a.permissions.write ? 'Écriture' : 'Lecture' %><% if (a.permissions && a.permissions.delete) { %> + Suppression<% } %>
+ </td>
+ <td style="text-align:right;">
+ <% if (peut('acces', 'delete')) { %>
+ <form action="/acces/activites/<%= a.id %>/supprimer" method="POST" class="form-inline"
+ onsubmit="return confirm('Révoquer cet accès ?');">
+ <button type="submit" class="btn btn-danger btn-petit">Révoquer</button>
+ </form>
+ <% } %>
+ </td>
+ </tr>
+ <% }) %>
+ </tbody>
+ </table>
+ <% } %>
 </div>
 
 <div class="carte">
-    <h2 style="margin-top:0; font-size:16px; color:var(--bleu-fonce);">Accès sur des sous-activités</h2>
-    <% if (!accesSousActivites.length) { %>
-        <p class="vide">Aucun accès particulier accordé (voir aussi l'onglet "Utilisateurs" de chaque sous-activité).</p>
-    <% } else { %>
-        <table class="tableau">
-            <thead><tr><th>Utilisateur</th><th>Sous-activité</th><th>Niveau</th><th></th></tr></thead>
-            <tbody>
-            <% accesSousActivites.forEach(function(a) { %>
-                <tr>
-                    <td><%= a.Utilisateur ? a.Utilisateur.prenom + ' ' + a.Utilisateur.nom : '—' %></td>
-                    <td><%= a.SousActivite ? a.SousActivite.nom : '—' %></td>
-                    <td>
-                        <%= a.permissions && a.permissions.write ? 'Écriture' : 'Lecture' %><% if (a.permissions && a.permissions.delete) { %> + Suppression<% } %>
-                    </td>
-                    <td style="text-align:right;">
-                        <% if (peut('acces', 'delete')) { %>
-                            <form action="/acces/sous-activites/<%= a.id %>/supprimer" method="POST" class="form-inline"
-                                  onsubmit="return confirm('Révoquer cet accès ?');">
-                                <button type="submit" class="btn btn-danger btn-petit">Révoquer</button>
-                            </form>
-                        <% } %>
-                    </td>
-                </tr>
-            <% }) %>
-            </tbody>
-        </table>
-    <% } %>
+ <h2 style="margin-top:0; font-size:16px; color:var(--bleu-fonce);">Accès sur des sous-activités</h2>
+ <% if (!accesSousActivites.length) { %>
+ <p class="vide">Aucun accès particulier accordé (voir aussi l'onglet "Utilisateurs" de chaque sous-activité).</p>
+ <% } else { %>
+ <table class="tableau">
+ <thead><tr><th>Utilisateur</th><th>Sous-activité</th><th>Niveau</th><th></th></tr></thead>
+ <tbody>
+ <% accesSousActivites.forEach(function(a) { %>
+ <tr>
+ <td><%= a.Utilisateur ? a.Utilisateur.prenom + ' ' + a.Utilisateur.nom : '—' %></td>
+ <td><%= a.SousActivite ? a.SousActivite.nom : '—' %></td>
+ <td>
+ <%= a.permissions && a.permissions.write ? 'Écriture' : 'Lecture' %><% if (a.permissions && a.permissions.delete) { %> + Suppression<% } %>
+ </td>
+ <td style="text-align:right;">
+ <% if (peut('acces', 'delete')) { %>
+ <form action="/acces/sous-activites/<%= a.id %>/supprimer" method="POST" class="form-inline"
+ onsubmit="return confirm('Révoquer cet accès ?');">
+ <button type="submit" class="btn btn-danger btn-petit">Révoquer</button>
+ </form>
+ <% } %>
+ </td>
+ </tr>
+ <% }) %>
+ </tbody>
+ </table>
+ <% } %>
 </div>
 
 <%- include('../partials/footer') %>

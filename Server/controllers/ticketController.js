@@ -3,6 +3,7 @@ const { isAdmin, normaliserPermissions } = require('../middlewares/auth');
 const { getPerimetreAcces } = require('../utils/perimetre');
 const { consigner } = require('../utils/journal');
 const { notifier } = require('../utils/notification');
+const { calculerSlaEcheance, statutSla, trouverAdmins } = require('../utils/slaTickets');
 
 const STATUTS_VALIDES = ['ouvert', 'en_cours', 'resolu', 'ferme'];
 const PRIORITES_VALIDES = ['basse', 'normale', 'haute', 'urgente'];
@@ -82,11 +83,32 @@ async function getAll(req, res, next) {
         }
         if (req.query.id_outil) tickets = tickets.filter(t => t.id_outil === parseInt(req.query.id_outil, 10));
 
-        res.json(tickets);
+        // Pagination
+        const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+        const allowed = [10, 25, 50, 100];
+        let parPage = parseInt(req.query.par_page, 10) || 25;
+        if (!allowed.includes(parPage)) parPage = 25;
+        const total = tickets.length;
+        const totalPages = Math.max(Math.ceil(total / parPage), 1);
+        const pageSafe = Math.min(page, totalPages);
+        const slice = tickets.slice((pageSafe - 1) * parPage, pageSafe * parPage);
+
+        const ticketsEnrichis = slice.map(t => {
+            const json = typeof t.toJSON === 'function' ? t.toJSON() : { ...t };
+            json.sla_statut = statutSla(json);
+            return json;
+        });
+        res.json({
+            tickets: ticketsEnrichis,
+            page: pageSafe,
+            par_page: parPage,
+            totalPages,
+            total
+        });
     } catch (err) { next(err); }
 }
 
-async function getById(req, res, next) {
+async function getById(req, res, next) { /* sla enrich below */
     try {
         const ticket = await Ticket.findByPk(req.params.id, {
             include: [...INCLUDE_COMPLET, {
@@ -103,7 +125,9 @@ async function getById(req, res, next) {
             return res.status(403).json({ message: "Vous n'avez pas accès à ce ticket." });
         }
 
-        res.json(ticket);
+        const json = ticket.toJSON();
+        json.sla_statut = statutSla(json);
+        res.json(json);
     } catch (err) { next(err); }
 }
 
@@ -122,6 +146,8 @@ async function create(req, res, next) {
             id_activite: id_activite || null,
             id_sous_activite: id_sous_activite || null,
             id_createur: req.currentUser.id
+        ,
+            sla_echeance: calculerSlaEcheance(PRIORITES_VALIDES.includes(priorite) ? priorite : 'normale')
         });
 
         // Images jointes (optionnelles, jusqu'à 6) : soit déjà uploadées par
@@ -179,7 +205,11 @@ async function update(req, res, next) {
         const { statut, priorite, id_assigne } = req.body;
         const changements = {};
         if (statut !== undefined && STATUTS_VALIDES.includes(statut)) changements.statut = statut;
-        if (priorite !== undefined && PRIORITES_VALIDES.includes(priorite)) changements.priorite = priorite;
+        if (priorite !== undefined && PRIORITES_VALIDES.includes(priorite)) {
+            changements.priorite = priorite;
+            // Recalcule le SLA à partir de maintenant si priorité change
+            changements.sla_echeance = calculerSlaEcheance(priorite);
+        }
 
         const ancienAssigne = ticket.id_assigne;
         if (id_assigne !== undefined) changements.id_assigne = id_assigne || null;
@@ -280,4 +310,71 @@ async function ajouterMessage(req, res, next) {
     } catch (err) { next(err); }
 }
 
-module.exports = { getAll, getById, create, update, remove, ajouterMessage, utilisateurPeutVoirTicket };
+async function escalader(req, res, next) {
+    try {
+        const ticket = await Ticket.findByPk(req.params.id);
+        if (!ticket) return res.status(404).json({ message: 'Ticket introuvable.' });
+        if (['resolu', 'ferme'].includes(ticket.statut)) {
+            return res.status(400).json({ message: 'Impossible d\'escalader un ticket clos.' });
+        }
+
+        const admins = await trouverAdmins();
+        if (!admins.length) {
+            return res.status(400).json({ message: 'Aucun administrateur disponible pour l\'escalade.' });
+        }
+
+        // Choisir un admin (premier différent du demandeur)
+        let admin = admins.find(a => a.id !== req.currentUser.id) || admins[0];
+        // Si body.id_admin fourni et valide
+        if (req.body.id_admin) {
+            const choisi = admins.find(a => a.id === parseInt(req.body.id_admin, 10));
+            if (choisi) admin = choisi;
+        }
+
+        await ticket.update({
+            escalade_le: new Date(),
+            id_escalade_admin: admin.id,
+            id_assigne: admin.id,
+            statut: ticket.statut === 'ouvert' ? 'en_cours' : ticket.statut,
+            // Priorité relevée d\'un cran si pas déjà urgente
+            priorite: ticket.priorite === 'urgente' ? 'urgente'
+                : ticket.priorite === 'haute' ? 'urgente'
+                : ticket.priorite === 'normale' ? 'haute' : 'normale',
+            sla_echeance: calculerSlaEcheance(
+                ticket.priorite === 'urgente' ? 'urgente'
+                : ticket.priorite === 'haute' ? 'urgente'
+                : ticket.priorite === 'normale' ? 'haute' : 'normale'
+            )
+        });
+
+        await notifier({
+            id_user: admin.id,
+            message: `Ticket #${ticket.id} « ${ticket.titre} » escaladé vers vous par ${req.currentUser.prenom} ${req.currentUser.nom}.`,
+            lien: `/tickets/${ticket.id}`,
+            type: 'alerte'
+        });
+        if (ticket.id_createur && ticket.id_createur !== admin.id) {
+            await notifier({
+                id_user: ticket.id_createur,
+                message: `Votre ticket #${ticket.id} a été escaladé vers un administrateur.`,
+                lien: `/tickets/${ticket.id}`,
+                type: 'info'
+            });
+        }
+
+        const fresh = await Ticket.findByPk(ticket.id, {
+            include: [
+                { model: require('../models').Utilisateur, as: 'Createur' },
+                { model: require('../models').Utilisateur, as: 'Assigne' },
+                { model: require('../models').Outil },
+                { model: require('../models').Activite },
+                { model: require('../models').SousActivite }
+            ]
+        });
+        const json = fresh.toJSON();
+        json.sla_statut = statutSla(json);
+        res.json(json);
+    } catch (err) { next(err); }
+}
+
+module.exports = { getAll, getById, create, escalader, update, remove, ajouterMessage, utilisateurPeutVoirTicket };

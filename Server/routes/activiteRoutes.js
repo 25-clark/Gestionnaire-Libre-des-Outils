@@ -11,6 +11,7 @@ router.get('/arborescence', checkPermission('activites', 'read'), activiteContro
 router.get('/:id', checkPermission('activites', 'read'), checkAccesLectureActivite(), activiteController.getById);
 router.post('/', checkPermission('activites', 'create'), uploadLogo.single('logo'), activiteController.create);
 router.put('/:id', checkPermission('activites', 'update'), checkAccesActivite('write'), uploadLogo.single('logo'), activiteController.update);
+router.put('/:id/reglages', checkPermission('activites', 'update'), checkAccesActivite('write'), activiteController.updateReglages);
 router.delete('/:id', checkPermission('activites', 'delete'), checkAccesActivite('delete'), activiteController.remove);
 
 module.exports = router;

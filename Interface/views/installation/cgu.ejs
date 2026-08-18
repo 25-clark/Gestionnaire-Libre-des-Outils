@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Installation GLO — CGU</title>
+ <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="conteneur" style="max-width:720px; margin:40px auto;">
+ <div class="entete-page"><h1>Installation de GLO</h1></div>
+ <p style="color:var(--gris);">Étape 1 / 6 — Conditions générales d'utilisation</p>
+ <% if (erreur) { %><div class="message-erreur"><%= erreur %></div><% } %>
+ <div class="carte">
+ <h2>Conditions Générales d'Utilisation</h2>
+ <h3>1. Objet</h3>
+ <p>Le Gestionnaire Libre des Outils (GLO) est une application interne destinée à la gestion des outils, activités, accès et tickets au sein de l'organisation.</p>
+ <h3>2. Accès et comptes</h3>
+ <p>L'accès est réservé aux utilisateurs autorisés (authentification locale ou LDAP). Chaque utilisateur est responsable de la confidentialité de ses identifiants.</p>
+ <h3>3. Données personnelles</h3>
+ <p>Les données collectées sont utilisées uniquement pour le fonctionnement de l'application. Elles ne sont pas cédées à des tiers.</p>
+ <h3>4. Responsabilités</h3>
+ <p>L'utilisateur s'engage à utiliser GLO conformément à sa finalité professionnelle.</p>
+ <h3>5. Disponibilité</h3>
+ <p>L'application est fournie « en l'état ». L'éditeur s'efforce d'assurer une disponibilité maximale.</p>
+ <form id="form-etape" action="/installation/cgu" method="POST" style="margin-top:20px;">
+ <div class="champ-case">
+ <input type="checkbox" id="accepte" name="accepte" required>
+ <label for="accepte">J'ai lu et j'accepte les CGU de GLO</label>
+ </div>
+ <div class="actions-form">
+ <button type="submit" class="btn btn-primaire">Continuer</button>
+ </div>
+ </form>
+ </div>
+</div>
+<script src="/js/installation-etapes.js"></script>
+</body>
+</html>

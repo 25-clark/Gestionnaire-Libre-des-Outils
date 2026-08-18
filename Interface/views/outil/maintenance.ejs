@@ -1,0 +1,42 @@
+<%- include('../partials/header') %>
+
+<div class="fil-ariane">
+    <a href="<%= retour %>">Retour</a> <span class="sep">›</span> Maintenance — <%= outil.nom %>
+</div>
+<div class="entete-page"><h1><i class="bi bi-tools"></i> Maintenance — <%= outil.nom %></h1></div>
+
+<% if (erreur) { %><div class="message-erreur"><%= erreur %></div><% } %>
+<% if (succes) { %><div class="message-succes"><%= succes %></div><% } %>
+
+<div class="carte" style="max-width:560px;">
+    <p style="color:var(--gris); font-size:13px;">
+        Informez les utilisateurs d’une <strong>coupure</strong>, d’une <strong>latence</strong> ou d’un test planifié.
+        Un bandeau s’affichera sur l’outil pendant la fenêtre indiquée.
+    </p>
+    <form action="/outils/<%= outil.id %>/maintenance" method="POST">
+        <input type="hidden" name="retour" value="<%= retour %>">
+
+        <label for="note_maintenance">Note de maintenance</label>
+        <textarea id="note_maintenance" name="note_maintenance" rows="3" placeholder="Ex. Mise à jour serveur, redémarrage planifié…"><%= outil.note_maintenance || '' %></textarea>
+
+        <label for="derangement_message">Message affiché aux utilisateurs</label>
+        <input type="text" id="derangement_message" name="derangement_message" maxlength="500"
+               value="<%= outil.derangement_message || '' %>"
+               placeholder="Ex. Coupure possible entre 14h et 16h — latence attendue">
+
+        <label for="derangement_debut">Début du dérangement / test</label>
+        <input type="datetime-local" id="derangement_debut" name="derangement_debut"
+               value="<%= outil.derangement_debut ? new Date(outil.derangement_debut).toISOString().slice(0,16) : '' %>">
+
+        <label for="derangement_fin">Fin prévue</label>
+        <input type="datetime-local" id="derangement_fin" name="derangement_fin"
+               value="<%= outil.derangement_fin ? new Date(outil.derangement_fin).toISOString().slice(0,16) : '' %>">
+
+        <div class="actions-form">
+            <button type="submit" class="btn btn-primaire">Enregistrer</button>
+            <a href="<%= retour %>" class="btn btn-gris">Annuler</a>
+        </div>
+    </form>
+</div>
+
+<%- include('../partials/footer') %>

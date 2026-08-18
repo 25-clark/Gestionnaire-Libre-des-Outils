@@ -1,176 +1,184 @@
 <%- include('../partials/header') %>
 
+<% if (activite.reglages_effectifs && activite.reglages_effectifs.message_info) { %>
+<div class="message-succes" style="background:#e3f2fd;color:#1565c0;border-color:#90caf9;">
+    <i class="bi bi-megaphone"></i> <%= activite.reglages_effectifs.message_info %>
+</div>
+<% } %>
+
 <div class="fil-ariane"><a href="/">Tableau de bord</a> <span class="sep">›</span> <%= activite.nom %></div>
 
 <div class="entete-page">
-    <h1>
-        <% if (activite.logo) { %><img src="<%= activite.logo %>" class="miniature" style="vertical-align:middle; margin-right:8px;"><% } %>
-        <%= activite.nom %> <span style="color:var(--gris); font-weight:400; font-size:15px;">(<%= activite.abbreviation %>)</span>
-    </h1>
-    <% if (peut('activites', 'update') || peut('activites', 'delete')) { %>
-        <div style="display:flex; gap:8px;">
-            <% if (peut('activites', 'update')) { %>
-                <a href="/activites/<%= activite.id %>/modifier" class="btn btn-gris">Modifier</a>
-            <% } %>
-            <% if (peut('activites', 'delete')) { %>
-                <form action="/activites/<%= activite.id %>/supprimer" method="POST" class="form-inline"
-                      onsubmit="return confirm('Supprimer cette activité ?');">
-                    <button type="submit" class="btn btn-danger">Supprimer</button>
-                </form>
-            <% } %>
-        </div>
-    <% } %>
+ <h1>
+ <% if (activite.logo) { %><img src="<%= activite.logo %>" class="miniature" style="vertical-align:middle; margin-right:8px;"><% } %>
+ <%= activite.nom %> <span style="color:var(--gris); font-weight:400; font-size:15px;">(<%= activite.abbreviation %>)</span>
+ </h1>
+ <% if (peut('activites', 'update') || peut('activites', 'delete')) { %>
+ <div style="display:flex; gap:8px;">
+ <% if (peut('activites', 'update')) { %>
+ <a href="/activites/<%= activite.id %>/modifier" class="btn btn-gris">Modifier</a>
+ <% } %>
+ <% if (peut('activites', 'delete')) { %>
+ <form action="/activites/<%= activite.id %>/supprimer" method="POST" class="form-inline"
+ onsubmit="return confirm('Supprimer cette activité ?');">
+ <button type="submit" class="btn btn-danger">Supprimer</button>
+ </form>
+ <% } %>
+ </div>
+    <% if (peut("activites", "update")) { %><a href="/activites/<%= activite.id %>/reglages" class="btn btn-gris btn-petit"><i class="bi bi-sliders"></i> Réglages locaux</a><% } %>
+
+ <% } %>
 </div>
 
 <div class="onglets">
-    <% if (peut('onglets', 'outils')) { %>
-        <a class="onglet <%= onglet === 'outils' ? 'actif' : '' %>" href="/activites/<%= activite.id %>?onglet=outils">Outils</a>
-    <% } %>
-    <% if (peut('onglets', 'archives')) { %>
-        <a class="onglet <%= onglet === 'archives' ? 'actif' : '' %>" href="/activites/<%= activite.id %>?onglet=archives">Archives</a>
-    <% } %>
-    <% if (peut('onglets', 'sous_activites') && peut('sous_activites', 'read')) { %>
-        <a class="onglet <%= onglet === 'sous-activites' ? 'actif' : '' %>" href="/activites/<%= activite.id %>?onglet=sous-activites">Sous-activités</a>
-    <% } %>
-    <% if (peut('onglets', 'utilisateurs') && peut('utilisateurs', 'read')) { %>
-        <a class="onglet <%= onglet === 'utilisateurs' ? 'actif' : '' %>" href="/activites/<%= activite.id %>?onglet=utilisateurs">Utilisateurs</a>
-    <% } %>
+ <% if (peut('onglets', 'outils')) { %>
+ <a class="onglet <%= onglet === 'outils' ? 'actif' : '' %>" href="/activites/<%= activite.id %>?onglet=outils">Outils</a>
+ <% } %>
+ <% if (peut('onglets', 'archives')) { %>
+ <a class="onglet <%= onglet === 'archives' ? 'actif' : '' %>" href="/activites/<%= activite.id %>?onglet=archives">Archives</a>
+ <% } %>
+ <% if (peut('onglets', 'sous_activites') && peut('sous_activites', 'read')) { %>
+ <a class="onglet <%= onglet === 'sous-activites' ? 'actif' : '' %>" href="/activites/<%= activite.id %>?onglet=sous-activites">Sous-activités</a>
+ <% } %>
+ <% if (peut('onglets', 'utilisateurs') && peut('utilisateurs', 'read')) { %>
+ <a class="onglet <%= onglet === 'utilisateurs' ? 'actif' : '' %>" href="/activites/<%= activite.id %>?onglet=utilisateurs">Utilisateurs</a>
+ <% } %>
 </div>
 
 <% if (onglet === 'sous-activites') { %>
-    <% if (peut('sous_activites', 'create')) { %>
-        <div class="entete-page">
-            <span></span>
-            <a href="/sous-activites/nouveau?id_activite=<%= activite.id %>" class="btn btn-accent">+ Nouvelle sous-activité</a>
-        </div>
-    <% } %>
+ <% if (peut('sous_activites', 'create')) { %>
+ <div class="entete-page">
+ <span></span>
+ <a href="/sous-activites/nouveau?id_activite=<%= activite.id %>" class="btn btn-accent">+ Nouvelle sous-activité</a>
+ </div>
+ <% } %>
 
-    <% if (!sousActivites.length) { %>
-        <div class="carte vide">Aucune sous-activité pour l'instant.</div>
-    <% } else { %>
-        <div class="carte">
-            <table class="tableau">
-                <thead><tr><th>Nom</th><th>Sous-activité parente</th><th></th></tr></thead>
-                <tbody>
-                <% sousActivites.forEach(function(sa) { %>
-                    <tr id="sa-<%= sa.id %>">
-                        <td><a href="/sous-activites/<%= sa.id %>">📂 <%= sa.nom %></a></td>
-                        <td><% if (sa.id_parent) {
-                            const parent = sousActivites.find(function(p){ return p.id === sa.id_parent; });
-                        %><%= parent ? parent.nom : '—' %><% } else { %>—<% } %></td>
-                        <td style="text-align:right; white-space:nowrap;">
-                            <% if (peut('sous_activites', 'update')) { %>
-                                <a href="/sous-activites/<%= sa.id %>/modifier" class="btn btn-gris btn-petit">Modifier</a>
-                            <% } %>
-                            <% if (peut('outils', 'create')) { %>
-                                <a href="/outils/nouveau?id_activite=<%= activite.id %>&id_sous_activite=<%= sa.id %>" class="btn btn-gris btn-petit">+ Outil</a>
-                            <% } %>
-                            <% if (peut('sous_activites', 'delete')) { %>
-                                <form action="/sous-activites/<%= sa.id %>/supprimer" method="POST" class="form-inline"
-                                      onsubmit="return confirm('Supprimer cette sous-activité ?');">
-                                    <button type="submit" class="btn btn-danger btn-petit">Supprimer</button>
-                                </form>
-                            <% } %>
-                        </td>
-                    </tr>
-                <% }) %>
-                </tbody>
-            </table>
-        </div>
-    <% } %>
+ <% if (!sousActivites.length) { %>
+ <div class="carte vide">Aucune sous-activité pour l'instant.</div>
+ <% } else { %>
+ <div class="carte">
+ <table class="tableau">
+ <thead><tr><th>Nom</th><th>Sous-activité parente</th><th></th></tr></thead>
+ <tbody>
+ <% sousActivites.forEach(function(sa) { %>
+ <tr id="sa-<%= sa.id %>">
+ <td><a href="/sous-activites/<%= sa.id %>"><i class="bi bi-folder2-open"></i> <%= sa.nom %></a></td>
+ <td><% if (sa.id_parent) {
+ const parent = sousActivites.find(function(p){ return p.id === sa.id_parent; });
+ %><%= parent ? parent.nom : '—' %><% } else { %>—<% } %></td>
+ <td style="text-align:right; white-space:nowrap;">
+ <% if (peut('sous_activites', 'update')) { %>
+ <a href="/sous-activites/<%= sa.id %>/modifier" class="btn btn-gris btn-petit">Modifier</a>
+ <% } %>
+ <% if (peut('outils', 'create')) { %>
+ <a href="/outils/nouveau?id_activite=<%= activite.id %>&id_sous_activite=<%= sa.id %>" class="btn btn-gris btn-petit">+ Outil</a>
+ <% } %>
+ <% if (peut('sous_activites', 'delete')) { %>
+ <form action="/sous-activites/<%= sa.id %>/supprimer" method="POST" class="form-inline"
+ onsubmit="return confirm('Supprimer cette sous-activité ?');">
+ <button type="submit" class="btn btn-danger btn-petit">Supprimer</button>
+ </form>
+ <% } %>
+ </td>
+ </tr>
+ <% }) %>
+ </tbody>
+ </table>
+ </div>
+ <% } %>
 <% } %>
 
 <% if (onglet === 'utilisateurs') { %>
-    <% if (typeof mdpReinitialise !== 'undefined' && mdpReinitialise) { %>
-        <div class="message-succes">Mot de passe réinitialisé à la valeur par défaut. L'utilisateur devra le changer à sa prochaine connexion.</div>
-    <% } %>
-    <div class="entete-page">
-        <% if (peut('utilisateurs', 'create')) { %>
-            <a href="/utilisateurs/nouveau?id_activite=<%= activite.id %>" class="btn btn-accent">+ Nouvel utilisateur</a>
-        <% } else { %>
-            <span></span>
-        <% } %>
-        <div style="display:flex; gap:8px;">
-            <% if (peut('export', 'read')) { %>
-            <a href="/activites/<%= activite.id %>/utilisateurs/export.csv" class="btn btn-gris btn-petit">⬇️ CSV</a>
-            <a href="/activites/<%= activite.id %>/utilisateurs/export-pdf" target="_blank" class="btn btn-gris btn-petit">🖨️ PDF</a>
-            <% } %>
-        </div>
-    </div>
+ <% if (typeof mdpReinitialise !== 'undefined' && mdpReinitialise) { %>
+ <div class="message-succes">Mot de passe réinitialisé à la valeur par défaut. L'utilisateur devra le changer à sa prochaine connexion.</div>
+ <% } %>
+ <div class="entete-page">
+ <% if (peut('utilisateurs', 'create')) { %>
+ <a href="/utilisateurs/nouveau?id_activite=<%= activite.id %>" class="btn btn-accent">+ Nouvel utilisateur</a>
+ <% } else { %>
+ <span></span>
+ <% } %>
+ <div style="display:flex; gap:8px;">
+ <% if (peut('export', 'read')) { %>
+ <a href="/activites/<%= activite.id %>/utilisateurs/export.csv" class="btn btn-gris btn-petit"><i class="bi bi-download"></i> CSV</a>
+ <a href="/activites/<%= activite.id %>/utilisateurs/export-pdf" target="_blank" class="btn btn-gris btn-petit"><i class="bi bi-printer"></i> PDF</a>
+ <% } %>
+ </div>
+ </div>
 
-    <% if (!utilisateurs.length) { %>
-        <div class="carte vide">Aucun utilisateur rattaché à cette activité.</div>
-    <% } else { %>
-        <div class="carte">
-            <table class="tableau">
-                <thead><tr><th>Matricule</th><th>Nom</th><th>Prénom</th><th>Rôle</th><th>Dernière connexion</th><th></th></tr></thead>
-                <tbody>
-                <% utilisateurs.forEach(function(u) { %>
-                    <tr>
-                        <td><%= u.matricule %></td>
-                        <td><%= u.nom %></td>
-                        <td><%= u.prenom %></td>
-                        <td><span class="badge-role" style="background:var(--bleu);"><%= u.Role ? u.Role.abbreviation : '—' %></span></td>
-                        <td style="font-size:13px; color:var(--gris);">
-                            <% if (u.derniere_connexion) { %>
-                                <%= new Date(u.derniere_connexion).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) %>
-                            <% } else { %>
-                                <span style="font-style:italic;">Jamais connecté</span>
-                            <% } %>
-                        </td>
-                        <td style="text-align:right;">
-                            <% if (currentUser.Role && currentUser.Role.abbreviation === 'ADMIN') { %>
-                                <form action="/utilisateurs/<%= u.id %>/reinitialiser-mdp" method="POST" class="form-inline"
-                                      onsubmit="return confirm('Réinitialiser le mot de passe de cet utilisateur à la valeur par défaut ?');">
-                                    <button type="submit" class="btn btn-gris btn-petit" title="Réinitialiser le mot de passe">🔑 Réinitialiser</button>
-                                </form>
-                            <% } %>
-                            <% if (peut('utilisateurs', 'delete')) { %>
-                                <form action="/utilisateurs/<%= u.id %>/supprimer" method="POST" class="form-inline"
-                                      onsubmit="return confirm('Supprimer cet utilisateur ?');">
-                                    <button type="submit" class="btn btn-danger btn-petit">Supprimer</button>
-                                </form>
-                            <% } %>
-                        </td>
-                    </tr>
-                <% }) %>
-                </tbody>
-            </table>
-        </div>
-    <% } %>
+ <% if (!utilisateurs.length) { %>
+ <div class="carte vide">Aucun utilisateur rattaché à cette activité.</div>
+ <% } else { %>
+ <div class="carte">
+ <table class="tableau">
+ <thead><tr><th>Matricule</th><th>Nom</th><th>Prénom</th><th>Rôle</th><th>Dernière connexion</th><th></th></tr></thead>
+ <tbody>
+ <% utilisateurs.forEach(function(u) { %>
+ <tr>
+ <td><%= u.matricule %></td>
+ <td><%= u.nom %></td>
+ <td><%= u.prenom %></td>
+ <td><span class="badge-role" style="background:var(--bleu);"><%= u.Role ? u.Role.abbreviation : '—' %></span></td>
+ <td style="font-size:13px; color:var(--gris);">
+ <% if (u.derniere_connexion) { %>
+ <%= new Date(u.derniere_connexion).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) %>
+ <% } else { %>
+ <span style="font-style:italic;">Jamais connecté</span>
+ <% } %>
+ </td>
+ <td style="text-align:right;">
+ <% if (currentUser.Role && currentUser.Role.abbreviation === 'ADMIN') { %>
+ <form action="/utilisateurs/<%= u.id %>/reinitialiser-mdp" method="POST" class="form-inline"
+ onsubmit="return confirm('Réinitialiser le mot de passe de cet utilisateur à la valeur par défaut ?');">
+ <button type="submit" class="btn btn-gris btn-petit" title="Réinitialiser le mot de passe"><i class="bi bi-key"></i> Réinitialiser</button>
+ </form>
+ <% } %>
+ <% if (peut('utilisateurs', 'delete')) { %>
+ <form action="/utilisateurs/<%= u.id %>/supprimer" method="POST" class="form-inline"
+ onsubmit="return confirm('Supprimer cet utilisateur ?');">
+ <button type="submit" class="btn btn-danger btn-petit">Supprimer</button>
+ </form>
+ <% } %>
+ </td>
+ </tr>
+ <% }) %>
+ </tbody>
+ </table>
+ </div>
+ <% } %>
 <% } %>
 
 <% if (onglet === 'outils') { %>
-    <div class="entete-page">
-        <% if (peut('outils', 'create')) { %>
-            <a href="/outils/nouveau?id_activite=<%= activite.id %>" class="btn btn-accent">+ Nouvel outil</a>
-        <% } else { %>
-            <span></span>
-        <% } %>
-        <div style="display:flex; gap:8px;">
-            <% if (peut('export', 'read')) { %>
-            <a href="/activites/<%= activite.id %>/outils/export.csv?onglet=outils" class="btn btn-gris btn-petit">⬇️ CSV</a>
-            <a href="/activites/<%= activite.id %>/outils/export-pdf?onglet=outils" target="_blank" class="btn btn-gris btn-petit">🖨️ PDF</a>
-            <% } %>
-        </div>
-    </div>
+ <div class="entete-page">
+ <% if (peut('outils', 'create')) { %>
+ <a href="/outils/nouveau?id_activite=<%= activite.id %>" class="btn btn-accent">+ Nouvel outil</a>
+ <% } else { %>
+ <span></span>
+ <% } %>
+ <div style="display:flex; gap:8px;">
+ <% if (peut('export', 'read')) { %>
+ <a href="/activites/<%= activite.id %>/outils/export.csv?onglet=outils" class="btn btn-gris btn-petit"><i class="bi bi-download"></i> CSV</a>
+ <a href="/activites/<%= activite.id %>/outils/export-pdf?onglet=outils" target="_blank" class="btn btn-gris btn-petit"><i class="bi bi-printer"></i> PDF</a>
+ <% } %>
+ </div>
+ </div>
 
-    <%- include('../partials/outils-vue', { outils: outils, retour: '/activites/' + activite.id + '?onglet=outils', messageVide: "Aucun outil actif pour l'instant." }) %>
+ <%- include('../partials/outils-vue', { outils: outils, retour: '/activites/' + activite.id + '?onglet=outils', messageVide: "Aucun outil actif pour l'instant." }) %>
 <% } %>
 
 <% if (onglet === 'archives') { %>
-    <div class="entete-page">
-        <p style="color:var(--gris); font-size:13px; margin:0;">
-            Outils désactivés de cette activité. Réactivez-les pour les faire réapparaître dans l'onglet "Outils".
-        </p>
-        <div style="display:flex; gap:8px;">
-            <% if (peut('export', 'read')) { %>
-            <a href="/activites/<%= activite.id %>/outils/export.csv?onglet=archives" class="btn btn-gris btn-petit">⬇️ CSV</a>
-            <a href="/activites/<%= activite.id %>/outils/export-pdf?onglet=archives" target="_blank" class="btn btn-gris btn-petit">🖨️ PDF</a>
-            <% } %>
-        </div>
-    </div>
-    <%- include('../partials/outils-vue', { outils: outils, retour: '/activites/' + activite.id + '?onglet=archives', messageVide: 'Aucun outil archivé.' }) %>
+ <div class="entete-page">
+ <p style="color:var(--gris); font-size:13px; margin:0;">
+ Outils désactivés de cette activité. Réactivez-les pour les faire réapparaître dans l'onglet "Outils".
+ </p>
+ <div style="display:flex; gap:8px;">
+ <% if (peut('export', 'read')) { %>
+ <a href="/activites/<%= activite.id %>/outils/export.csv?onglet=archives" class="btn btn-gris btn-petit"><i class="bi bi-download"></i> CSV</a>
+ <a href="/activites/<%= activite.id %>/outils/export-pdf?onglet=archives" target="_blank" class="btn btn-gris btn-petit"><i class="bi bi-printer"></i> PDF</a>
+ <% } %>
+ </div>
+ </div>
+ <%- include('../partials/outils-vue', { outils: outils, retour: '/activites/' + activite.id + '?onglet=archives', messageVide: 'Aucun outil archivé.' }) %>
 <% } %>
 
 <%- include('../partials/footer') %>

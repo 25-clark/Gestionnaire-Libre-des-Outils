@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Installation GLO — Admin</title>
+ <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="conteneur" style="max-width:520px; margin:40px auto;">
+ <div class="entete-page"><h1>Installation de GLO</h1></div>
+ <p style="color:var(--gris);">Étape 4 / 6 — Compte administrateur</p>
+ <% if (erreur) { %><div class="message-erreur"><%= erreur %></div><% } %>
+ <div class="carte">
+ <p>Créez le premier compte administrateur (rôles Admin / Agent / Invité seront créés automatiquement).</p>
+ <form id="form-etape" action="/installation/admin" method="POST">
+ <label for="matricule">Matricule</label>
+ <input type="text" id="matricule" name="matricule" required placeholder="0000.admin" value="0000.admin">
+ <label for="nom">Nom</label>
+ <input type="text" id="nom" name="nom" required placeholder="Admin">
+ <label for="prenom">Prénom</label>
+ <input type="text" id="prenom" name="prenom" required placeholder="GLO">
+ <label for="mot_de_passe">Mot de passe</label>
+ <input type="password" id="mot_de_passe" name="mot_de_passe" required minlength="6" placeholder="min. 6 caractères">
+ <div class="actions-form">
+ <a href="/installation/dependances" class="btn btn-gris">Retour</a>
+ <button type="submit" class="btn btn-primaire">Créer l'admin</button>
+ </div>
+ </form>
+ </div>
+</div>
+<script src="/js/installation-etapes.js"></script>
+</body>
+</html>

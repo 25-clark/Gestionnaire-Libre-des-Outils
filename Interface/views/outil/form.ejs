@@ -4,92 +4,93 @@
 <div class="entete-page"><h1><%= titre %></h1></div>
 
 <div class="carte" style="max-width:560px;">
-    <% if (erreur) { %>
-        <div class="message-erreur"><%= erreur %></div>
-    <% } %>
-    <p style="color:var(--gris); font-size:13px; margin-top:-4px;">
-        En cas d'erreur de saisie, il faudra supprimer puis recréer l'outil (pas de modification possible,
-        seule l'activation/désactivation et les credentials sont modifiables).
-    </p>
+ <% if (erreur) { %>
+ <div class="message-erreur"><%= erreur %></div>
+ <% } %>
+ <p style="color:var(--gris); font-size:13px; margin-top:-4px;">
+ En cas d'erreur de saisie, il faudra supprimer puis recréer l'outil (pas de modification possible,
+ seule l'activation/désactivation et les credentials sont modifiables).
+ </p>
 
-    <form action="/outils" method="POST" enctype="multipart/form-data" id="form-outil">
-        <input type="hidden" name="id_activite" value="<%= id_activite %>">
-        <input type="hidden" name="credentials" id="credentials-json" value="[]">
+ <form action="/outils" method="POST" enctype="multipart/form-data" id="form-outil">
+ <input type="hidden" name="id_activite" value="<%= id_activite %>">
+ <input type="hidden" name="credentials" id="credentials-json" value="[]">
 
-        <label for="nom">Nom de l'outil</label>
-        <input type="text" id="nom" name="nom" required>
+ <label for="nom">Nom de l'outil</label>
+ <input type="text" id="nom" name="nom" required>
 
-        <label for="lien">Lien (optionnel)</label>
-        <input type="url" id="lien" name="lien" placeholder="https://...">
+ <label for="lien">Lien (optionnel)</label>
+ <input type="url" id="lien" name="lien" placeholder="https://...">
 
-        <label for="adresse">Adresse IP / nom d'hôte (optionnel)</label>
-        <input type="text" id="adresse" name="adresse" placeholder="192.168.1.10 ou routeur.local">
-        <p style="color:var(--gris); font-size:13px; margin-top:-6px;">
-            Permet de tester la joignabilité de l'outil (ping, traceroute...) depuis l'onglet Diagnostic réseau.
-        </p>
+ <label for="adresse">Adresse IP / nom d'hôte (optionnel)</label>
+ <input type="text" id="adresse" name="adresse" placeholder="192.168.1.10 ou routeur.local">
+ <p style="color:var(--gris); font-size:13px; margin-top:-6px;">
+ Permet de tester la joignabilité de l'outil (ping, traceroute...) depuis l'onglet Diagnostic réseau.
+ </p>
 
-        <label>Propriétaire</label>
-        <p style="margin:4px 0 0; padding:9px 11px; background:var(--gris-clair); border-radius:var(--rayon); font-size:14px;">
-            <%= currentUser.prenom %> <%= currentUser.nom %> <span style="color:var(--gris);">(vous)</span>
-        </p>
+ <label>Propriétaire</label>
+ <p style="margin:4px 0 0; padding:9px 11px; background:var(--gris-clair); border-radius:var(--rayon); font-size:14px;">
+ <%= currentUser.prenom %> <%= currentUser.nom %> <span style="color:var(--gris);">(vous)</span>
+ </p>
 
-        <label for="id_sous_activite">Sous-activité (optionnel)</label>
-        <select id="id_sous_activite" name="id_sous_activite">
-            <option value="">— Aucune —</option>
-            <% sousActivites.forEach(function(sa) { %>
-                <option value="<%= sa.id %>" <%= String(sa.id) === String(id_sous_activite) ? 'selected' : '' %>><%= sa.nom %></option>
-            <% }) %>
-        </select>
+ <label for="id_sous_activite">Sous-activité (optionnel)</label>
+ <select id="id_sous_activite" name="id_sous_activite">
+ <option value="">— Aucune —</option>
+ <% sousActivites.forEach(function(sa) { %>
+ <option value="<%= sa.id %>" <%= String(sa.id) === String(id_sous_activite) ? 'selected' : '' %>><%= sa.nom %></option>
+ <% }) %>
+ </select>
 
-        <label for="image">Image (optionnel)</label>
-        <input type="file" id="image" name="image" accept="image/*">
+ <label for="image">Image (optionnel)</label>
+ <input type="file" id="image" name="image" accept="image/*">
 
-        <% if (typeof credentialsActifs !== 'undefined' && credentialsActifs && peut('credentials', 'create')) { %>
-        <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
-        <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 6px;">🔑 Credentials (optionnel)</h2>
-        <p style="color:var(--gris); font-size:13px; margin-top:0;">
-            Identifiants de connexion à cet outil (login, mot de passe, clé API…). Ils pourront être copiés d’un clic à l’ouverture.
-        </p>
-        <div id="creds-liste" class="contacts-liste"></div>
-        <button type="button" class="btn-ajouter-contact" id="btn-ajouter-cred">+ Ajouter un champ</button>
+ <% if (typeof credentialsActifs !== 'undefined' && credentialsActifs && peut('credentials', 'create')) { %>
+ <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
+ <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 6px;"><i class="bi bi-key"></i> Mes credentials pour cet outil (optionnel)</h2>
+ <p style="color:var(--gris);font-size:13px;">Uniquement pour votre compte — non partagés avec les autres utilisateurs.</p>
+ <p style="color:var(--gris); font-size:13px; margin-top:0;">
+ Identifiants de connexion à cet outil (login, mot de passe, clé API…). Ils pourront être copiés d’un clic à l’ouverture.
+ </p>
+ <div id="creds-liste" class="contacts-liste"></div>
+ <button type="button" class="btn-ajouter-contact" id="btn-ajouter-cred">+ Ajouter un champ</button>
 
-        <% } %>
+ <% } %>
 
-        <div class="actions-form" style="margin-top:18px;">
-            <button type="submit" class="btn btn-primaire">Créer</button>
-            <a href="<%= id_activite ? '/activites/' + id_activite + '?onglet=outils' : '/' %>" class="btn btn-gris">Annuler</a>
-        </div>
-    </form>
+ <div class="actions-form" style="margin-top:18px;">
+ <button type="submit" class="btn btn-primaire">Créer</button>
+ <a href="<%= id_activite ? '/activites/' + id_activite + '?onglet=outils' : '/' %>" class="btn btn-gris">Annuler</a>
+ </div>
+ </form>
 </div>
 
 <script>
 (function () {
-    var liste = document.getElementById('creds-liste');
-    function ligne(label, valeur) {
-        var div = document.createElement('div');
-        div.className = 'contact-ligne';
-        div.innerHTML =
-            '<input type="text" class="cred-label" placeholder="Libellé (ex. Login)" value="' + (label || '') + '" style="flex:1;">' +
-            '<input type="text" class="cred-valeur" placeholder="Valeur" value="' + (valeur || '') + '" style="flex:1.2;">' +
-            '<button type="button" class="btn-retirer" title="Retirer">&times;</button>';
-        div.querySelector('.btn-retirer').onclick = function () { div.remove(); };
-        liste.appendChild(div);
-    }
-    document.getElementById('btn-ajouter-cred').onclick = function () { ligne('', ''); };
-    // Deux champs par défaut
-    ligne('Login', '');
-    ligne('Mot de passe', '');
+ var liste = document.getElementById('creds-liste');
+ function ligne(label, valeur) {
+ var div = document.createElement('div');
+ div.className = 'contact-ligne';
+ div.innerHTML =
+ '<input type="text" class="cred-label" placeholder="Libellé (ex. Login)" value="' + (label || '') + '" style="flex:1;">' +
+ '<input type="text" class="cred-valeur" placeholder="Valeur" value="' + (valeur || '') + '" style="flex:1.2;">' +
+ '<button type="button" class="btn-retirer" title="Retirer">&times;</button>';
+ div.querySelector('.btn-retirer').onclick = function () { div.remove(); };
+ liste.appendChild(div);
+ }
+ document.getElementById('btn-ajouter-cred').onclick = function () { ligne('', ''); };
+ // Deux champs par défaut
+ ligne('Login', '');
+ ligne('Mot de passe', '');
 
-    document.getElementById('form-outil').addEventListener('submit', function () {
-        var rows = liste.querySelectorAll('.contact-ligne');
-        var creds = [];
-        rows.forEach(function (row) {
-            var label = (row.querySelector('.cred-label').value || '').trim();
-            var valeur = (row.querySelector('.cred-valeur').value || '').trim();
-            if (label || valeur) creds.push({ label: label || 'Champ', valeur: valeur });
-        });
-        document.getElementById('credentials-json').value = JSON.stringify(creds);
-    });
+ document.getElementById('form-outil').addEventListener('submit', function () {
+ var rows = liste.querySelectorAll('.contact-ligne');
+ var creds = [];
+ rows.forEach(function (row) {
+ var label = (row.querySelector('.cred-label').value || '').trim();
+ var valeur = (row.querySelector('.cred-valeur').value || '').trim();
+ if (label || valeur) creds.push({ label: label || 'Champ', valeur: valeur });
+ });
+ document.getElementById('credentials-json').value = JSON.stringify(creds);
+ });
 })();
 </script>
 

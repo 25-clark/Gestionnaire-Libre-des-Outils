@@ -1,17 +1,17 @@
 <% /* Attend : o (outil), retour (URL de redirection après action) */ %>
 <% if (o.adresse) { %>
-    <% if (o.dernier_statut === 'en_ligne') { %>
-        <span class="pastille-reseau en-ligne" title="Dernière vérification : <%= o.derniere_verification ? new Date(o.derniere_verification).toLocaleString('fr-FR') : '—' %>">🟢 En ligne</span>
-    <% } else if (o.dernier_statut === 'hors_ligne') { %>
-        <span class="pastille-reseau hors-ligne" title="Dernière vérification : <%= o.derniere_verification ? new Date(o.derniere_verification).toLocaleString('fr-FR') : '—' %>">🔴 Hors ligne</span>
-    <% } else { %>
-        <span class="pastille-reseau inconnu" title="Pas encore vérifié par la surveillance automatique">⚪ Inconnu</span>
-    <% } %>
-    <% if (peut('outils', 'update')) { %>
-        <form action="/outils/<%= o.id %>/verifier-statut" method="POST" class="form-inline">
-            <input type="hidden" name="retour" value="<%= retour %>">
-            <button type="submit" class="btn-icone" title="Vérifier maintenant">🔄</button>
-        </form>
-    <% } %>
-    <a href="/outils/<%= o.id %>/historique-statut" class="btn-icone" title="Historique de disponibilité">📈</a>
+ <% if (o.dernier_statut === 'en_ligne') { %>
+ <span class="pastille-reseau en-ligne" title="Dernière vérification : <%= o.derniere_verification ? new Date(o.derniere_verification).toLocaleString('fr-FR') : '—' %>"><i class="bi bi-circle-fill text-statut-ok"></i> En ligne</span>
+ <% } else if (o.dernier_statut === 'hors_ligne') { %>
+ <span class="pastille-reseau hors-ligne" title="Dernière vérification : <%= o.derniere_verification ? new Date(o.derniere_verification).toLocaleString('fr-FR') : '—' %>"><i class="bi bi-circle-fill text-statut-ko"></i> Hors ligne</span>
+ <% } else { %>
+ <span class="pastille-reseau inconnu" title="Pas encore vérifié par la surveillance automatique"><i class="bi bi-circle text-statut-na"></i> Inconnu</span>
+ <% } %>
+ <% if (peut('outils', 'update')) { %>
+ <form action="/outils/<%= o.id %>/verifier-statut" method="POST" class="form-inline">
+ <input type="hidden" name="retour" value="<%= retour %>">
+ <button type="submit" class="btn-icone" title="Vérifier maintenant"><i class="bi bi-arrow-repeat"></i> </button>
+ </form>
+ <% } %>
+ <a href="/outils/<%= o.id %>/historique-statut" class="btn-icone" title="Historique de disponibilité"><i class="bi bi-graph-up-arrow"></i> </a>
 <% } %>

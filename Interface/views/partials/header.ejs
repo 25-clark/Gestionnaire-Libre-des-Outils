@@ -1,115 +1,128 @@
 <!DOCTYPE html>
 <html lang="<%= typeof lang !== 'undefined' ? lang : 'fr' %>">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="manifest" href="/site.webmanifest">
-    <title><%= typeof titre !== 'undefined' ? titre + ' · ' + nomApplication : nomApplication %></title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <% 
-      var prefsTheme = (typeof prefs !== 'undefined' && prefs.theme) ? prefs.theme : 'clair';
-      if (typeof currentUser !== 'undefined' && currentUser && currentUser.preferences && currentUser.preferences.theme) {
-        prefsTheme = currentUser.preferences.theme;
-      }
-    %>
-    <script>
-      (function () {
-        // Préférence serveur, avec secours localStorage (appliqué avant le paint)
-        var theme = '<%= prefsTheme %>';
-        try {
-          var stored = localStorage.getItem('glo_theme');
-          if (stored === 'clair' || stored === 'sombre' || stored === 'auto') theme = stored;
-        } catch (e) {}
-        if (theme === 'auto') {
-          theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'sombre' : 'clair';
-        }
-        if (theme === 'sombre') {
-          document.documentElement.classList.add('theme-sombre');
-        } else {
-          document.documentElement.classList.remove('theme-sombre');
-        }
-        // Persister la préférence serveur pour les prochains chargements
-        try { localStorage.setItem('glo_theme', '<%= prefsTheme %>'); } catch (e) {}
-        try { localStorage.setItem('glo_langue', '<%= typeof lang !== "undefined" ? lang : "fr" %>'); } catch (e) {}
-      })();
-    </script>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+ <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+ <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+ <link rel="manifest" href="/site.webmanifest">
+ <title><%= typeof titre !== 'undefined' ? titre + ' · ' + nomApplication : nomApplication %></title>
+ <link rel="stylesheet" href="/css/style.css">
+ <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+ <% 
+ var prefsTheme = (typeof prefs !== 'undefined' && prefs.theme) ? prefs.theme : 'clair';
+ if (typeof currentUser !== 'undefined' && currentUser && currentUser.preferences && currentUser.preferences.theme) {
+ prefsTheme = currentUser.preferences.theme;
+ }
+ %>
+ <script>
+ (function () {
+ var theme = '<%= prefsTheme %>';
+ try {
+ var stored = localStorage.getItem('glo_theme');
+ if (stored === 'clair' || stored === 'sombre' || stored === 'auto') theme = stored;
+ } catch (e) {}
+ if (theme === 'auto') {
+ theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'sombre' : 'clair';
+ }
+ if (theme === 'sombre') {
+ document.documentElement.classList.add('theme-sombre');
+ } else {
+ document.documentElement.classList.remove('theme-sombre');
+ }
+ try { localStorage.setItem('glo_theme', '<%= prefsTheme %>'); } catch (e) {}
+ try { localStorage.setItem('glo_langue', '<%= typeof lang !== "undefined" ? lang : "fr" %>'); } catch (e) {}
+ })();
+ </script>
 </head>
 <body class="<%= prefsTheme === 'sombre' ? 'theme-sombre' : '' %>">
 <script>
-  // Aligner body sur html (cas auto résolu côté client)
-  if (document.documentElement.classList.contains('theme-sombre')) {
-    document.body.classList.add('theme-sombre');
-  } else {
-    document.body.classList.remove('theme-sombre');
-  }
+ if (document.documentElement.classList.contains('theme-sombre')) {
+ document.body.classList.add('theme-sombre');
+ } else {
+ document.body.classList.remove('theme-sombre');
+ }
 </script>
 <% if (currentUser) { %>
 <% var t = typeof t === 'function' ? t : function(k){ return k; }; %>
 <header class="topbar">
-    <a href="/" class="logo"><img src="/favicon-32x32.png" alt="favicon"><span><%= nomEntreprise ? nomEntreprise : 'Gestionnaire' %></span></a>
-    <nav>
-        <a href="/"><%= t('nav.dashboard') %></a>
-        <% var itemsSecurite = []; %>
-        <% if (peut('roles', 'read')) itemsSecurite.push({ href: '/roles', label: t('nav.roles') }); %>
-        <% if (peut('acces', 'read')) itemsSecurite.push({ href: '/acces', label: t('nav.access') }); %>
-        <% if (currentUser.Role && currentUser.Role.abbreviation === 'ADMIN') { %>
-            <% itemsSecurite.push({ href: '/parametres', label: t('nav.settings') }); %>
-            <% itemsSecurite.push({ href: '/statistiques', label: t('nav.stats') }); %>
-            <% itemsSecurite.push({ href: '/ldap', label: t('nav.ldap') }); %>
-        <% } %>
-        <% if (peut('journal', 'read')) itemsSecurite.push({ href: '/journal', label: t('nav.journal') }); %>
-        <% if (itemsSecurite.length) { %>
-            <div class="menu-deroulant">
-                <button type="button" class="lien-menu-deroulant"><%= t('nav.security') %> ▾</button>
-                <div class="contenu-menu-deroulant">
-                    <% itemsSecurite.forEach(function(item) { %>
-                        <a href="<%= item.href %>"><%= item.label %></a>
-                    <% }) %>
-                </div>
-            </div>
-        <% } %>
-        <% if (peut('diagnostic', 'read')) { %>
-            <a href="/diagnostic"><%= t('nav.diagnostic') %></a>
-        <% } %>
-        <% if (peut('tickets', 'read')) { %>
-            <a href="/tickets">🎫 <%= t('nav.tickets') %></a>
-        <% } %>
-    </nav>
-    <form action="/recherche" method="GET" class="recherche-topbar">
-        <input type="text" name="q" placeholder="<%= t('nav.search') %>" value="<%= typeof q !== 'undefined' ? q : '' %>">
-        <button type="submit" title="Search"><i class="bi bi-search"></i></button>
-    </form>
-    <div class="utilisateur">
-        <% if (peut('notifications', 'read')) { %>
-            <a href="/notifications" class="lien-notifications" title="<%= t('nav.notifications') %>">
-                <i class="bi bi-bell"></i>
-                <% if (notificationsNonLues > 0) { %>
-                    <span class="badge-notif"><%= notificationsNonLues > 9 ? '9+' : notificationsNonLues %></span>
-                <% } %>
-            </a>
-        <% } %>
-        <div class="menu-deroulant menu-utilisateur">
-            <button type="button" class="lien-menu-deroulant lien-utilisateur">
-                <span class="nom-utilisateur"><%= currentUser.prenom %> <%= currentUser.nom %></span>
-                <% if (currentUser.Role) { %>
-                    <span class="badge-role"><%= currentUser.Role.abbreviation %></span>
-                <% } %>
-                <span class="chevron">▾</span>
-            </button>
-            <div class="contenu-menu-deroulant contenu-menu-utilisateur">
-                <% if (peut('profil', 'read')) { %>
-                    <a href="/profil"><i class="bi bi-person"></i> <%= t('nav.profile') %></a>
-                <% } %>
-                <form action="/logout" method="POST" class="form-logout-menu">
-                    <button type="submit"><i class="bi bi-box-arrow-right"></i> <%= t('nav.logout') %></button>
-                </form>
-            </div>
-        </div>
-    </div>
+ <a href="/" class="logo"><img src="/favicon-32x32.png" alt=""><span><%= nomEntreprise ? nomEntreprise : 'GLO' %></span></a>
+ <nav>
+ <%/* —— Accueil —— */%>
+ <a href="/"><%= t('nav.dashboard') %></a>
+
+ <%/* —— Assistance : tickets + diagnostic —— */%>
+ <% var itemsAssistance = []; %>
+ <% if (peut('tickets', 'read')) itemsAssistance.push({ href: '/tickets', label: t('nav.tickets'), icon: 'bi-ticket-detailed' }); %>
+ <% if (peut('diagnostic', 'read')) itemsAssistance.push({ href: '/diagnostic', label: t('nav.diagnostic'), icon: 'bi-hdd-network' }); %>
+ <% if (itemsAssistance.length === 1) { %>
+ <a href="<%= itemsAssistance[0].href %>"><%= itemsAssistance[0].label %></a>
+ <% } else if (itemsAssistance.length > 1) { %>
+ <div class="menu-deroulant">
+ <button type="button" class="lien-menu-deroulant"><%= t('nav.assistance') %> <i class="bi bi-chevron-down" style="font-size:0.75em;"></i></button>
+ <div class="contenu-menu-deroulant">
+ <% itemsAssistance.forEach(function(item) { %>
+ <a href="<%= item.href %>"><% if (item.icon) { %><i class="bi <%= item.icon %>"></i> <% } %><%= item.label %></a>
+ <% }) %>
+ </div>
+ </div>
+ <% } %>
+
+ <%/* —— Administration : rôles, accès, journal, stats, LDAP, réglages —— */%>
+ <% var itemsAdmin = []; %>
+ <% if (peut('roles', 'read')) itemsAdmin.push({ href: '/roles', label: t('nav.roles'), icon: 'bi-shield-lock' }); %>
+ <% if (peut('acces', 'read')) itemsAdmin.push({ href: '/acces', label: t('nav.access'), icon: 'bi-key' }); %>
+ <% if (peut('journal', 'read')) itemsAdmin.push({ href: '/journal', label: t('nav.journal'), icon: 'bi-journal-text' }); %>
+ <% if (currentUser.Role && currentUser.Role.abbreviation === 'ADMIN') { %>
+ <% itemsAdmin.push({ href: '/statistiques', label: t('nav.stats'), icon: 'bi-graph-up' }); %>
+ <% itemsAdmin.push({ href: '/ldap', label: t('nav.ldap'), icon: 'bi-diagram-3' }); %>
+ <% itemsAdmin.push({ href: '/parametres', label: t('nav.settings'), icon: 'bi-gear' }); %>
+ <% } %>
+ <% if (itemsAdmin.length) { %>
+ <div class="menu-deroulant">
+ <button type="button" class="lien-menu-deroulant"><%= t('nav.administration') %> <i class="bi bi-chevron-down" style="font-size:0.75em;"></i></button>
+ <div class="contenu-menu-deroulant">
+ <% itemsAdmin.forEach(function(item) { %>
+ <a href="<%= item.href %>"><% if (item.icon) { %><i class="bi <%= item.icon %>"></i> <% } %><%= item.label %></a>
+ <% }) %>
+ </div>
+ </div>
+ <% } %>
+ </nav>
+
+ <form action="/recherche" method="GET" class="recherche-topbar">
+ <input type="text" name="q" placeholder="<%= t('nav.search') %>" value="<%= typeof q !== 'undefined' ? q : '' %>">
+ <button type="submit" title="<%= t('nav.search') %>"><i class="bi bi-search"></i></button>
+ </form>
+
+ <div class="utilisateur">
+ <% if (peut('notifications', 'read')) { %>
+ <a href="/notifications" class="lien-notifications" title="<%= t('nav.notifications') %>">
+ <i class="bi bi-bell"></i>
+ <% if (notificationsNonLues > 0) { %>
+ <span class="badge-notif"><%= notificationsNonLues > 9 ? '9+' : notificationsNonLues %></span>
+ <% } %>
+ </a>
+ <% } %>
+ <div class="menu-deroulant menu-utilisateur">
+ <button type="button" class="lien-menu-deroulant lien-utilisateur">
+ <span class="nom-utilisateur"><%= currentUser.prenom %> <%= currentUser.nom %></span>
+ <% if (currentUser.Role) { %>
+ <span class="badge-role"><%= currentUser.Role.abbreviation %></span>
+ <% } %>
+ <span class="chevron"><i class="bi bi-chevron-down" style="font-size:0.75em;"></i></span>
+ </button>
+ <div class="contenu-menu-deroulant contenu-menu-utilisateur">
+ <% if (peut('profil', 'read')) { %>
+ <a href="/profil"><i class="bi bi-person"></i> <%= t('nav.profile') %></a>
+ <% } %>
+ <form action="/logout" method="POST" class="form-logout-menu">
+ <button type="submit"><i class="bi bi-box-arrow-right"></i> <%= t('nav.logout') %></button>
+ </form>
+ </div>
+ </div>
+ </div>
 </header>
 <% } %>
 <div class="conteneur">

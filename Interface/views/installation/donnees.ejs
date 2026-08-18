@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Installation GLO — Activité</title>
+ <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="conteneur" style="max-width:520px; margin:40px auto;">
+ <div class="entete-page"><h1>Installation de GLO</h1></div>
+ <p style="color:var(--gris);">Étape 5 / 6 — Activité et sous-activité</p>
+ <% if (erreur) { %><div class="message-erreur"><%= erreur %></div><% } %>
+ <div class="carte">
+ <p>Créez la première <strong>activité</strong>. La sous-activité est optionnelle.</p>
+ <form action="/installation/donnees" method="POST" id="form-etape" novalidate>
+ <label for="nom_activite">Nom de l'activité <span style="color:var(--rouge);">*</span></label>
+ <input type="text" id="nom_activite" name="nom_activite" required
+ placeholder="Maintenance Bâtiment" autocomplete="off">
+
+ <label for="abbreviation">Abréviation</label>
+ <input type="text" id="abbreviation" name="abbreviation" maxlength="10"
+ placeholder="MAINT (auto si vide)" autocomplete="off">
+
+ <label for="nom_sous_activite">Sous-activité <span style="color:var(--gris); font-weight:400;">(optionnel)</span></label>
+ <input type="text" id="nom_sous_activite" name="nom_sous_activite"
+ placeholder="Ex. Électricité — laisser vide si aucune" autocomplete="off">
+
+ <div class="champ-case" style="margin-top:12px;">
+ <input type="checkbox" id="creer_demo" name="creer_demo">
+ <label for="creer_demo">Créer aussi un outil exemple rattaché</label>
+ </div>
+
+ <p style="color:var(--gris); font-size:12px; margin-top:8px;">
+ Astuce : appuyez sur <kbd>Entrée</kbd> pour passer à l’étape suivante lorsque les champs obligatoires sont remplis.
+ </p>
+
+ <div class="actions-form">
+ <a href="/installation/admin" class="btn btn-gris">Retour</a>
+ <button type="submit" class="btn btn-primaire">Continuer</button>
+ </div>
+ </form>
+ </div>
+</div>
+<script src="/js/installation-etapes.js"></script>
+</body>
+</html>

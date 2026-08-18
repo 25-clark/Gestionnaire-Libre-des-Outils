@@ -1,6 +1,7 @@
 const { Activite, SousActivite, Utilisateur, Outil } = require('../models');
 const { getIdsActivitesAccessibles } = require('../middlewares/auth');
 const { consigner } = require('../utils/journal');
+const { reglagesEffectifs, normaliserPourSauvegarde } = require('../utils/reglagesEffectifs');
 
 // Construit récursivement l'arbre des sous-activités d'une activité.
 function construireArbre(sousActivites, idParent = null) {
@@ -66,7 +67,11 @@ async function getById(req, res, next) {
             include: [{ model: SousActivite }, { model: Utilisateur }]
         });
         if (!activite) return res.status(404).json({ message: 'Activité introuvable.' });
-        res.json(activite);
+        const json = activite.toJSON();
+        const reg = await reglagesEffectifs(json.reglages, null);
+        json.reglages_effectifs = reg.effectifs;
+        json.reglages_globaux = reg.global;
+        res.json(json);
     } catch (err) { next(err); }
 }
 
@@ -109,11 +114,17 @@ async function update(req, res, next) {
         const { nom, abbreviation } = req.body;
         const logo = req.file ? `/uploads/logos/${req.file.filename}` : (req.body.logo ?? activite.logo);
 
-        await activite.update({
+        const data = {
             nom: nom ?? activite.nom,
             abbreviation: abbreviation ?? activite.abbreviation,
             logo
-        });
+        };
+        if (req.body.reglages !== undefined) {
+            data.reglages = await normaliserPourSauvegarde(
+                typeof req.body.reglages === 'string' ? JSON.parse(req.body.reglages) : req.body.reglages
+            );
+        }
+        await activite.update(data);
 
         await consigner({
             user: req.currentUser,
@@ -159,4 +170,28 @@ async function remove(req, res, next) {
     } catch (err) { next(err); }
 }
 
-module.exports = { getAll, getArborescence, getById, create, update, remove };
+
+async function updateReglages(req, res, next) {
+    try {
+        const activite = await Activite.findByPk(req.params.id);
+        if (!activite) return res.status(404).json({ message: 'Activité introuvable.' });
+        const reglages = await normaliserPourSauvegarde(req.body.reglages || req.body);
+        await activite.update({ reglages });
+        await consigner({
+            user: req.currentUser,
+            action: 'modification',
+            ressource: 'activite',
+            id_ressource: activite.id,
+            libelle: `Réglages locaux de l'activité "${activite.nom}" modifiés`
+        });
+        const json = activite.toJSON();
+        json.reglages = reglages;
+        const reg = await reglagesEffectifs(reglages, null);
+        json.reglages_effectifs = reg.effectifs;
+        json.reglages_globaux = reg.global;
+        res.json(json);
+    } catch (err) { next(err); }
+}
+
+module.exports = { getAll, getArborescence, getById, create, update, remove, updateReglages };
+

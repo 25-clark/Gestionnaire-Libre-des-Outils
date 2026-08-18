@@ -1,4 +1,4 @@
-# GLO — Gestionnaire Libre des Outils
+# GLO — Gestionnaire d'Outils par Activité
 
 Application de gestion des outils utilisés par les différentes activités et
 sous-activités d'une organisation, avec gestion fine des accès par rôle.

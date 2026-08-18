@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Installation GLO — Dépendances</title>
+ <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="conteneur" style="max-width:640px; margin:40px auto;">
+ <div class="entete-page"><h1>Installation de GLO</h1></div>
+ <p style="color:var(--gris);">Étape 3 / 6 — Dépendances et prérequis</p>
+ <div class="carte">
+ <p>Vérifiez que les éléments suivants sont en place avant de continuer :</p>
+ <ol style="line-height:1.8;">
+ <li><strong>Node.js 18+</strong> et npm installés</li>
+ <li><strong>MySQL</strong> démarré, base <code>glo_db</code> créée</li>
+ <li>Fichiers <code>Server/.env</code> et <code>Interface/.env</code> configurés</li>
+ <li>Dans <code>Server/</code> : <code>npm install</code> puis <code>npm start</code></li>
+ <li>Dans <code>Interface/</code> : <code>npm install</code> puis <code>npm start</code></li>
+ </ol>
+ <pre style="background:var(--gris-clair); padding:12px; border-radius:8px; font-size:13px; overflow:auto;">cd Server
+npm install
+cp .env.example .env # puis éditer DB_* et SESSION_SECRET
+npm start
+
+cd ../Interface
+npm install
+cp .env.example .env # API_URL=http://localhost:4000/api
+npm start</pre>
+ <p style="color:var(--gris); font-size:13px;">Si cette page s'affiche, le serveur et l'interface répondent déjà — vous pouvez continuer.</p>
+ <div class="actions-form">
+ <a href="/installation/auth" class="btn btn-gris">Retour</a>
+ <a href="/installation/admin" class="btn btn-primaire">Continuer</a>
+ </div>
+ </div>
+</div>
+</body>
+</html>

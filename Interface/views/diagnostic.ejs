@@ -1,78 +1,78 @@
 <%- include('partials/header') %>
 
-<div class="entete-page"><h1>🩺 Diagnostic réseau</h1></div>
+<div class="entete-page"><h1><i class="bi bi-heart-pulse"></i> Diagnostic réseau</h1></div>
 <p style="color:var(--gris); font-size:14px; margin-top:-10px;">
-    Teste la joignabilité d'une adresse IP ou d'un nom d'hôte — utile pour vérifier qu'un outil réseau répond.
+ Teste la joignabilité d'une adresse IP ou d'un nom d'hôte — utile pour vérifier qu'un outil réseau répond.
 </p>
 
 <div class="carte" style="max-width:640px;">
-    <form action="/diagnostic/executer" method="GET">
-        <label for="cible">Cible (IP ou nom d'hôte)</label>
-        <input type="text" id="cible" name="cible" value="<%= cible %>" placeholder="192.168.1.10 ou routeur.local" required>
+ <form action="/diagnostic/executer" method="GET">
+ <label for="cible">Cible (IP ou nom d'hôte)</label>
+ <input type="text" id="cible" name="cible" value="<%= cible %>" placeholder="192.168.1.10 ou routeur.local" required>
 
-        <label for="port">Port (uniquement pour "Test de port")</label>
-        <input type="number" id="port" name="port" min="1" max="65535" value="<%= port %>" placeholder="ex : 80, 443, 22">
+ <label for="port">Port (uniquement pour "Test de port")</label>
+ <input type="number" id="port" name="port" min="1" max="65535" value="<%= port %>" placeholder="ex : 80, 443, 22">
 
-        <label>Test</label>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
-            <button type="submit" name="test" value="ping" class="btn btn-gris">📶 Ping</button>
-            <button type="submit" name="test" value="traceroute" class="btn btn-gris">🛣️ Traceroute</button>
-            <button type="submit" name="test" value="nslookup" class="btn btn-gris">🔎 Nslookup / DNS</button>
-            <button type="submit" name="test" value="port" class="btn btn-gris">🔌 Test de port</button>
-        </div>
-    </form>
+ <label>Test</label>
+ <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
+ <button type="submit" name="test" value="ping" class="btn btn-gris"><i class="bi bi-wifi"></i> Ping</button>
+ <button type="submit" name="test" value="traceroute" class="btn btn-gris"><i class="bi bi-signpost-split"></i> Traceroute</button>
+ <button type="submit" name="test" value="nslookup" class="btn btn-gris"><i class="bi bi-search"></i> Nslookup / DNS</button>
+ <button type="submit" name="test" value="port" class="btn btn-gris"><i class="bi bi-plug"></i> Test de port</button>
+ </div>
+ </form>
 </div>
 
 <% if (erreur) { %>
-    <div class="message-erreur" style="max-width:640px;"><%= erreur %></div>
+ <div class="message-erreur" style="max-width:640px;"><%= erreur %></div>
 <% } %>
 
 <% if (resultat) { %>
-    <div class="carte" style="max-width:800px;">
-        <h2 style="margin-top:0; font-size:16px; color:var(--bleu-fonce);">
-            Résultat — <%= testLibelle %> sur <code><%= cible %></code><% if (test === 'port') { %>:<%= port %><% } %>
-        </h2>
-        <pre style="background:var(--gris-fonce, #222); color:#e8e8e8; padding:14px; border-radius:var(--rayon); overflow-x:auto; font-size:13px; white-space:pre-wrap; word-break:break-word;"><%= resultat.sortie %></pre>
-    </div>
+ <div class="carte" style="max-width:800px;">
+ <h2 style="margin-top:0; font-size:16px; color:var(--bleu-fonce);">
+ Résultat — <%= testLibelle %> sur <code><%= cible %></code><% if (test === 'port') { %>:<%= port %><% } %>
+ </h2>
+ <pre style="background:var(--gris-fonce, #222); color:#e8e8e8; padding:14px; border-radius:var(--rayon); overflow-x:auto; font-size:13px; white-space:pre-wrap; word-break:break-word;"><%= resultat.sortie %></pre>
+ </div>
 <% } %>
 
 <div class="entete-page" style="margin-top:28px;">
-    <h2 style="font-size:16px; color:var(--bleu-fonce); margin:0;">📡 État du parc réseau</h2>
-    <div style="display:flex; gap:8px;">
-        <% if (peut('export', 'read')) { %>
-            <a href="/diagnostic/export.csv" class="btn btn-gris btn-petit">⬇️ CSV</a>
-            <a href="/diagnostic/export-pdf" target="_blank" class="btn btn-gris btn-petit">🖨️ PDF</a>
-        <% } %>
-    </div>
+ <h2 style="font-size:16px; color:var(--bleu-fonce); margin:0;"><i class="bi bi-broadcast"></i> État du parc réseau</h2>
+ <div style="display:flex; gap:8px;">
+ <% if (peut('export', 'read')) { %>
+ <a href="/diagnostic/export.csv" class="btn btn-gris btn-petit"><i class="bi bi-download"></i> CSV</a>
+ <a href="/diagnostic/export-pdf" target="_blank" class="btn btn-gris btn-petit"><i class="bi bi-printer"></i> PDF</a>
+ <% } %>
+ </div>
 </div>
 
 <% if (!parc.length) { %>
-    <div class="carte vide">Aucun outil avec une adresse renseignée pour l'instant.</div>
+ <div class="carte vide">Aucun outil avec une adresse renseignée pour l'instant.</div>
 <% } else { %>
-    <div class="carte" style="max-width:800px;">
-        <table class="tableau">
-            <thead><tr><th>Nom</th><th>Adresse</th><th>Statut</th><th>Dernière vérification</th><th></th></tr></thead>
-            <tbody>
-            <% parc.forEach(function(o) { %>
-                <tr>
-                    <td><%= o.nom %></td>
-                    <td><code><%= o.adresse %></code></td>
-                    <td>
-                        <% if (o.dernier_statut === 'en_ligne') { %>🟢 En ligne
-                        <% } else if (o.dernier_statut === 'hors_ligne') { %>🔴 Hors ligne
-                        <% } else { %>⚪ Inconnu<% } %>
-                    </td>
-                    <td style="color:var(--gris); font-size:13px;">
-                        <%= o.derniere_verification ? new Date(o.derniere_verification).toLocaleString('fr-FR') : 'Jamais' %>
-                    </td>
-                    <td style="text-align:right;">
-                        <a href="/diagnostic?cible=<%= encodeURIComponent(o.adresse) %>" class="btn btn-gris btn-petit">Tester</a>
-                    </td>
-                </tr>
-            <% }) %>
-            </tbody>
-        </table>
-    </div>
+ <div class="carte" style="max-width:800px;">
+ <table class="tableau">
+ <thead><tr><th>Nom</th><th>Adresse</th><th>Statut</th><th>Dernière vérification</th><th></th></tr></thead>
+ <tbody>
+ <% parc.forEach(function(o) { %>
+ <tr>
+ <td><%= o.nom %></td>
+ <td><code><%= o.adresse %></code></td>
+ <td>
+ <% if (o.dernier_statut === 'en_ligne') { %><i class="bi bi-circle-fill text-statut-ok"></i> En ligne
+ <% } else if (o.dernier_statut === 'hors_ligne') { %><i class="bi bi-circle-fill text-statut-ko"></i> Hors ligne
+ <% } else { %><i class="bi bi-circle text-statut-na"></i> Inconnu<% } %>
+ </td>
+ <td style="color:var(--gris); font-size:13px;">
+ <%= o.derniere_verification ? new Date(o.derniere_verification).toLocaleString('fr-FR') : 'Jamais' %>
+ </td>
+ <td style="text-align:right;">
+ <a href="/diagnostic?cible=<%= encodeURIComponent(o.adresse) %>" class="btn btn-gris btn-petit">Tester</a>
+ </td>
+ </tr>
+ <% }) %>
+ </tbody>
+ </table>
+ </div>
 <% } %>
 
 <%- include('partials/footer') %>

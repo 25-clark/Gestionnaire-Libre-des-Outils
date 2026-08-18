@@ -23,14 +23,22 @@ router.get('/', async (req, res, next) => {
     try {
         const api = apiClient(req);
         const page = parseInt(req.query.page, 10) || 1;
+        const par_page = parseInt(req.query.par_page, 10) || 25;
         const { data } = await api.get('/journal', {
-            params: { page, q: req.query.q || undefined, ressource: req.query.ressource || undefined, action: req.query.action || undefined }
+            params: {
+                page,
+                par_page,
+                q: req.query.q || undefined,
+                ressource: req.query.ressource || undefined,
+                action: req.query.action || undefined
+            }
         });
 
         res.render('journal', {
             titre: "Journal d'événements",
             evenements: data.evenements,
             page: data.page,
+            par_page: data.par_page || par_page,
             totalPages: data.totalPages,
             total: data.total,
             q: req.query.q || '',

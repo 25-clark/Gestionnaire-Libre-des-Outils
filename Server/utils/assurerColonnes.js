@@ -42,6 +42,45 @@ async function assurerColonnes() {
     await ajouterColonne('parametres', 'installation_terminee', 'TINYINT(1) NOT NULL DEFAULT 0');
     await ajouterColonne('parametres', 'cgu_acceptees_le', 'DATETIME NULL');
 
+
+    // ---- Table credentials personnels (utilisateur × outil) ----
+    try {
+        await sequelize.query(`
+            CREATE TABLE IF NOT EXISTS \`utilisateur_outil_credentials\` (
+                \`id\` INT NOT NULL AUTO_INCREMENT,
+                \`id_user\` INT NOT NULL,
+                \`id_outil\` INT NOT NULL,
+                \`credentials\` JSON NOT NULL,
+                \`created_at\` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                \`updated_at\` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (\`id\`),
+                UNIQUE KEY \`uq_user_outil_creds\` (\`id_user\`, \`id_outil\`),
+                KEY \`idx_uoc_user\` (\`id_user\`),
+                KEY \`idx_uoc_outil\` (\`id_outil\`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+        console.log('[schema] Table utilisateur_outil_credentials OK');
+    } catch (e) {
+        console.warn('[schema] utilisateur_outil_credentials:', e.message);
+    }
+
+
+    // ---- tickets : SLA / escalade ----
+    await ajouterColonne('tickets', 'sla_echeance', 'DATETIME NULL');
+    await ajouterColonne('tickets', 'derniere_relance_le', 'DATETIME NULL');
+    await ajouterColonne('tickets', 'escalade_le', 'DATETIME NULL');
+    await ajouterColonne('tickets', 'id_escalade_admin', 'INT NULL');
+
+    // ---- outils : maintenance / dérangement ----
+    await ajouterColonne('outils', 'note_maintenance', 'TEXT NULL');
+    await ajouterColonne('outils', 'derangement_debut', 'DATETIME NULL');
+    await ajouterColonne('outils', 'derangement_fin', 'DATETIME NULL');
+    await ajouterColonne('outils', 'derangement_message', 'VARCHAR(500) NULL');
+
+
+    await ajouterColonne('activites', 'reglages', 'JSON NULL');
+    await ajouterColonne('sous_activites', 'reglages', 'JSON NULL');
+
     console.log('[schema] Vérification des colonnes terminée.');
 }
 

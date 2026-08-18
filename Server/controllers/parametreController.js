@@ -17,9 +17,21 @@ async function trouverOuCreer() {
 async function obtenirPublic(req, res, next) {
     try {
         const parametre = await trouverOuCreer();
+        let installation_terminee = !!parametre.installation_terminee;
+        // Rétrocompat : si des utilisateurs existent déjà, ne pas forcer le wizard
+        if (!installation_terminee) {
+            const { Utilisateur } = require('../models');
+            const n = await Utilisateur.count();
+            if (n > 0) {
+                await parametre.update({ installation_terminee: true, cgu_acceptees_le: parametre.cgu_acceptees_le || new Date() });
+                installation_terminee = true;
+            }
+        }
         res.json({
             nom_entreprise: parametre.nom_entreprise,
-            credentials_actifs: !!parametre.credentials_actifs
+            credentials_actifs: !!parametre.credentials_actifs,
+            installation_terminee,
+            ldap_actif: !!parametre.ldap_actif
         });
     } catch (err) { next(err); }
 }

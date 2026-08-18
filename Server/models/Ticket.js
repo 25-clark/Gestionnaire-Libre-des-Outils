@@ -35,7 +35,14 @@ module.exports = (sequelize) => {
         id_activite: { type: DataTypes.INTEGER, allowNull: true },
         id_sous_activite: { type: DataTypes.INTEGER, allowNull: true },
         id_createur: { type: DataTypes.INTEGER, allowNull: false },
-        id_assigne: { type: DataTypes.INTEGER, allowNull: true }
+        id_assigne: { type: DataTypes.INTEGER, allowNull: true },
+        // SLA : échéance calculée à la création / changement de priorité
+        sla_echeance: { type: DataTypes.DATE, allowNull: true },
+        // Dernière relance automatique (notification)
+        derniere_relance_le: { type: DataTypes.DATE, allowNull: true },
+        // Escalade vers un admin
+        escalade_le: { type: DataTypes.DATE, allowNull: true },
+        id_escalade_admin: { type: DataTypes.INTEGER, allowNull: true }
     }, {
         tableName: 'tickets',
         timestamps: true,

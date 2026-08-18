@@ -115,6 +115,11 @@ router.get('/:id', checkPermission('outils', 'read'), outilController.getById);
 router.get('/:id/historique-statut', checkPermission('outils', 'read'), checkAccesOutilExistant('read'), outilController.historiqueStatut);
 router.post('/', checkPermission('outils', 'create'), uploadOutilImage.single('image'), checkAccesCreationOutil, outilController.create);
 router.patch('/:id/toggle-active', checkPermission('outils', 'update'), checkAccesOutilExistant('write'), outilController.toggleActive);
+router.put('/:id/maintenance',
+    checkPermission('outils', 'update'),
+    checkAccesOutilExistant('write'),
+    outilController.updateMaintenance
+);
 router.put('/:id/credentials',
     exigerCredentialsActifs,
     checkPermission('credentials', 'update'),

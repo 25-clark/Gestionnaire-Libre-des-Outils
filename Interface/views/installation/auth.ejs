@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Installation GLO — Authentification</title>
+ <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="conteneur" style="max-width:560px; margin:40px auto;">
+ <div class="entete-page"><h1>Installation de GLO</h1></div>
+ <p style="color:var(--gris);">Étape 2 / 6 — Mode d'authentification</p>
+ <% if (erreur) { %><div class="message-erreur"><%= erreur %></div><% } %>
+ <div class="carte">
+ <p>Choisissez comment les utilisateurs se connecteront à GLO.</p>
+ <form id="form-etape" action="/installation/auth" method="POST">
+ <label style="display:flex; gap:10px; align-items:flex-start; margin-bottom:12px; font-weight:400;">
+ <input type="radio" name="mode" value="local" checked style="margin-top:4px;">
+ <span><strong>Local</strong><br><span style="color:var(--gris); font-size:13px;">Comptes gérés dans GLO (matricule + mot de passe).</span></span>
+ </label>
+ <label style="display:flex; gap:10px; align-items:flex-start; margin-bottom:12px; font-weight:400;">
+ <input type="radio" name="mode" value="ldap" style="margin-top:4px;">
+ <span><strong>LDAP / Active Directory</strong><br><span style="color:var(--gris); font-size:13px;">Authentification via l'annuaire de l'entreprise (configurable ensuite dans LDAP).</span></span>
+ </label>
+ <div class="actions-form">
+ <a href="/installation/cgu" class="btn btn-gris">Retour</a>
+ <button type="submit" class="btn btn-primaire">Continuer</button>
+ </div>
+ </form>
+ </div>
+</div>
+<script src="/js/installation-etapes.js"></script>
+</body>
+</html>

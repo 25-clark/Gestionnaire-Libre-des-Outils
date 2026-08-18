@@ -21,7 +21,9 @@ function construireWhere(query) {
 async function getAll(req, res, next) {
     try {
         const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
-        const parPage = 50;
+        const allowed = [10, 25, 50, 100];
+        let parPage = parseInt(req.query.par_page, 10) || 25;
+        if (!allowed.includes(parPage)) parPage = 25;
         const where = construireWhere(req.query);
 
         const { rows, count } = await Journal.findAndCountAll({
@@ -34,6 +36,7 @@ async function getAll(req, res, next) {
         res.json({
             evenements: rows,
             page,
+            par_page: parPage,
             totalPages: Math.max(Math.ceil(count / parPage), 1),
             total: count
         });

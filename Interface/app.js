@@ -20,6 +20,7 @@ const statistiqueRoutes = require('./routes/statistiqueRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
 const ldapRoutes = require('./routes/ldapRoutes');
+const installationRoutes = require('./routes/installationRoutes');
 
 const app = express();
 
@@ -52,10 +53,11 @@ async function obtenirParametresPublics() {
         cachePublic = {
             nom_entreprise: data.nom_entreprise,
             credentials_actifs: !!data.credentials_actifs,
-            expire: Date.now() + 30000
+            installation_terminee: !!data.installation_terminee,
+            expire: Date.now() + 15000
         };
     } catch {
-        cachePublic = { nom_entreprise: null, credentials_actifs: false, expire: Date.now() + 30000 };
+        cachePublic = { nom_entreprise: null, credentials_actifs: false, installation_terminee: true, expire: Date.now() + 15000 };
     }
     return cachePublic;
 }
@@ -93,9 +95,18 @@ app.use(async (req, res, next) => {
         } catch { /* pas bloquant : l'en-tête s'affiche juste sans le badge */ }
     }
 
+    // Première installation : rediriger vers l'assistant
+    const path = req.path || '';
+    const estInstallation = path === '/installation' || path.startsWith('/installation/');
+    const estPublic = path === '/login' || path.startsWith('/login') || path === '/cgu';
+    if (!pub.installation_terminee && !estInstallation && !estPublic && !path.startsWith('/css') && !path.startsWith('/js') && !path.startsWith('/favicon')) {
+        return res.redirect('/installation');
+    }
+
     next();
 });
 
+app.use('/installation', installationRoutes);
 app.use('/', authRoutes);
 app.use('/', dashboardRoutes);
 app.use('/activites', activiteRoutes);

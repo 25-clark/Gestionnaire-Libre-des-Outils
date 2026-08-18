@@ -4,31 +4,31 @@
 <div class="entete-page"><h1><%= titre %></h1></div>
 
 <div class="carte" style="max-width:520px;">
-    <% if (erreur) { %>
-        <div class="message-erreur"><%= erreur %></div>
-    <% } %>
+ <% if (erreur) { %>
+ <div class="message-erreur"><%= erreur %></div>
+ <% } %>
 
-    <form action="<%= activite && activite.id ? '/activites/' + activite.id + '/modifier' : '/activites' %>"
-          method="POST" enctype="multipart/form-data">
+ <form action="<%= activite && activite.id ? '/activites/' + activite.id + '/modifier' : '/activites' %>"
+ method="POST" enctype="multipart/form-data">
 
-        <label for="nom">Nom de l'activité</label>
-        <input type="text" id="nom" name="nom" required value="<%= activite ? activite.nom : '' %>">
+ <label for="nom">Nom de l'activité</label>
+ <input type="text" id="nom" name="nom" required value="<%= activite ? activite.nom : '' %>">
 
-        <label for="abbreviation">Abréviation</label>
-        <input type="text" id="abbreviation" name="abbreviation" maxlength="10" required
-               value="<%= activite ? activite.abbreviation : '' %>">
+ <label for="abbreviation">Abréviation</label>
+ <input type="text" id="abbreviation" name="abbreviation" maxlength="10" required
+ value="<%= activite ? activite.abbreviation : '' %>">
 
-        <label for="logo">Logo (optionnel)</label>
-        <% if (activite && activite.logo) { %>
-            <img src="<%= activite.logo %>" alt="logo actuel" class="miniature" style="margin-bottom:8px;">
-        <% } %>
-        <input type="file" id="logo" name="logo" accept="image/*">
+ <label for="logo">Logo (optionnel)</label>
+ <% if (activite && activite.logo) { %>
+ <img src="<%= activite.logo %>" alt="logo actuel" class="miniature" style="margin-bottom:8px;">
+ <% } %>
+ <input type="file" id="logo" name="logo" accept="image/*">
 
-        <div class="actions-form">
-            <button type="submit" class="btn btn-primaire">Enregistrer</button>
-            <a href="<%= activite && activite.id ? '/activites/' + activite.id : '/' %>" class="btn btn-gris">Annuler</a>
-        </div>
-    </form>
+ <div class="actions-form">
+ <button type="submit" class="btn btn-primaire">Enregistrer</button>
+ <a href="<%= activite && activite.id ? '/activites/' + activite.id : '/' %>" class="btn btn-gris">Annuler</a>
+ </div>
+ </form>
 </div>
 
 <%- include('../partials/footer') %>

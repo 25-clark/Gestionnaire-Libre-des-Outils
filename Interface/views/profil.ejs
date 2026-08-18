@@ -1,24 +1,24 @@
 <%- include('partials/header') %>
 <% var t = typeof t === 'function' ? t : function(k){ return k; }; %>
 <% 
-  var prefs = (user.preferences && typeof user.preferences === 'object')
-    ? user.preferences
-    : (typeof prefs !== 'undefined' ? prefs : { theme: 'clair', langue: 'fr' });
-  if (typeof user.preferences === 'string') {
-    try { prefs = JSON.parse(user.preferences); } catch (_) {}
-  }
-  var contacts = [];
-  if (Array.isArray(user.autres_contacts)) {
-    contacts = user.autres_contacts;
-  } else if (typeof user.autres_contacts === 'string' && user.autres_contacts.trim()) {
-    try {
-      var parsed = JSON.parse(user.autres_contacts);
-      contacts = Array.isArray(parsed) ? parsed : [user.autres_contacts];
-    } catch (_) {
-      contacts = user.autres_contacts.split(/[,;]/).map(function(s) { return s.trim(); }).filter(Boolean);
-    }
-  }
-  if (!contacts.length) contacts = [''];
+ var prefs = (user.preferences && typeof user.preferences === 'object')
+ ? user.preferences
+ : (typeof prefs !== 'undefined' ? prefs : { theme: 'clair', langue: 'fr' });
+ if (typeof user.preferences === 'string') {
+ try { prefs = JSON.parse(user.preferences); } catch (_) {}
+ }
+ var contacts = [];
+ if (Array.isArray(user.autres_contacts)) {
+ contacts = user.autres_contacts;
+ } else if (typeof user.autres_contacts === 'string' && user.autres_contacts.trim()) {
+ try {
+ var parsed = JSON.parse(user.autres_contacts);
+ contacts = Array.isArray(parsed) ? parsed : [user.autres_contacts];
+ } catch (_) {
+ contacts = user.autres_contacts.split(/[,;]/).map(function(s) { return s.trim(); }).filter(Boolean);
+ }
+ }
+ if (!contacts.length) contacts = [''];
 %>
 
 <div class="fil-ariane"><a href="/"><%= t('nav.dashboard') %></a> <span class="sep">›</span> <%= t('profile.title') %></div>
@@ -28,108 +28,112 @@
 <% if (succes) { %>
 <div class="message-succes"><%= succes === 'prefs' ? t('profile.prefs.saved') : (succes === 'infos' ? t('profile.info.saved') : succes) %></div>
 <script>
-  // Persister thème / langue juste après sauvegarde des préférences
-  try {
-    var themeSel = document.getElementById('theme');
-    var langSel = document.getElementById('langue');
-    if (themeSel) localStorage.setItem('glo_theme', themeSel.value);
-    if (langSel) localStorage.setItem('glo_langue', langSel.value);
-  } catch (e) {}
+ // Persister thème / langue juste après sauvegarde des préférences
+ try {
+ var themeSel = document.getElementById('theme');
+ var langSel = document.getElementById('langue');
+ if (themeSel) localStorage.setItem('glo_theme', themeSel.value);
+ if (langSel) localStorage.setItem('glo_langue', langSel.value);
+ } catch (e) {}
 </script>
 <% } %>
 
 <div class="profil-grille">
-    <div class="carte">
-        <h2><i class="bi bi-person-badge"></i> <%= t('profile.personal') %></h2>
-        <form action="/profil" method="POST" id="form-infos">
-            <input type="hidden" name="section" value="infos">
+ <div class="carte">
+ <h2><i class="bi bi-person-badge"></i> <%= t('profile.personal') %></h2>
+ <form action="/profil" method="POST" id="form-infos">
+ <input type="hidden" name="section" value="infos">
 
-            <p style="color:var(--gris); font-size:13px; margin-top:-4px; margin-bottom:14px;">
-                <%= t('common.matricule') %> : <strong><%= user.matricule %></strong>
-                <% if (user.Role) { %> · <span class="badge-role" style="vertical-align:middle;"><%= user.Role.abbreviation %></span><% } %>
-            </p>
+ <label for="matricule"><%= t('common.matricule') %></label>
+ <input type="text" id="matricule" value="<%= user.matricule || '' %>" disabled readonly class="champ-lecture">
 
-            <label>Nom / Prénom</label>
-            <p style="margin:4px 0 12px; padding:9px 11px; background:var(--gris-clair); border-radius:var(--rayon); font-size:14px;">
-                <%= user.prenom %> <%= user.nom %>
-            </p>
+ <label for="role_affiche">Rôle</label>
+ <select id="role_affiche" disabled class="champ-lecture">
+ <option selected><%= user.Role ? (user.Role.nom + ' (' + user.Role.abbreviation + ')') : '—' %></option>
+ </select>
 
-            <label for="email"><%= t('profile.email') %></label>
-            <input type="email" id="email" name="email" value="<%= user.email || '' %>" placeholder="prenom.nom@exemple.com">
+ <label for="nom_affiche">Nom</label>
+ <input type="text" id="nom_affiche" value="<%= user.nom || '' %>" disabled readonly class="champ-lecture">
 
-            <label for="telephone"><%= t('profile.phone') %></label>
-            <input type="text" id="telephone" name="telephone" value="<%= user.telephone || '' %>" placeholder="+33 6 12 34 56 78">
+ <label for="prenom_affiche">Prénom</label>
+ <input type="text" id="prenom_affiche" value="<%= user.prenom || '' %>" disabled readonly class="champ-lecture">
 
-            <label><%= t('profile.contacts') %></label>
-            <div class="contacts-liste" id="contacts-liste">
-                <% contacts.forEach(function(c) { %>
-                <div class="contact-ligne">
-                    <input type="text" name="autres_contacts[]" value="<%= c %>" placeholder="Teams, Slack, LinkedIn…">
-                    <button type="button" class="btn-retirer" title="×" onclick="this.parentElement.remove()">&times;</button>
-                </div>
-                <% }) %>
-            </div>
-            <button type="button" class="btn-ajouter-contact" onclick="ajouterContact()">+ Ajouter</button>
+ <label for="email"><%= t('profile.email') %></label>
+ <input type="email" id="email" name="email" value="<%= user.email || '' %>" placeholder="prenom.nom@exemple.com">
 
-            <label for="fonction" style="margin-top:14px;"><%= t('profile.function') %></label>
-            <input type="text" id="fonction" name="fonction" value="<%= user.fonction || '' %>">
+ <label for="telephone"><%= t('profile.phone') %></label>
+ <input type="text" id="telephone" name="telephone" value="<%= user.telephone || '' %>" placeholder="+33 6 12 34 56 78">
 
-            <label for="adresse"><%= t('profile.address') %></label>
-            <textarea id="adresse" name="adresse" rows="2"><%= user.adresse || '' %></textarea>
+ <label><%= t('profile.contacts') %></label>
+ <div class="contacts-liste" id="contacts-liste">
+ <% contacts.forEach(function(c) { %>
+ <div class="contact-ligne">
+ <input type="text" name="autres_contacts[]" value="<%= c %>" placeholder="Teams, Slack, LinkedIn…">
+ <button type="button" class="btn-retirer" title="×" onclick="this.parentElement.remove()">&times;</button>
+ </div>
+ <% }) %>
+ </div>
+ <button type="button" class="btn-ajouter-contact" onclick="ajouterContact()">+ Ajouter</button>
 
-            <div class="actions-form">
-                <button type="submit" class="btn btn-primaire"><%= t('profile.save.info') %></button>
-            </div>
+ <label for="fonction" style="margin-top:14px;"><%= t('profile.function') %></label>
+ <input type="text" id="fonction" name="fonction" value="<%= user.fonction || '' %>">
 
-            <p style="margin-top:16px;">
-                <a href="/changer-mot-de-passe" class="lien-mdp"><i class="bi bi-key"></i> <%= t('profile.change.password') %></a>
-            </p>
-        </form>
-    </div>
+ <label for="adresse"><%= t('profile.address') %></label>
+ <textarea id="adresse" name="adresse" rows="2"><%= user.adresse || '' %></textarea>
 
-    <div class="carte">
-        <h2><i class="bi bi-sliders"></i> <%= t('profile.prefs') %></h2>
-        <form action="/profil" method="POST" id="form-prefs">
-            <input type="hidden" name="section" value="preferences">
+ <div class="actions-form">
+ <button type="submit" class="btn btn-primaire"><%= t('profile.save.info') %></button>
+ </div>
 
-            <label for="theme"><%= t('profile.theme') %></label>
-            <select id="theme" name="theme">
-                <option value="clair" <%= prefs.theme === 'clair' ? 'selected' : '' %>><%= t('profile.theme.light') %></option>
-                <option value="sombre" <%= prefs.theme === 'sombre' ? 'selected' : '' %>><%= t('profile.theme.dark') %></option>
-                <option value="auto" <%= prefs.theme === 'auto' ? 'selected' : '' %>><%= t('profile.theme.auto') %></option>
-            </select>
-            <p style="color:var(--gris); font-size:12px; margin-top:-6px;"><%= t('profile.theme.hint') %></p>
+ <p style="margin-top:16px;">
+ <a href="/changer-mot-de-passe" class="lien-mdp"><i class="bi bi-key"></i> <%= t('profile.change.password') %></a>
+ </p>
+ </form>
+ </div>
 
-            <label for="langue"><%= t('profile.lang') %></label>
-            <select id="langue" name="langue">
-                <option value="fr" <%= prefs.langue === 'fr' ? 'selected' : '' %>>Français</option>
-                <option value="en" <%= prefs.langue === 'en' ? 'selected' : '' %>>English</option>
-            </select>
+ <div class="carte">
+ <h2><i class="bi bi-sliders"></i> <%= t('profile.prefs') %></h2>
+ <form action="/profil" method="POST" id="form-prefs">
+ <input type="hidden" name="section" value="preferences">
 
-            <div class="actions-form">
-                <button type="submit" class="btn btn-primaire"><%= t('profile.save.prefs') %></button>
-            </div>
-        </form>
-    </div>
+ <label for="theme"><%= t('profile.theme') %></label>
+ <select id="theme" name="theme">
+ <option value="clair" <%= prefs.theme === 'clair' ? 'selected' : '' %>><%= t('profile.theme.light') %></option>
+ <option value="sombre" <%= prefs.theme === 'sombre' ? 'selected' : '' %>><%= t('profile.theme.dark') %></option>
+ <option value="auto" <%= prefs.theme === 'auto' ? 'selected' : '' %>><%= t('profile.theme.auto') %></option>
+ </select>
+ <p style="color:var(--gris); font-size:12px; margin-top:-6px;"><%= t('profile.theme.hint') %></p>
+
+ <label for="langue"><%= t('profile.lang') %></label>
+ <select id="langue" name="langue">
+ <option value="fr" <%= prefs.langue === 'fr' ? 'selected' : '' %>>Français</option>
+ <option value="en" <%= prefs.langue === 'en' ? 'selected' : '' %>>English</option>
+ </select>
+
+ <div class="actions-form">
+ <button type="submit" class="btn btn-primaire"><%= t('profile.save.prefs') %></button>
+ </div>
+ </form>
+ </div>
 </div>
 
 <script>
 function ajouterContact() {
-    var liste = document.getElementById('contacts-liste');
-    var div = document.createElement('div');
-    div.className = 'contact-ligne';
-    div.innerHTML = '<input type="text" name="autres_contacts[]" value="" placeholder="Teams, Slack…">' +
-        '<button type="button" class="btn-retirer" onclick="this.parentElement.remove()">&times;</button>';
-    liste.appendChild(div);
+ var liste = document.getElementById('contacts-liste');
+ var div = document.createElement('div');
+ div.className = 'contact-ligne';
+ div.innerHTML = '<input type="text" name="autres_contacts[]" value="" placeholder="Teams, Slack…">' +
+ '<button type="button" class="btn-retirer" onclick="this.parentElement.remove()">&times;</button>';
+ liste.appendChild(div);
 }
 // Aperçu immédiat du thème à la sélection
 document.getElementById('theme').addEventListener('change', function () {
-    var theme = this.value;
-    if (theme === 'auto') {
-        theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'sombre' : 'clair';
-    }
-    document.documentElement.classList.toggle('theme-sombre', theme === 'sombre');
-    document.body.classList.toggle('theme-sombre', theme === 'sombre');
+ var theme = this.value;
+ if (theme === 'auto') {
+ theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'sombre' : 'clair';
+ }
+ document.documentElement.classList.toggle('theme-sombre', theme === 'sombre');
+ document.body.classList.toggle('theme-sombre', theme === 'sombre');
 });
 </script>
 

@@ -1,35 +1,35 @@
 <%- include('../partials/header') %>
 
 <div class="entete-page">
-    <h1>Rôles</h1>
-    <% if (peut('roles', 'create')) { %>
-        <a href="/roles/nouveau" class="btn btn-accent">+ Nouveau rôle</a>
-    <% } %>
+ <h1>Rôles</h1>
+ <% if (peut('roles', 'create')) { %>
+ <a href="/roles/nouveau" class="btn btn-accent">+ Nouveau rôle</a>
+ <% } %>
 </div>
 
 <div class="carte">
-    <table class="tableau">
-        <thead><tr><th>Nom</th><th>Abréviation</th><th></th></tr></thead>
-        <tbody>
-        <% roles.forEach(function(r) { %>
-            <tr>
-                <td><%= r.nom %></td>
-                <td><span class="badge-role" style="background:var(--bleu);"><%= r.abbreviation %></span></td>
-                <td style="text-align:right; white-space:nowrap;">
-                    <% if (peut('roles', 'update')) { %>
-                        <a href="/roles/<%= r.id %>/modifier" class="btn btn-gris btn-petit">Modifier</a>
-                    <% } %>
-                    <% if (r.abbreviation !== 'ADMIN' && peut('roles', 'delete')) { %>
-                        <form action="/roles/<%= r.id %>/supprimer" method="POST" class="form-inline"
-                              onsubmit="return confirm('Supprimer ce rôle ?');">
-                            <button type="submit" class="btn btn-danger btn-petit">Supprimer</button>
-                        </form>
-                    <% } %>
-                </td>
-            </tr>
-        <% }) %>
-        </tbody>
-    </table>
+ <table class="tableau">
+ <thead><tr><th>Nom</th><th>Abréviation</th><th></th></tr></thead>
+ <tbody>
+ <% roles.forEach(function(r) { %>
+ <tr>
+ <td><%= r.nom %></td>
+ <td><span class="badge-role" style="background:var(--bleu);"><%= r.abbreviation %></span></td>
+ <td style="text-align:right; white-space:nowrap;">
+ <% if (peut('roles', 'update')) { %>
+ <a href="/roles/<%= r.id %>/modifier" class="btn btn-gris btn-petit">Modifier</a>
+ <% } %>
+ <% if (r.abbreviation !== 'ADMIN' && peut('roles', 'delete')) { %>
+ <form action="/roles/<%= r.id %>/supprimer" method="POST" class="form-inline"
+ onsubmit="return confirm('Supprimer ce rôle ?');">
+ <button type="submit" class="btn btn-danger btn-petit">Supprimer</button>
+ </form>
+ <% } %>
+ </td>
+ </tr>
+ <% }) %>
+ </tbody>
+ </table>
 </div>
 
 <%- include('../partials/footer') %>

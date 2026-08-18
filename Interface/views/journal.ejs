@@ -1,80 +1,88 @@
 <%- include('partials/header') %>
 
 <div class="entete-page">
-    <h1>📜 Journal d'événements</h1>
-    <div style="display:flex; gap:8px;">
-        <% if (peut('export', 'read')) { %>
-        <a href="/journal/export.csv?q=<%= encodeURIComponent(q) %>&ressource=<%= ressource %>&action=<%= action %>" class="btn btn-gris btn-petit">⬇️ CSV</a>
-        <a href="/journal/export-pdf?q=<%= encodeURIComponent(q) %>&ressource=<%= ressource %>&action=<%= action %>" target="_blank" class="btn btn-gris btn-petit">🖨️ PDF</a>
-        <% } %>
-    </div>
+ <h1><i class="bi bi-journal-text"></i> Journal d'événements</h1>
+ <div style="display:flex; gap:8px;">
+ <% if (peut('export', 'read')) { %>
+ <a href="/journal/export.csv?q=<%= encodeURIComponent(q) %>&ressource=<%= ressource %>&action=<%= action %>" class="btn btn-gris btn-petit"><i class="bi bi-download"></i> CSV</a>
+ <a href="/journal/export-pdf?q=<%= encodeURIComponent(q) %>&ressource=<%= ressource %>&action=<%= action %>" target="_blank" class="btn btn-gris btn-petit"><i class="bi bi-printer"></i> PDF</a>
+ <% } %>
+ </div>
 </div>
 <p style="color:var(--gris); font-size:14px; margin-top:-10px;"><%= total %> événement(s) au total.</p>
 
 <div class="carte" style="max-width:900px;">
-    <form action="/journal" method="GET" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
-        <div style="flex:1; min-width:160px;">
-            <label for="q">Rechercher</label>
-            <input type="text" id="q" name="q" value="<%= q %>" placeholder="nom, matricule, libellé...">
-        </div>
-        <div style="min-width:160px;">
-            <label for="ressource">Ressource</label>
-            <select id="ressource" name="ressource">
-                <option value="">— Toutes —</option>
-                <% [['auth','Connexion'],['utilisateur','Utilisateur'],['activite','Activité'],['sous_activite','Sous-activité'],['outil','Outil'],['role','Rôle'],['acces','Accès'],['parametre','Réglages']].forEach(function(r) { %>
-                    <option value="<%= r[0] %>" <%= ressource === r[0] ? 'selected' : '' %>><%= r[1] %></option>
-                <% }) %>
-            </select>
-        </div>
-        <div style="min-width:160px;">
-            <label for="action">Action</label>
-            <select id="action" name="action">
-                <option value="">— Toutes —</option>
-                <% [['connexion','Connexion'],['connexion_echouee','Échec de connexion'],['compte_bloque','Compte bloqué'],['deconnexion','Déconnexion'],['creation','Création'],['modification','Modification'],['suppression','Suppression'],['reinitialisation_mdp','Réinit. mot de passe'],['octroi_acces','Octroi d\'accès'],['revocation_acces','Révocation d\'accès'],['changement_statut','Changement statut réseau']].forEach(function(a) { %>
-                    <option value="<%= a[0] %>" <%= action === a[0] ? 'selected' : '' %>><%= a[1] %></option>
-                <% }) %>
-            </select>
-        </div>
-        <button type="submit" class="btn btn-primaire">Filtrer</button>
-        <% if (q || ressource || action) { %>
-            <a href="/journal" class="btn btn-gris">Réinitialiser</a>
-        <% } %>
-    </form>
+ <form action="/journal" method="GET" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+ <div style="flex:1; min-width:160px;">
+ <label for="q">Rechercher</label>
+ <input type="text" id="q" name="q" value="<%= q %>" placeholder="nom, matricule, libellé...">
+ </div>
+ <div style="min-width:160px;">
+ <label for="ressource">Ressource</label>
+ <select id="ressource" name="ressource">
+ <option value="">— Toutes —</option>
+ <% [['auth','Connexion'],['utilisateur','Utilisateur'],['activite','Activité'],['sous_activite','Sous-activité'],['outil','Outil'],['role','Rôle'],['acces','Accès'],['parametre','Réglages']].forEach(function(r) { %>
+ <option value="<%= r[0] %>" <%= ressource === r[0] ? 'selected' : '' %>><%= r[1] %></option>
+ <% }) %>
+ </select>
+ </div>
+ <div style="min-width:160px;">
+ <label for="action">Action</label>
+ <select id="action" name="action">
+ <option value="">— Toutes —</option>
+ <% [['connexion','Connexion'],['connexion_echouee','Échec de connexion'],['compte_bloque','Compte bloqué'],['deconnexion','Déconnexion'],['creation','Création'],['modification','Modification'],['suppression','Suppression'],['reinitialisation_mdp','Réinit. mot de passe'],['octroi_acces','Octroi d\'accès'],['revocation_acces','Révocation d\'accès'],['changement_statut','Changement statut réseau']].forEach(function(a) { %>
+ <option value="<%= a[0] %>" <%= action === a[0] ? 'selected' : '' %>><%= a[1] %></option>
+ <% }) %>
+ </select>
+ </div>
+ <div>
+ <label for="par_page">Par page</label>
+ <select id="par_page" name="par_page">
+ <% [10, 25, 50, 100].forEach(function(n) { %>
+ <option value="<%= n %>" <%= Number(par_page) === n ? 'selected' : '' %>><%= n %></option>
+ <% }) %>
+ </select>
+ </div>
+ <button type="submit" class="btn btn-primaire">Filtrer</button>
+ <% if (q || ressource || action) { %>
+ <a href="/journal" class="btn btn-gris">Réinitialiser</a>
+ <% } %>
+ </form>
 </div>
 
 <% if (!evenements.length) { %>
-    <div class="carte vide">Aucun événement ne correspond à ces filtres.</div>
+ <div class="carte vide">Aucun événement ne correspond à ces filtres.</div>
 <% } else { %>
-    <div class="carte" style="max-width:900px;">
-        <table class="tableau">
-            <thead><tr><th>Date</th><th>Utilisateur</th><th>Action</th><th>Ressource</th><th>Détail</th></tr></thead>
-            <tbody>
-            <% evenements.forEach(function(e) { %>
-                <tr>
-                    <td style="white-space:nowrap; font-size:13px; color:var(--gris);">
-                        <%= new Date(e.createdAt).toLocaleString('fr-FR') %>
-                    </td>
-                    <td><%= e.nom_user || 'Système' %><% if (e.matricule_user) { %> <span style="color:var(--gris); font-size:12px;">(<%= e.matricule_user %>)</span><% } %></td>
-                    <td><span class="badge-role" style="background:var(--bleu);"><%= e.action %></span></td>
-                    <td><%= e.ressource %></td>
-                    <td><%= e.libelle %></td>
-                </tr>
-            <% }) %>
-            </tbody>
-        </table>
-    </div>
+ <div class="carte" style="max-width:900px;">
+ <table class="tableau">
+ <thead><tr><th>Date</th><th>Utilisateur</th><th>Action</th><th>Ressource</th><th>Détail</th></tr></thead>
+ <tbody>
+ <% evenements.forEach(function(e) { %>
+ <tr>
+ <td style="white-space:nowrap; font-size:13px; color:var(--gris);">
+ <%= new Date(e.createdAt).toLocaleString('fr-FR') %>
+ </td>
+ <td><%= e.nom_user || 'Système' %><% if (e.matricule_user) { %> <span style="color:var(--gris); font-size:12px;">(<%= e.matricule_user %>)</span><% } %></td>
+ <td><span class="badge-role" style="background:var(--bleu);"><%= e.action %></span></td>
+ <td><%= e.ressource %></td>
+ <td><%= e.libelle %></td>
+ </tr>
+ <% }) %>
+ </tbody>
+ </table>
+ </div>
 
-    <% if (totalPages > 1) { %>
-        <div style="display:flex; gap:8px; margin-top:14px; align-items:center;">
-            <% if (page > 1) { %>
-                <a href="/journal?page=<%= page - 1 %>&q=<%= encodeURIComponent(q) %>&ressource=<%= ressource %>&action=<%= action %>" class="btn btn-gris btn-petit">← Précédent</a>
-            <% } %>
-            <span style="color:var(--gris); font-size:13px;">Page <%= page %> / <%= totalPages %></span>
-            <% if (page < totalPages) { %>
-                <a href="/journal?page=<%= page + 1 %>&q=<%= encodeURIComponent(q) %>&ressource=<%= ressource %>&action=<%= action %>" class="btn btn-gris btn-petit">Suivant →</a>
-            <% } %>
-        </div>
-    <% } %>
+ <% if (totalPages > 1) { %>
+ <div style="display:flex; gap:8px; margin-top:14px; align-items:center;">
+ <% if (page > 1) { %>
+ <a href="/journal?page=<%= page - 1 %>&par_page=<%= par_page %>&q=<%= encodeURIComponent(q) %>&ressource=<%= ressource %>&action=<%= action %>" class="btn btn-gris btn-petit"><i class="bi bi-arrow-left"></i> Précédent</a>
+ <% } %>
+ <span style="color:var(--gris); font-size:13px;">Page <%= page %> / <%= totalPages %></span>
+ <% if (page < totalPages) { %>
+ <a href="/journal?page=<%= page + 1 %>&par_page=<%= par_page %>&q=<%= encodeURIComponent(q) %>&ressource=<%= ressource %>&action=<%= action %>" class="btn btn-gris btn-petit">Suivant <i class="bi bi-arrow-right"></i> </a>
+ <% } %>
+ </div>
+ <% } %>
 <% } %>
 
 <%- include('partials/footer') %>

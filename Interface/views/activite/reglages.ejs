@@ -1,0 +1,96 @@
+<%- include('../partials/header') %>
+<% 
+  var loc = activite.reglages || {};
+  if (typeof loc === 'string') { try { loc = JSON.parse(loc); } catch(e) { loc = {}; } }
+  var glob = activite.reglages_globaux || {};
+  var eff = activite.reglages_effectifs || {};
+  function sel(name, val) {
+    var v = loc[name];
+    if (v === true || v === 'true') return 'true';
+    if (v === false || v === 'false') return 'false';
+    return 'inherit';
+  }
+%>
+
+<div class="fil-ariane">
+    <a href="/activites/<%= activite.id %>">Activité</a> <span class="sep">›</span> Réglages locaux
+</div>
+<div class="entete-page"><h1><i class="bi bi-sliders"></i> Réglages — <%= activite.nom %></h1></div>
+
+<p style="color:var(--gris); font-size:14px; max-width:640px;">
+    Ces paramètres s’appliquent à cette activité (et ses sous-activités par héritage).
+    Ils <strong>ne peuvent pas assouplir</strong> les <a href="/parametres">Réglages généraux</a> :
+    uniquement restreindre ou renforcer.
+</p>
+
+<% if (erreur) { %><div class="message-erreur"><%= erreur %></div><% } %>
+<% if (succes) { %><div class="message-succes"><%= succes %></div><% } %>
+
+<div class="carte" style="max-width:640px;">
+    <form action="/activites/<%= activite.id %>/reglages" method="POST">
+        <h2 style="font-size:15px; color:var(--bleu-fonce);"><i class="bi bi-key"></i> Credentials</h2>
+        <p style="color:var(--gris); font-size:12px; margin-top:-6px;">
+            Global : <%= glob.credentials_actifs ? 'activés' : 'désactivés' %>
+            <% if (!glob.credentials_actifs) { %> — impossible d’activer localement.<% } %>
+        </p>
+        <label for="credentials_actifs">Credentials sur les outils de cette activité</label>
+        <select id="credentials_actifs" name="credentials_actifs" <%= !glob.credentials_actifs ? 'disabled' : '' %>>
+            <option value="inherit" <%= sel('credentials_actifs')==='inherit'?'selected':'' %>>Hériter (<%= eff.credentials_actifs ? 'activés' : 'désactivés' %>)</option>
+            <% if (glob.credentials_actifs) { %>
+            <option value="true" <%= sel('credentials_actifs')==='true'?'selected':'' %>>Activés</option>
+            <option value="false" <%= sel('credentials_actifs')==='false'?'selected':'' %>>Désactivés pour cette activité</option>
+            <% } %>
+        </select>
+        <% if (!glob.credentials_actifs) { %><input type="hidden" name="credentials_actifs" value="inherit"><% } %>
+
+        <h2 style="font-size:15px; color:var(--bleu-fonce); margin-top:22px;"><i class="bi bi-shield-check"></i> Politiques de sécurité</h2>
+        <label for="mdp_longueur_min">Longueur min. mot de passe (local ≥ global = <%= glob.mdp_longueur_min || 6 %>)</label>
+        <input type="number" id="mdp_longueur_min" name="mdp_longueur_min" min="<%= glob.mdp_longueur_min || 6 %>" max="32"
+               placeholder="Hériter (<%= eff.mdp_longueur_min %>)"
+               value="<%= loc.mdp_longueur_min != null ? loc.mdp_longueur_min : '' %>">
+
+        <label for="mdp_complexite">Complexité du mot de passe</label>
+        <select id="mdp_complexite" name="mdp_complexite">
+            <option value="inherit" <%= sel('mdp_complexite')==='inherit'?'selected':'' %>>Hériter (<%= eff.mdp_complexite ? 'exigée' : 'non exigée' %>)</option>
+            <option value="true" <%= sel('mdp_complexite')==='true'?'selected':'' %>>Exiger la complexité ici</option>
+            <% if (!glob.mdp_complexite) { %>
+            <option value="false" <%= sel('mdp_complexite')==='false'?'selected':'' %>>Ne pas exiger (si global le permet)</option>
+            <% } %>
+        </select>
+
+        <label for="max_tentatives_connexion">Max. tentatives connexion (local ≤ global = <%= glob.max_tentatives_connexion || 5 %>)</label>
+        <input type="number" id="max_tentatives_connexion" name="max_tentatives_connexion" min="3" max="<%= glob.max_tentatives_connexion || 5 %>"
+               placeholder="Hériter (<%= eff.max_tentatives_connexion %>)"
+               value="<%= loc.max_tentatives_connexion != null ? loc.max_tentatives_connexion : '' %>">
+
+        <h2 style="font-size:15px; color:var(--bleu-fonce); margin-top:22px;"><i class="bi bi-toggles"></i> Fonctionnalités</h2>
+        <% var features = [
+            ['tickets_actifs', 'Tickets / demandes', 'tickets'],
+            ['partage_outils', 'Partage d’outils', 'partage'],
+            ['export_autorise', 'Export CSV / PDF', 'export'],
+            ['diagnostic_actif', 'Diagnostic réseau', 'diagnostic'],
+            ['surveillance_active', 'Surveillance réseau des outils', 'surveillance']
+        ]; %>
+        <% features.forEach(function(f) { %>
+            <label for="<%= f[0] %>"><%= f[1] %></label>
+            <select id="<%= f[0] %>" name="<%= f[0] %>">
+                <option value="inherit" <%= sel(f[0])==='inherit'?'selected':'' %>>Hériter (<%= eff[f[0]] ? 'activé' : 'désactivé' %>)</option>
+                <option value="true" <%= sel(f[0])==='true'?'selected':'' %>>Activé</option>
+                <option value="false" <%= sel(f[0])==='false'?'selected':'' %>>Désactivé pour cette activité</option>
+            </select>
+        <% }) %>
+
+        <h2 style="font-size:15px; color:var(--bleu-fonce); margin-top:22px;"><i class="bi bi-megaphone"></i> Message d’information</h2>
+        <label for="message_info">Bandeau affiché aux utilisateurs de l’activité</label>
+        <input type="text" id="message_info" name="message_info" maxlength="500"
+               value="<%= loc.message_info || '' %>"
+               placeholder="Ex. Maintenance planifiée vendredi — privilégier les tickets urgents">
+
+        <div class="actions-form">
+            <button type="submit" class="btn btn-primaire">Enregistrer les réglages</button>
+            <a href="/activites/<%= activite.id %>" class="btn btn-gris">Retour</a>
+        </div>
+    </form>
+</div>
+
+<%- include('../partials/footer') %>

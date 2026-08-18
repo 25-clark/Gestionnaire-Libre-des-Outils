@@ -1,84 +1,84 @@
 <%- include('../partials/header') %>
 
 <div class="fil-ariane"><a href="<%= retour %>">Retour</a> <span class="sep">›</span> Partager</div>
-<div class="entete-page"><h1>🔗 Partager — <%= outil.nom %></h1></div>
+<div class="entete-page"><h1><i class="bi bi-link-45deg"></i> Partager — <%= outil.nom %></h1></div>
 <p style="color:var(--gris); font-size:14px; margin-top:-10px;">
-    C'est le <strong>même outil</strong>, juste rattaché à un endroit supplémentaire (pas de copie) :
-    modifier l'outil ou son statut réseau se répercute partout où il est partagé.
+ C'est le <strong>même outil</strong>, juste rattaché à un endroit supplémentaire (pas de copie) :
+ modifier l'outil ou son statut réseau se répercute partout où il est partagé.
 </p>
 
 <% if (erreur) { %>
-    <div class="message-erreur" style="max-width:600px;"><%= erreur %></div>
+ <div class="message-erreur" style="max-width:600px;"><%= erreur %></div>
 <% } %>
 
 <% if (peut('partage', 'create')) { %>
 <div class="carte" style="max-width:600px;">
-    <form action="/outils/<%= outil.id %>/partager" method="POST">
-        <input type="hidden" name="retour" value="<%= retour %>">
+ <form action="/outils/<%= outil.id %>/partager" method="POST">
+ <input type="hidden" name="retour" value="<%= retour %>">
 
-        <label for="id_activite">Activité de destination</label>
-        <select id="id_activite" name="id_activite" required onchange="rechargerSousActivites()">
-            <option value="">— Choisir —</option>
-            <% activites.forEach(function(a) { %>
-                <option value="<%= a.id %>" <%= String(id_activite) === String(a.id) ? 'selected' : '' %>><%= a.nom %></option>
-            <% }) %>
-        </select>
+ <label for="id_activite">Activité de destination</label>
+ <select id="id_activite" name="id_activite" required onchange="rechargerSousActivites()">
+ <option value="">— Choisir —</option>
+ <% activites.forEach(function(a) { %>
+ <option value="<%= a.id %>" <%= String(id_activite) === String(a.id) ? 'selected' : '' %>><%= a.nom %></option>
+ <% }) %>
+ </select>
 
-        <% if (id_activite && sousActivites.length) { %>
-            <label for="id_sous_activite">Sous-activité précise (optionnel)</label>
-            <select id="id_sous_activite" name="id_sous_activite">
-                <option value="">— Toute l'activité —</option>
-                <% sousActivites.forEach(function(sa) { %>
-                    <option value="<%= sa.id %>"><%= sa.nom %></option>
-                <% }) %>
-            </select>
-        <% } %>
+ <% if (id_activite && sousActivites.length) { %>
+ <label for="id_sous_activite">Sous-activité précise (optionnel)</label>
+ <select id="id_sous_activite" name="id_sous_activite">
+ <option value="">— Toute l'activité —</option>
+ <% sousActivites.forEach(function(sa) { %>
+ <option value="<%= sa.id %>"><%= sa.nom %></option>
+ <% }) %>
+ </select>
+ <% } %>
 
-        <div class="actions-form">
-            <button type="submit" class="btn btn-primaire">Partager ici</button>
-        </div>
-    </form>
+ <div class="actions-form">
+ <button type="submit" class="btn btn-primaire">Partager ici</button>
+ </div>
+ </form>
 </div>
 <script>
-    function rechargerSousActivites() {
-        var idActivite = document.getElementById('id_activite').value;
-        window.location.href = '/outils/<%= outil.id %>/partager?id_activite=' + encodeURIComponent(idActivite) + '&retour=<%= encodeURIComponent(retour) %>';
-    }
+ function rechargerSousActivites() {
+ var idActivite = document.getElementById('id_activite').value;
+ window.location.href = '/outils/<%= outil.id %>/partager?id_activite=' + encodeURIComponent(idActivite) + '&retour=<%= encodeURIComponent(retour) %>';
+ }
 </script>
 <% } %>
 
 <div class="carte" style="max-width:600px;">
-    <h2 style="margin-top:0; font-size:15px; color:var(--bleu-fonce);">Emplacements actuels</h2>
-    <% if (!outil.activites.length && !outil.sousActivites.length) { %>
-        <p class="vide">Cet outil n'est rattaché à aucun endroit pour l'instant.</p>
-    <% } else { %>
-        <ul style="list-style:none; padding:0; margin:0;">
-            <% outil.activites.forEach(function(a) { %>
-                <li style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--gris-bordure);">
-                    <span>📁 <%= a.nom %> <span style="color:var(--gris); font-size:12px;">(activité entière)</span></span>
-                    <% if (peut('partage', 'delete')) { %>
-                        <form action="/outils/<%= outil.id %>/retirer-partage/activite/<%= a.id %>" method="POST"
-                              onsubmit="return confirm('Retirer ce partage ?');">
-                            <input type="hidden" name="retour" value="<%= retour %>">
-                            <button type="submit" class="btn btn-danger btn-petit">Retirer</button>
-                        </form>
-                    <% } %>
-                </li>
-            <% }) %>
-            <% outil.sousActivites.forEach(function(sa) { %>
-                <li style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--gris-bordure);">
-                    <span>📂 <%= sa.nom %></span>
-                    <% if (peut('partage', 'delete')) { %>
-                        <form action="/outils/<%= outil.id %>/retirer-partage/sous-activite/<%= sa.id %>" method="POST"
-                              onsubmit="return confirm('Retirer ce partage ?');">
-                            <input type="hidden" name="retour" value="<%= retour %>">
-                            <button type="submit" class="btn btn-danger btn-petit">Retirer</button>
-                        </form>
-                    <% } %>
-                </li>
-            <% }) %>
-        </ul>
-    <% } %>
+ <h2 style="margin-top:0; font-size:15px; color:var(--bleu-fonce);">Emplacements actuels</h2>
+ <% if (!outil.activites.length && !outil.sousActivites.length) { %>
+ <p class="vide">Cet outil n'est rattaché à aucun endroit pour l'instant.</p>
+ <% } else { %>
+ <ul style="list-style:none; padding:0; margin:0;">
+ <% outil.activites.forEach(function(a) { %>
+ <li style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--gris-bordure);">
+ <span><i class="bi bi-folder"></i> <%= a.nom %> <span style="color:var(--gris); font-size:12px;">(activité entière)</span></span>
+ <% if (peut('partage', 'delete')) { %>
+ <form action="/outils/<%= outil.id %>/retirer-partage/activite/<%= a.id %>" method="POST"
+ onsubmit="return confirm('Retirer ce partage ?');">
+ <input type="hidden" name="retour" value="<%= retour %>">
+ <button type="submit" class="btn btn-danger btn-petit">Retirer</button>
+ </form>
+ <% } %>
+ </li>
+ <% }) %>
+ <% outil.sousActivites.forEach(function(sa) { %>
+ <li style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--gris-bordure);">
+ <span><i class="bi bi-folder2-open"></i> <%= sa.nom %></span>
+ <% if (peut('partage', 'delete')) { %>
+ <form action="/outils/<%= outil.id %>/retirer-partage/sous-activite/<%= sa.id %>" method="POST"
+ onsubmit="return confirm('Retirer ce partage ?');">
+ <input type="hidden" name="retour" value="<%= retour %>">
+ <button type="submit" class="btn btn-danger btn-petit">Retirer</button>
+ </form>
+ <% } %>
+ </li>
+ <% }) %>
+ </ul>
+ <% } %>
 </div>
 
 <%- include('../partials/footer') %>

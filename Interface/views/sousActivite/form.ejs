@@ -4,29 +4,29 @@
 <div class="entete-page"><h1><%= titre %></h1></div>
 
 <div class="carte" style="max-width:520px;">
-    <% if (erreur) { %>
-        <div class="message-erreur"><%= erreur %></div>
-    <% } %>
+ <% if (erreur) { %>
+ <div class="message-erreur"><%= erreur %></div>
+ <% } %>
 
-    <form action="<%= sousActivite && sousActivite.id ? '/sous-activites/' + sousActivite.id + '/modifier' : '/sous-activites' %>" method="POST">
-        <input type="hidden" name="id_activite" value="<%= id_activite %>">
+ <form action="<%= sousActivite && sousActivite.id ? '/sous-activites/' + sousActivite.id + '/modifier' : '/sous-activites' %>" method="POST">
+ <input type="hidden" name="id_activite" value="<%= id_activite %>">
 
-        <label for="nom">Nom de la sous-activité</label>
-        <input type="text" id="nom" name="nom" required value="<%= sousActivite ? sousActivite.nom : '' %>">
+ <label for="nom">Nom de la sous-activité</label>
+ <input type="text" id="nom" name="nom" required value="<%= sousActivite ? sousActivite.nom : '' %>">
 
-        <label for="id_parent">Sous-activité parente (optionnel)</label>
-        <select id="id_parent" name="id_parent">
-            <option value="">— Aucune (niveau racine de l'activité) —</option>
-            <% sousActivitesDisponibles.forEach(function(sa) { %>
-                <option value="<%= sa.id %>" <%= String(id_parent) === String(sa.id) ? 'selected' : '' %>><%= sa.nom %></option>
-            <% }) %>
-        </select>
+ <label for="id_parent">Sous-activité parente (optionnel)</label>
+ <select id="id_parent" name="id_parent">
+ <option value="">— Aucune (niveau racine de l'activité) —</option>
+ <% sousActivitesDisponibles.forEach(function(sa) { %>
+ <option value="<%= sa.id %>" <%= String(id_parent) === String(sa.id) ? 'selected' : '' %>><%= sa.nom %></option>
+ <% }) %>
+ </select>
 
-        <div class="actions-form">
-            <button type="submit" class="btn btn-primaire">Enregistrer</button>
-            <a href="/activites/<%= id_activite %>" class="btn btn-gris">Annuler</a>
-        </div>
-    </form>
+ <div class="actions-form">
+ <button type="submit" class="btn btn-primaire">Enregistrer</button>
+ <a href="/activites/<%= id_activite %>" class="btn btn-gris">Annuler</a>
+ </div>
+ </form>
 </div>
 
 <%- include('../partials/footer') %>

@@ -1,6 +1,7 @@
 const { SousActivite, Activite, Utilisateur, Outil } = require('../models');
 const { isAdmin, getIdsActivitesAccessibles } = require('../middlewares/auth');
 const { consigner } = require('../utils/journal');
+const { reglagesEffectifs, normaliserPourSauvegarde } = require('../utils/reglagesEffectifs');
 
 async function getAll(req, res, next) {
     try {
@@ -44,14 +45,15 @@ async function getAll(req, res, next) {
 async function getById(req, res, next) {
     try {
         const sousActivite = await SousActivite.findByPk(req.params.id, {
-            include: [
-                { model: Activite },
-                { model: SousActivite, as: 'enfants' },
-                { model: SousActivite, as: 'parent' }
-            ]
+            include: [{ model: Activite }]
         });
         if (!sousActivite) return res.status(404).json({ message: 'Sous-activité introuvable.' });
-        res.json(sousActivite);
+        const json = sousActivite.toJSON();
+        const regAct = json.Activite ? json.Activite.reglages : null;
+        const reg = await reglagesEffectifs(regAct, json.reglages);
+        json.reglages_effectifs = reg.effectifs;
+        json.reglages_globaux = reg.global;
+        res.json(json);
     } catch (err) { next(err); }
 }
 
@@ -193,4 +195,29 @@ async function copier(req, res, next) {
     } catch (err) { next(err); }
 }
 
-module.exports = { getAll, getById, create, update, remove, copier };
+
+async function updateReglages(req, res, next) {
+    try {
+        const sousActivite = await SousActivite.findByPk(req.params.id, { include: [{ model: Activite }] });
+        if (!sousActivite) return res.status(404).json({ message: 'Sous-activité introuvable.' });
+        const reglages = await normaliserPourSauvegarde(req.body.reglages || req.body);
+        await sousActivite.update({ reglages });
+        await consigner({
+            user: req.currentUser,
+            action: 'modification',
+            ressource: 'sous_activite',
+            id_ressource: sousActivite.id,
+            libelle: `Réglages locaux de la sous-activité "${sousActivite.nom}" modifiés`
+        });
+        await sousActivite.reload({ include: [{ model: Activite }] });
+        const json = sousActivite.toJSON();
+        const regAct = json.Activite ? json.Activite.reglages : null;
+        const reg = await reglagesEffectifs(regAct, reglages);
+        json.reglages_effectifs = reg.effectifs;
+        json.reglages_globaux = reg.global;
+        res.json(json);
+    } catch (err) { next(err); }
+}
+
+module.exports = { getAll, getById, create, update, remove, copier, updateReglages };
+

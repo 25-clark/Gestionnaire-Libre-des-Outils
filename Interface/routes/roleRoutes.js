@@ -113,6 +113,10 @@ function construirePermissions(body) {
     if (permissions.activites) {
         permissions.activites.read = true;
     }
+    // « read » sur les utilisateurs est toujours actif (consultation minimale).
+    if (permissions.utilisateurs) {
+        permissions.utilisateurs.read = true;
+    }
 
     permissions.onglets = {};
     for (const onglet of ONGLETS) {

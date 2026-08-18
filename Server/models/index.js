@@ -16,6 +16,7 @@ const Notification = require('./Notification')(sequelize);
 const Ticket = require('./Ticket')(sequelize);
 const TicketMessage = require('./TicketMessage')(sequelize);
 const TicketImage = require('./TicketImage')(sequelize);
+const UtilisateurOutilCredential = require('./UtilisateurOutilCredential')(sequelize);
 
 // ========================= ASSOCIATIONS =========================
 
@@ -140,6 +141,13 @@ TicketMessage.belongsTo(Utilisateur, { foreignKey: 'id_user', as: 'Auteur' });
 Ticket.hasMany(TicketImage, { foreignKey: 'id_ticket', as: 'images' });
 TicketImage.belongsTo(Ticket, { foreignKey: 'id_ticket' });
 
+
+// ---- Credentials personnels (utilisateur × outil) ----
+Utilisateur.hasMany(UtilisateurOutilCredential, { foreignKey: 'id_user', as: 'credentialsOutils' });
+UtilisateurOutilCredential.belongsTo(Utilisateur, { foreignKey: 'id_user' });
+Outil.hasMany(UtilisateurOutilCredential, { foreignKey: 'id_outil', as: 'credentialsUtilisateurs' });
+UtilisateurOutilCredential.belongsTo(Outil, { foreignKey: 'id_outil' });
+
 module.exports = {
     sequelize,
     Role,
@@ -157,5 +165,6 @@ module.exports = {
     Notification,
     Ticket,
     TicketMessage,
-    TicketImage
+    TicketImage,
+    UtilisateurOutilCredential
 };

@@ -1,25 +1,85 @@
-const { Outil, Utilisateur, Activite, SousActivite, OutilHistoriqueStatut, Parametre } = require('../models');
+const { Outil, Utilisateur, Activite, SousActivite, OutilHistoriqueStatut, Parametre, UtilisateurOutilCredential } = require('../models');
 const { isAdmin, getIdsActivitesAccessibles } = require('../middlewares/auth');
 const { getPerimetreAcces } = require('../utils/perimetre');
 const { consigner } = require('../utils/journal');
 const { verifierUnOutil } = require('../utils/surveillance');
 const { chiffrerCredentials, dechiffrerOutil, dechiffrerOutils } = require('../utils/credentialsCrypto');
 
-async function credentialsAutorises(user) {
+async function moduleCredentialsActif() {
     const [p] = await Parametre.findOrCreate({ where: { id: 1 }, defaults: {} });
-    if (!p.credentials_actifs) return false;
+    return !!p.credentials_actifs;
+}
+
+function permissionCredentials(user, action) {
     if (isAdmin(user)) return true;
     const perms = user.Role && user.Role.permissions
         ? (typeof user.Role.permissions === 'string' ? JSON.parse(user.Role.permissions || '{}') : user.Role.permissions)
         : {};
-    return !!(perms.credentials && perms.credentials.read);
+    return !!(perms.credentials && perms.credentials[action]);
 }
 
-function masquerCredentials(obj) {
-    if (!obj) return obj;
-    const json = typeof obj.toJSON === 'function' ? obj.toJSON() : { ...obj };
-    json.credentials = [];
+async function credentialsAutorises(user) {
+    if (!(await moduleCredentialsActif())) return false;
+    return permissionCredentials(user, 'read');
+}
+
+/** Charge les credentials personnels de l'utilisateur courant pour un outil. */
+async function chargerCredentialsPerso(idUser, idOutil) {
+    const row = await UtilisateurOutilCredential.findOne({
+        where: { id_user: idUser, id_outil: idOutil }
+    });
+    if (!row) return [];
+    const liste = row.credentials || [];
+    // Déchiffre via le même helper que les outils
+    return dechiffrerOutil({ credentials: liste }).credentials || [];
+}
+
+/** Attache mes_credentials (personnels) et retire credentials partagés de l'outil. */
+function calculerDerangement(json) {
+    const now = Date.now();
+    const deb = json.derangement_debut ? new Date(json.derangement_debut).getTime() : null;
+    const fin = json.derangement_fin ? new Date(json.derangement_fin).getTime() : null;
+    let en_cours = false;
+    if (deb && fin) en_cours = now >= deb && now <= fin;
+    else if (deb && !fin) en_cours = now >= deb;
+    else if (!deb && fin) en_cours = now <= fin;
+    return {
+        en_derangement: en_cours,
+        note_maintenance: json.note_maintenance || null,
+        derangement_debut: json.derangement_debut || null,
+        derangement_fin: json.derangement_fin || null,
+        derangement_message: json.derangement_message || null
+    };
+}
+
+async function enrichirOutilCredentials(outil, user) {
+    const json = typeof outil.toJSON === 'function' ? outil.toJSON() : { ...outil };
+    // Ne jamais exposer d'anciens credentials partagés sur l'outil
+    delete json.credentials;
+    json.mes_credentials = [];
+    if (await credentialsAutorises(user)) {
+        json.mes_credentials = await chargerCredentialsPerso(user.id, json.id);
+    }
+    // Alias pour l'UI existante qui lit outil.credentials (= toujours perso)
+    json.credentials = json.mes_credentials;
+    Object.assign(json, calculerDerangement(json));
     return json;
+}
+
+async function enrichirOutilsCredentials(outils, user) {
+    return Promise.all(outils.map(o => enrichirOutilCredentials(o, user)));
+}
+
+async function sauvegarderCredentialsPerso(idUser, idOutil, liste) {
+    const chiffrés = chiffrerCredentials(Array.isArray(liste) ? liste : []);
+    const [row] = await UtilisateurOutilCredential.findOrCreate({
+        where: { id_user: idUser, id_outil: idOutil },
+        defaults: { credentials: chiffrés }
+    });
+    if (!row.isNewRecord) {
+        await row.update({ credentials: chiffrés });
+    }
+    return chiffrés;
 }
 
 
@@ -70,8 +130,7 @@ async function getAll(req, res, next) {
             outils = outils.filter(o => o.nom.toLowerCase().includes(terme));
         }
 
-        const peutVoirCreds = await credentialsAutorises(req.currentUser);
-        res.json(peutVoirCreds ? dechiffrerOutils(outils) : outils.map(masquerCredentials));
+        res.json(await enrichirOutilsCredentials(outils, req.currentUser));
     } catch (err) { next(err); }
 }
 
@@ -85,8 +144,7 @@ async function getById(req, res, next) {
             ]
         });
         if (!outil) return res.status(404).json({ message: 'Outil introuvable.' });
-        const peutVoirCreds = await credentialsAutorises(req.currentUser);
-        res.json(peutVoirCreds ? dechiffrerOutil(outil) : masquerCredentials(outil));
+        res.json(await enrichirOutilCredentials(outil, req.currentUser));
     } catch (err) { next(err); }
 }
 
@@ -105,16 +163,15 @@ async function create(req, res, next) {
 
         const image = req.file ? `/uploads/outils/${req.file.filename}` : (req.body.image || null);
 
-        let credentials = [];
-        if (req.body.credentials && await credentialsAutorises(req.currentUser)) {
-            // create also needs create permission ideally - admin or credentials.create
+        // Credentials à la création = personnels (créateur uniquement), pas sur l'outil
+        let credentialsPerso = null;
+        if (req.body.credentials && (await moduleCredentialsActif()) && permissionCredentials(req.currentUser, 'create')) {
             try {
-                credentials = typeof req.body.credentials === 'string'
+                credentialsPerso = typeof req.body.credentials === 'string'
                     ? JSON.parse(req.body.credentials)
                     : req.body.credentials;
-            } catch (_) { credentials = []; }
-            if (!Array.isArray(credentials)) credentials = [];
-            credentials = chiffrerCredentials(credentials);
+            } catch (_) { credentialsPerso = []; }
+            if (!Array.isArray(credentialsPerso)) credentialsPerso = [];
         }
 
         const outil = await Outil.create({
@@ -122,8 +179,7 @@ async function create(req, res, next) {
             lien: lien || null,
             adresse: adresse || null,
             image,
-            id_user,
-            credentials
+            id_user
         });
 
         // activites / sousActivites : tableau d'ids (JSON stringifié si envoyé en multipart)
@@ -149,7 +205,11 @@ async function create(req, res, next) {
             libelle: `Outil "${nom}" créé`
         });
 
-        res.status(201).json(dechiffrerOutil(outilComplet));
+        if (credentialsPerso && credentialsPerso.length) {
+            await sauvegarderCredentialsPerso(req.currentUser.id, outil.id, credentialsPerso);
+        }
+
+        res.status(201).json(await enrichirOutilCredentials(outilComplet, req.currentUser));
     } catch (err) { next(err); }
 }
 
@@ -337,24 +397,30 @@ async function updateCredentials(req, res, next) {
         const outil = await Outil.findByPk(req.params.id);
         if (!outil) return res.status(404).json({ message: 'Outil introuvable.' });
 
+        if (!(await moduleCredentialsActif())) {
+            return res.status(403).json({ message: 'Les credentials sont désactivés dans les Réglages généraux.' });
+        }
+        if (!permissionCredentials(req.currentUser, 'update') && !permissionCredentials(req.currentUser, 'create')) {
+            return res.status(403).json({ message: 'Permission credentials insuffisante.' });
+        }
+
         let credentials = req.body.credentials;
         if (typeof credentials === 'string') {
             try { credentials = JSON.parse(credentials); } catch (_) { credentials = []; }
         }
         if (!Array.isArray(credentials)) credentials = [];
-        credentials = chiffrerCredentials(credentials);
 
-        await outil.update({ credentials });
+        // Uniquement les credentials de l'utilisateur connecté
+        await sauvegarderCredentialsPerso(req.currentUser.id, outil.id, credentials);
 
         await consigner({
             user: req.currentUser,
             action: 'modification',
-            ressource: 'outil',
+            ressource: 'credentials',
             id_ressource: outil.id,
-            libelle: `Credentials de l'outil "${outil.nom}" mis à jour (${credentials.length} champ(s))`
+            libelle: `Credentials personnels mis à jour pour l'outil "${outil.nom}" (${credentials.length} champ(s)) — utilisateur ${req.currentUser.matricule}`
         });
 
-        const { Utilisateur, Activite, SousActivite } = require('../models');
         const fresh = await Outil.findByPk(outil.id, {
             include: [
                 { model: Utilisateur },
@@ -362,8 +428,46 @@ async function updateCredentials(req, res, next) {
                 { model: SousActivite, as: 'sousActivites' }
             ]
         });
-        res.json(dechiffrerOutil(fresh));
+        res.json(await enrichirOutilCredentials(fresh, req.currentUser));
     } catch (err) { next(err); }
 }
 
-module.exports = { getAll, getById, create, toggleActive, remove, verifierStatut, historiqueStatut, partager, retirerPartageActivite, retirerPartageSousActivite, updateCredentials };
+
+async function updateMaintenance(req, res, next) {
+    try {
+        const outil = await Outil.findByPk(req.params.id);
+        if (!outil) return res.status(404).json({ message: 'Outil introuvable.' });
+
+        const { note_maintenance, derangement_debut, derangement_fin, derangement_message } = req.body;
+        const data = {};
+        if (note_maintenance !== undefined) data.note_maintenance = note_maintenance || null;
+        if (derangement_message !== undefined) data.derangement_message = derangement_message || null;
+        if (derangement_debut !== undefined) {
+            data.derangement_debut = derangement_debut ? new Date(derangement_debut) : null;
+        }
+        if (derangement_fin !== undefined) {
+            data.derangement_fin = derangement_fin ? new Date(derangement_fin) : null;
+        }
+
+        await outil.update(data);
+
+        await consigner({
+            user: req.currentUser,
+            action: 'modification',
+            ressource: 'outil',
+            id_ressource: outil.id,
+            libelle: `Maintenance / dérangement mis à jour pour l'outil "${outil.nom}"`
+        });
+
+        const fresh = await Outil.findByPk(outil.id, {
+            include: [
+                { model: Utilisateur },
+                { model: Activite, as: 'activites' },
+                { model: SousActivite, as: 'sousActivites' }
+            ]
+        });
+        res.json(await enrichirOutilCredentials(fresh, req.currentUser));
+    } catch (err) { next(err); }
+}
+
+module.exports = { getAll, getById, create, toggleActive, remove, verifierStatut, historiqueStatut, partager, retirerPartageActivite, retirerPartageSousActivite, updateCredentials, updateMaintenance };

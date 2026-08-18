@@ -227,5 +227,42 @@ router.post('/:id/credentials', async (req, res, next) => {
     }
 });
 
+
+router.get('/:id/maintenance', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const { data: outil } = await api.get(`/outils/${req.params.id}`);
+        const retour = req.query.retour || '/';
+        res.render('outil/maintenance', { titre: 'Maintenance — ' + outil.nom, outil, retour, erreur: null, succes: null });
+    } catch (err) { next(err); }
+});
+
+router.post('/:id/maintenance', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const body = {
+            note_maintenance: req.body.note_maintenance,
+            derangement_debut: req.body.derangement_debut || null,
+            derangement_fin: req.body.derangement_fin || null,
+            derangement_message: req.body.derangement_message
+        };
+        await api.put(`/outils/${req.params.id}/maintenance`, body);
+        const retour = req.body.retour || '/';
+        res.redirect(retour);
+    } catch (err) {
+        try {
+            const api = apiClient(req);
+            const { data: outil } = await api.get(`/outils/${req.params.id}`);
+            res.render('outil/maintenance', {
+                titre: 'Maintenance',
+                outil,
+                retour: req.body.retour || '/',
+                erreur: err.response?.data?.message || 'Erreur',
+                succes: null
+            });
+        } catch (e) { next(err); }
+    }
+});
+
 module.exports = router;
 

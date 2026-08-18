@@ -1,175 +1,175 @@
 <%- include('../partials/header') %>
 
 <div class="fil-ariane">
-    <a href="/">Tableau de bord</a> <span class="sep">›</span>
-    <a href="/activites/<%= activite.id %>"><%= activite.nom %></a>
-    <% ancetres.forEach(function(ancetre) { %>
-        <span class="sep">›</span> <a href="/sous-activites/<%= ancetre.id %>"><%= ancetre.nom %></a>
-    <% }) %>
-    <span class="sep">›</span> <%= sousActivite.nom %>
+ <a href="/">Tableau de bord</a> <span class="sep">›</span>
+ <a href="/activites/<%= activite.id %>"><%= activite.nom %></a>
+ <% ancetres.forEach(function(ancetre) { %>
+ <span class="sep">›</span> <a href="/sous-activites/<%= ancetre.id %>"><%= ancetre.nom %></a>
+ <% }) %>
+ <span class="sep">›</span> <%= sousActivite.nom %>
 </div>
 
 <div class="entete-page">
-    <h1>📂 <%= sousActivite.nom %></h1>
-    <% if (peut('sous_activites', 'update') || peut('sous_activites', 'delete') || peut('partage', 'create')) { %>
-        <div style="display:flex; gap:8px;">
-            <% if (peut('partage', 'create')) { %>
-                <a href="/sous-activites/<%= sousActivite.id %>/copier" class="btn btn-gris" title="Copier avec ses sous-activités descendantes">📑 Copier</a>
-            <% } %>
-            <% if (peut('sous_activites', 'update')) { %>
-                <a href="/sous-activites/<%= sousActivite.id %>/modifier" class="btn btn-gris">Modifier</a>
-            <% } %>
-            <% if (peut('sous_activites', 'delete')) { %>
-                <form action="/sous-activites/<%= sousActivite.id %>/supprimer" method="POST" class="form-inline"
-                      onsubmit="return confirm('Supprimer cette sous-activité ?');">
-                    <button type="submit" class="btn btn-danger">Supprimer</button>
-                </form>
-            <% } %>
-        </div>
-    <% } %>
+ <h1><i class="bi bi-folder2-open"></i> <%= sousActivite.nom %></h1>
+ <% if (peut('sous_activites', 'update') || peut('sous_activites', 'delete') || peut('partage', 'create')) { %>
+ <div style="display:flex; gap:8px;">
+ <% if (peut('partage', 'create')) { %>
+ <a href="/sous-activites/<%= sousActivite.id %>/copier" class="btn btn-gris" title="Copier avec ses sous-activités descendantes"><i class="bi bi-files"></i>  Copier</a>
+ <% } %>
+ <% if (peut('sous_activites', 'update')) { %>
+ <a href="/sous-activites/<%= sousActivite.id %>/modifier" class="btn btn-gris">Modifier</a>
+ <% } %>
+ <% if (peut('sous_activites', 'delete')) { %>
+ <form action="/sous-activites/<%= sousActivite.id %>/supprimer" method="POST" class="form-inline"
+ onsubmit="return confirm('Supprimer cette sous-activité ?');">
+ <button type="submit" class="btn btn-danger">Supprimer</button>
+ </form>
+ <% } %>
+ </div>
+ <% } %>
 </div>
 
 <div class="onglets">
-    <% if (peut('onglets', 'outils')) { %>
-        <a class="onglet <%= onglet === 'outils' ? 'actif' : '' %>" href="/sous-activites/<%= sousActivite.id %>?onglet=outils">Outils</a>
-    <% } %>
-    <% if (peut('onglets', 'archives')) { %>
-        <a class="onglet <%= onglet === 'archives' ? 'actif' : '' %>" href="/sous-activites/<%= sousActivite.id %>?onglet=archives">Archives</a>
-    <% } %>
-    <% if (peut('onglets', 'sous_activites') && peut('sous_activites', 'read')) { %>
-        <a class="onglet <%= onglet === 'sous-activites' ? 'actif' : '' %>" href="/sous-activites/<%= sousActivite.id %>?onglet=sous-activites">Sous-activités</a>
-    <% } %>
-    <% if (peut('onglets', 'utilisateurs') && peut('acces', 'read')) { %>
-        <a class="onglet <%= onglet === 'utilisateurs' ? 'actif' : '' %>" href="/sous-activites/<%= sousActivite.id %>?onglet=utilisateurs">Utilisateurs</a>
-    <% } %>
+ <% if (peut('onglets', 'outils')) { %>
+ <a class="onglet <%= onglet === 'outils' ? 'actif' : '' %>" href="/sous-activites/<%= sousActivite.id %>?onglet=outils">Outils</a>
+ <% } %>
+ <% if (peut('onglets', 'archives')) { %>
+ <a class="onglet <%= onglet === 'archives' ? 'actif' : '' %>" href="/sous-activites/<%= sousActivite.id %>?onglet=archives">Archives</a>
+ <% } %>
+ <% if (peut('onglets', 'sous_activites') && peut('sous_activites', 'read')) { %>
+ <a class="onglet <%= onglet === 'sous-activites' ? 'actif' : '' %>" href="/sous-activites/<%= sousActivite.id %>?onglet=sous-activites">Sous-activités</a>
+ <% } %>
+ <% if (peut('onglets', 'utilisateurs') && peut('acces', 'read')) { %>
+ <a class="onglet <%= onglet === 'utilisateurs' ? 'actif' : '' %>" href="/sous-activites/<%= sousActivite.id %>?onglet=utilisateurs">Utilisateurs</a>
+ <% } %>
 </div>
 
 <% if (onglet === 'sous-activites') { %>
-    <% if (peut('sous_activites', 'create')) { %>
-        <div class="entete-page">
-            <span></span>
-            <a href="/sous-activites/nouveau?id_activite=<%= sousActivite.id_activite %>&id_parent=<%= sousActivite.id %>" class="btn btn-accent">+ Nouvelle sous-activité</a>
-        </div>
-    <% } %>
+ <% if (peut('sous_activites', 'create')) { %>
+ <div class="entete-page">
+ <span></span>
+ <a href="/sous-activites/nouveau?id_activite=<%= sousActivite.id_activite %>&id_parent=<%= sousActivite.id %>" class="btn btn-accent">+ Nouvelle sous-activité</a>
+ </div>
+ <% } %>
 
-    <% if (!enfants.length) { %>
-        <div class="carte vide">Aucune sous-activité enfant.</div>
-    <% } else { %>
-        <div class="carte">
-            <table class="tableau">
-                <thead><tr><th>Nom</th><th></th></tr></thead>
-                <tbody>
-                <% enfants.forEach(function(sa) { %>
-                    <tr>
-                        <td><a href="/sous-activites/<%= sa.id %>">📂 <%= sa.nom %></a></td>
-                        <td style="text-align:right;">
-                            <% if (peut('sous_activites', 'update')) { %>
-                                <a href="/sous-activites/<%= sa.id %>/modifier" class="btn btn-gris btn-petit">Modifier</a>
-                            <% } %>
-                        </td>
-                    </tr>
-                <% }) %>
-                </tbody>
-            </table>
-        </div>
-    <% } %>
+ <% if (!enfants.length) { %>
+ <div class="carte vide">Aucune sous-activité enfant.</div>
+ <% } else { %>
+ <div class="carte">
+ <table class="tableau">
+ <thead><tr><th>Nom</th><th></th></tr></thead>
+ <tbody>
+ <% enfants.forEach(function(sa) { %>
+ <tr>
+ <td><a href="/sous-activites/<%= sa.id %>"><i class="bi bi-folder2-open"></i> <%= sa.nom %></a></td>
+ <td style="text-align:right;">
+ <% if (peut('sous_activites', 'update')) { %>
+ <a href="/sous-activites/<%= sa.id %>/modifier" class="btn btn-gris btn-petit">Modifier</a>
+ <% } %>
+ </td>
+ </tr>
+ <% }) %>
+ </tbody>
+ </table>
+ </div>
+ <% } %>
 <% } %>
 
 <% if (onglet === 'utilisateurs') { %>
-    <p style="color:var(--gris); font-size:13px; margin-top:-10px;">
-        Utilisateurs ayant un accès particulier accordé sur cette sous-activité précisément
-        (en plus, le cas échéant, de leur activité principale).
-    </p>
+ <p style="color:var(--gris); font-size:13px; margin-top:-10px;">
+ Utilisateurs ayant un accès particulier accordé sur cette sous-activité précisément
+ (en plus, le cas échéant, de leur activité principale).
+ </p>
 
-    <% if (peut('acces', 'create')) { %>
-        <div class="carte" style="max-width:520px;">
-            <form action="/acces/sous-activites" method="POST">
-                <input type="hidden" name="id_sous_activite" value="<%= sousActivite.id %>">
-                <input type="hidden" name="retour" value="/sous-activites/<%= sousActivite.id %>?onglet=utilisateurs">
+ <% if (peut('acces', 'create')) { %>
+ <div class="carte" style="max-width:520px;">
+ <form action="/acces/sous-activites" method="POST">
+ <input type="hidden" name="id_sous_activite" value="<%= sousActivite.id %>">
+ <input type="hidden" name="retour" value="/sous-activites/<%= sousActivite.id %>?onglet=utilisateurs">
 
-                <label for="id_user">Utilisateur</label>
-                <select id="id_user" name="id_user" required>
-                    <option value="">— Choisir —</option>
-                    <% tousUtilisateurs.forEach(function(u) { %>
-                        <option value="<%= u.id %>"><%= u.prenom %> <%= u.nom %> (<%= u.matricule %>)</option>
-                    <% }) %>
-                </select>
+ <label for="id_user">Utilisateur</label>
+ <select id="id_user" name="id_user" required>
+ <option value="">— Choisir —</option>
+ <% tousUtilisateurs.forEach(function(u) { %>
+ <option value="<%= u.id %>"><%= u.prenom %> <%= u.nom %> (<%= u.matricule %>)</option>
+ <% }) %>
+ </select>
 
-                <div class="champ-case">
-                    <input type="checkbox" id="write" name="write">
-                    <label for="write">Autoriser l'écriture</label>
-                </div>
-                <div class="champ-case">
-                    <input type="checkbox" id="delete" name="delete">
-                    <label for="delete">Autoriser la suppression</label>
-                </div>
+ <div class="champ-case">
+ <input type="checkbox" id="write" name="write">
+ <label for="write">Autoriser l'écriture</label>
+ </div>
+ <div class="champ-case">
+ <input type="checkbox" id="delete" name="delete">
+ <label for="delete">Autoriser la suppression</label>
+ </div>
 
-                <div class="actions-form">
-                    <button type="submit" class="btn btn-primaire">Accorder l'accès</button>
-                </div>
-            </form>
-        </div>
-    <% } %>
+ <div class="actions-form">
+ <button type="submit" class="btn btn-primaire">Accorder l'accès</button>
+ </div>
+ </form>
+ </div>
+ <% } %>
 
-    <% if (!utilisateurs.length) { %>
-        <div class="carte vide">Aucun accès particulier accordé sur cette sous-activité.</div>
-    <% } else { %>
-        <div class="carte">
-            <table class="tableau">
-                <thead><tr><th>Utilisateur</th><th>Niveau</th><th></th></tr></thead>
-                <tbody>
-                <% utilisateurs.forEach(function(a) { %>
-                    <tr>
-                        <td><%= a.Utilisateur ? a.Utilisateur.prenom + ' ' + a.Utilisateur.nom : '—' %></td>
-                        <td><%= a.permissions && a.permissions.write ? 'Écriture' : 'Lecture' %><% if (a.permissions && a.permissions.delete) { %> + Suppression<% } %></td>
-                        <td style="text-align:right;">
-                            <% if (peut('acces', 'delete')) { %>
-                                <form action="/acces/sous-activites/<%= a.id %>/supprimer" method="POST" class="form-inline"
-                                      onsubmit="return confirm('Révoquer cet accès ?');">
-                                    <input type="hidden" name="retour" value="/sous-activites/<%= sousActivite.id %>?onglet=utilisateurs">
-                                    <button type="submit" class="btn btn-danger btn-petit">Révoquer</button>
-                                </form>
-                            <% } %>
-                        </td>
-                    </tr>
-                <% }) %>
-                </tbody>
-            </table>
-        </div>
-    <% } %>
+ <% if (!utilisateurs.length) { %>
+ <div class="carte vide">Aucun accès particulier accordé sur cette sous-activité.</div>
+ <% } else { %>
+ <div class="carte">
+ <table class="tableau">
+ <thead><tr><th>Utilisateur</th><th>Niveau</th><th></th></tr></thead>
+ <tbody>
+ <% utilisateurs.forEach(function(a) { %>
+ <tr>
+ <td><%= a.Utilisateur ? a.Utilisateur.prenom + ' ' + a.Utilisateur.nom : '—' %></td>
+ <td><%= a.permissions && a.permissions.write ? 'Écriture' : 'Lecture' %><% if (a.permissions && a.permissions.delete) { %> + Suppression<% } %></td>
+ <td style="text-align:right;">
+ <% if (peut('acces', 'delete')) { %>
+ <form action="/acces/sous-activites/<%= a.id %>/supprimer" method="POST" class="form-inline"
+ onsubmit="return confirm('Révoquer cet accès ?');">
+ <input type="hidden" name="retour" value="/sous-activites/<%= sousActivite.id %>?onglet=utilisateurs">
+ <button type="submit" class="btn btn-danger btn-petit">Révoquer</button>
+ </form>
+ <% } %>
+ </td>
+ </tr>
+ <% }) %>
+ </tbody>
+ </table>
+ </div>
+ <% } %>
 <% } %>
 
 <% if (onglet === 'outils') { %>
-    <div class="entete-page">
-        <% if (peut('outils', 'create')) { %>
-            <a href="/outils/nouveau?id_activite=<%= sousActivite.id_activite %>&id_sous_activite=<%= sousActivite.id %>" class="btn btn-accent">+ Nouvel outil</a>
-        <% } else { %>
-            <span></span>
-        <% } %>
-        <div style="display:flex; gap:8px;">
-            <% if (peut('export', 'read')) { %>
-            <a href="/sous-activites/<%= sousActivite.id %>/outils/export.csv?onglet=outils" class="btn btn-gris btn-petit">⬇️ CSV</a>
-            <a href="/sous-activites/<%= sousActivite.id %>/outils/export-pdf?onglet=outils" target="_blank" class="btn btn-gris btn-petit">🖨️ PDF</a>
-            <% } %>
-        </div>
-    </div>
+ <div class="entete-page">
+ <% if (peut('outils', 'create')) { %>
+ <a href="/outils/nouveau?id_activite=<%= sousActivite.id_activite %>&id_sous_activite=<%= sousActivite.id %>" class="btn btn-accent">+ Nouvel outil</a>
+ <% } else { %>
+ <span></span>
+ <% } %>
+ <div style="display:flex; gap:8px;">
+ <% if (peut('export', 'read')) { %>
+ <a href="/sous-activites/<%= sousActivite.id %>/outils/export.csv?onglet=outils" class="btn btn-gris btn-petit"><i class="bi bi-download"></i> CSV</a>
+ <a href="/sous-activites/<%= sousActivite.id %>/outils/export-pdf?onglet=outils" target="_blank" class="btn btn-gris btn-petit"><i class="bi bi-printer"></i> PDF</a>
+ <% } %>
+ </div>
+ </div>
 
-    <%- include('../partials/outils-vue', { outils: outils, retour: '/sous-activites/' + sousActivite.id + '?onglet=outils', messageVide: "Aucun outil actif pour l'instant." }) %>
+ <%- include('../partials/outils-vue', { outils: outils, retour: '/sous-activites/' + sousActivite.id + '?onglet=outils', messageVide: "Aucun outil actif pour l'instant." }) %>
 <% } %>
 
 <% if (onglet === 'archives') { %>
-    <div class="entete-page">
-        <p style="color:var(--gris); font-size:13px; margin:0;">
-            Outils désactivés de cette sous-activité. Réactivez-les pour les faire réapparaître dans l'onglet "Outils".
-        </p>
-        <div style="display:flex; gap:8px;">
-            <% if (peut('export', 'read')) { %>
-            <a href="/sous-activites/<%= sousActivite.id %>/outils/export.csv?onglet=archives" class="btn btn-gris btn-petit">⬇️ CSV</a>
-            <a href="/sous-activites/<%= sousActivite.id %>/outils/export-pdf?onglet=archives" target="_blank" class="btn btn-gris btn-petit">🖨️ PDF</a>
-            <% } %>
-        </div>
-    </div>
-    <%- include('../partials/outils-vue', { outils: outils, retour: '/sous-activites/' + sousActivite.id + '?onglet=archives', messageVide: 'Aucun outil archivé.' }) %>
+ <div class="entete-page">
+ <p style="color:var(--gris); font-size:13px; margin:0;">
+ Outils désactivés de cette sous-activité. Réactivez-les pour les faire réapparaître dans l'onglet "Outils".
+ </p>
+ <div style="display:flex; gap:8px;">
+ <% if (peut('export', 'read')) { %>
+ <a href="/sous-activites/<%= sousActivite.id %>/outils/export.csv?onglet=archives" class="btn btn-gris btn-petit"><i class="bi bi-download"></i> CSV</a>
+ <a href="/sous-activites/<%= sousActivite.id %>/outils/export-pdf?onglet=archives" target="_blank" class="btn btn-gris btn-petit"><i class="bi bi-printer"></i> PDF</a>
+ <% } %>
+ </div>
+ </div>
+ <%- include('../partials/outils-vue', { outils: outils, retour: '/sous-activites/' + sousActivite.id + '?onglet=archives', messageVide: 'Aucun outil archivé.' }) %>
 <% } %>
 
 <%- include('../partials/footer') %>

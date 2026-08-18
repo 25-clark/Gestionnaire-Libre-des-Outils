@@ -6,6 +6,7 @@ const path = require('path');
 
 const { sequelize } = require('./models');
 const { demarrerSurveillance } = require('./utils/surveillance');
+const { demarrerSlaTickets } = require('./utils/slaTickets');
 const { assurerColonnes } = require('./utils/assurerColonnes');
 
 const authRoutes = require('./routes/authRoutes');
@@ -22,6 +23,7 @@ const statistiqueRoutes = require('./routes/statistiqueRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
 const ldapRoutes = require('./routes/ldapRoutes');
+const setupRoutes = require('./routes/setupRoutes');
 
 const app = express();
 
@@ -64,6 +66,7 @@ app.use('/api/statistiques', statistiqueRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/ldap', ldapRoutes);
+app.use('/api/setup', setupRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
@@ -84,6 +87,7 @@ sequelize.authenticate()
         app.listen(PORT, () => {
             console.log(`Serveur GLO démarré sur http://localhost:${PORT}`);
             demarrerSurveillance();
+            demarrerSlaTickets();
         });
     })
     .catch((err) => {

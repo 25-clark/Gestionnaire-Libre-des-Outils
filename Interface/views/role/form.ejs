@@ -4,92 +4,93 @@
 <div class="entete-page"><h1><%= titre %></h1></div>
 
 <% var libellesRessources = {
-    utilisateurs: 'Utilisateurs',
-    roles: 'Rôles',
-    activites: 'Activités',
-    sous_activites: 'Sous-activités',
-    outils: 'Outils',
-    acces: 'Accès',
-    tickets: 'Tickets',
-    diagnostic: 'Diagnostic réseau',
-    notifications: 'Notifications',
-    export: 'Export et impression',
-    profil: 'Mon profil',
-    partage: 'Partage (outils / sous-activités)',
-    journal: "Journal d'événements",
-    credentials: 'Credentials (outils)'
+ utilisateurs: 'Utilisateurs',
+ roles: 'Rôles',
+ activites: 'Activités',
+ sous_activites: 'Sous-activités',
+ outils: 'Outils',
+ acces: 'Accès',
+ tickets: 'Tickets',
+ diagnostic: 'Diagnostic réseau',
+ notifications: 'Notifications',
+ export: 'Export et impression',
+ profil: 'Mon profil',
+ partage: 'Partage (outils / sous-activités)',
+ journal: "Journal d'événements",
+ credentials: 'Credentials (outils)'
 };
 var libellesOnglets = {
-    outils: 'Outils',
-    archives: 'Archives',
-    sous_activites: 'Sous-activités',
-    utilisateurs: 'Utilisateurs'
+ outils: 'Outils',
+ archives: 'Archives',
+ sous_activites: 'Sous-activités',
+ utilisateurs: 'Utilisateurs'
 };
 var libellesActions = { read: 'Lire', create: 'Créer', update: 'Modifier', delete: 'Supprimer' };
 %>
 
 <div class="carte" style="max-width:640px;">
-    <% if (erreur) { %>
-        <div class="message-erreur"><%= erreur %></div>
-    <% } %>
+ <% if (erreur) { %>
+ <div class="message-erreur"><%= erreur %></div>
+ <% } %>
 
-    <form action="<%= role && role.id ? '/roles/' + role.id + '/modifier' : '/roles' %>" method="POST">
-        <label for="nom">Nom du rôle</label>
-        <input type="text" id="nom" name="nom" required value="<%= role ? role.nom : '' %>">
+ <form action="<%= role && role.id ? '/roles/' + role.id + '/modifier' : '/roles' %>" method="POST">
+ <label for="nom">Nom du rôle</label>
+ <input type="text" id="nom" name="nom" required value="<%= role ? role.nom : '' %>">
 
-        <label for="abbreviation">Abréviation</label>
-        <input type="text" id="abbreviation" name="abbreviation" maxlength="10" required
-               value="<%= role ? role.abbreviation : '' %>" <%= role && role.abbreviation === 'ADMIN' ? 'readonly' : '' %>>
+ <label for="abbreviation">Abréviation</label>
+ <input type="text" id="abbreviation" name="abbreviation" maxlength="10" required
+ value="<%= role ? role.abbreviation : '' %>" <%= role && role.abbreviation === 'ADMIN' ? 'readonly' : '' %>>
 
-        <label>Permissions</label>
-        <table class="tableau">
-            <thead>
-                <tr>
-                    <th>Ressource</th>
-                    <% actions.forEach(function(action) { %>
-                        <th><%= libellesActions[action] %></th>
-                    <% }) %>
-                </tr>
-            </thead>
-            <tbody>
-            <% ressources.forEach(function(ressource) { %>
-                <tr>
-                    <td><%= libellesRessources[ressource] %></td>
-                    <% actions.forEach(function(action) { %>
-                        <% var coche = role && role.permissions && role.permissions[ressource] && role.permissions[ressource][action]; %>
-                        <% var fige = (ressource === 'activites' && action === 'read'); %>
-                        <td>
-                            <input type="checkbox" name="perm_<%= ressource %>_<%= action %>"
-                                   <%= (coche || fige) ? 'checked' : '' %>
-                                   <%= fige ? 'checked disabled' : '' %>>
-                            <% if (fige) { %><input type="hidden" name="perm_activites_read" value="on"><% } %>
-                        </td>
-                    <% }) %>
-                </tr>
-            <% }) %>
-            </tbody>
-        </table>
+ <label>Permissions</label>
+ <table class="tableau">
+ <thead>
+ <tr>
+ <th>Ressource</th>
+ <% actions.forEach(function(action) { %>
+ <th><%= libellesActions[action] %></th>
+ <% }) %>
+ </tr>
+ </thead>
+ <tbody>
+ <% ressources.forEach(function(ressource) { %>
+ <% if (ressource === 'credentials' && !(typeof credentialsActifs !== 'undefined' && credentialsActifs)) { return; } %>
+ <tr>
+ <td><%= libellesRessources[ressource] %></td>
+ <% actions.forEach(function(action) { %>
+ <% var coche = role && role.permissions && role.permissions[ressource] && role.permissions[ressource][action]; %>
+ <% var fige = (ressource === 'activites' && action === 'read') || (ressource === 'utilisateurs' && action === 'read'); %>
+ <td>
+ <input type="checkbox" name="perm_<%= ressource %>_<%= action %>"
+ <%= (coche || fige) ? 'checked' : '' %>
+ <%= fige ? 'checked disabled' : '' %>>
+ <% if (fige) { %><input type="hidden" name="perm_<%= ressource %>_<%= action %>" value="on"><% } %>
+ </td>
+ <% }) %>
+ </tr>
+ <% }) %>
+ </tbody>
+ </table>
 
-        <label style="margin-top:18px;">Onglets visibles dans une activité / sous-activité</label>
-        <p style="color:var(--gris); font-size:13px; margin-top:-6px;">
-            Contrôle uniquement quels onglets apparaissent dans la navbar d'une page activité/sous-activité —
-            ce que le rôle peut y faire reste régi par les permissions ci-dessus (Outils, Accès...).
-        </p>
-        <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px;">
-            <% onglets.forEach(function(o) { %>
-                <% var coche = role && role.permissions && role.permissions.onglets && role.permissions.onglets[o]; %>
-                <label style="display:flex; align-items:center; gap:6px; font-weight:400;">
-                    <input type="checkbox" name="onglet_<%= o %>" <%= coche ? 'checked' : '' %>>
-                    <%= libellesOnglets[o] %>
-                </label>
-            <% }) %>
-        </div>
+ <label style="margin-top:18px;">Onglets visibles dans une activité / sous-activité</label>
+ <p style="color:var(--gris); font-size:13px; margin-top:-6px;">
+ Contrôle uniquement quels onglets apparaissent dans la navbar d'une page activité/sous-activité —
+ ce que le rôle peut y faire reste régi par les permissions ci-dessus (Outils, Accès...).
+ </p>
+ <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px;">
+ <% onglets.forEach(function(o) { %>
+ <% var coche = role && role.permissions && role.permissions.onglets && role.permissions.onglets[o]; %>
+ <label style="display:flex; align-items:center; gap:6px; font-weight:400;">
+ <input type="checkbox" name="onglet_<%= o %>" <%= coche ? 'checked' : '' %>>
+ <%= libellesOnglets[o] %>
+ </label>
+ <% }) %>
+ </div>
 
-        <div class="actions-form">
-            <button type="submit" class="btn btn-primaire">Enregistrer</button>
-            <a href="/roles" class="btn btn-gris">Annuler</a>
-        </div>
-    </form>
+ <div class="actions-form">
+ <button type="submit" class="btn btn-primaire">Enregistrer</button>
+ <a href="/roles" class="btn btn-gris">Annuler</a>
+ </div>
+ </form>
 </div>
 
 <%- include('../partials/footer') %>

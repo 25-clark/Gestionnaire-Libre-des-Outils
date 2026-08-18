@@ -31,6 +31,11 @@ module.exports = (sequelize) => {
                 model: 'utilisateurs',
                 key: 'id'
             }
+        },
+        reglages: {
+            type: DataTypes.JSON,
+            allowNull: true,
+            defaultValue: null
         }
     }, {
         tableName: 'activites',

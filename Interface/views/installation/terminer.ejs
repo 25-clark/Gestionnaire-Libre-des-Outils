@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Installation GLO — Terminer</title>
+ <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="conteneur" style="max-width:520px; margin:40px auto;">
+ <div class="entete-page"><h1>Installation de GLO</h1></div>
+ <p style="color:var(--gris);">Étape 6 / 6 — Finalisation</p>
+ <% if (erreur) { %><div class="message-erreur"><%= erreur %></div><% } %>
+ <div class="carte">
+ <p>Tout est prêt. Cliquez sur <strong>Terminer l'installation</strong> pour activer GLO et accéder à la page de connexion.</p>
+ <ul style="color:var(--gris); font-size:14px;">
+ <li>CGU acceptées</li>
+ <li>Mode d'authentification choisi</li>
+ <li>Compte administrateur créé</li>
+ <li>Activité initiale créée</li>
+ </ul>
+ <form id="form-etape" action="/installation/terminer" method="POST">
+ <div class="actions-form">
+ <a href="/installation/donnees" class="btn btn-gris">Retour</a>
+ <button type="submit" class="btn btn-primaire">Terminer l'installation</button>
+ </div>
+ </form>
+ </div>
+</div>
+<script src="/js/installation-etapes.js"></script>
+</body>
+</html>

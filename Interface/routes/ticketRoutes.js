@@ -22,18 +22,23 @@ router.get('/', async (req, res, next) => {
     try {
         const api = apiClient(req);
         const { statut, priorite, id_createur, id_assigne } = req.query;
-        const params = {};
+        const page = parseInt(req.query.page, 10) || 1;
+        const par_page = parseInt(req.query.par_page, 10) || 25;
+        const params = { page, par_page };
         if (statut) params.statut = statut;
         if (priorite) params.priorite = priorite;
         if (id_createur) params.id_createur = id_createur;
         if (id_assigne) params.id_assigne = id_assigne;
 
-        const { data: tickets } = await api.get('/tickets', { params });
+        const { data } = await api.get('/tickets', { params });
+        const tickets = Array.isArray(data) ? data : (data.tickets || []);
+        const pagination = Array.isArray(data) ? null : {
+            page: data.page || page,
+            par_page: data.par_page || par_page,
+            totalPages: data.totalPages || 1,
+            total: data.total != null ? data.total : tickets.length
+        };
 
-        // Liste des utilisateurs pour les filtres "Créé par" / "Assigné à" :
-        // déjà scopée au périmètre réel de l'utilisateur côté Server (comme
-        // partout ailleurs), donc chacun ne peut filtrer que sur des
-        // personnes qu'il a effectivement le droit de voir.
         const { data: utilisateurs } = await api.get('/utilisateurs');
 
         res.render('ticket/liste', {
@@ -44,6 +49,10 @@ router.get('/', async (req, res, next) => {
             priorite: priorite || '',
             id_createur: id_createur || '',
             id_assigne: id_assigne || '',
+            page: pagination ? pagination.page : 1,
+            par_page: pagination ? pagination.par_page : tickets.length,
+            totalPages: pagination ? pagination.totalPages : 1,
+            total: pagination ? pagination.total : tickets.length,
             LIBELLES_STATUT,
             LIBELLES_PRIORITE
         });
@@ -79,13 +88,27 @@ function ticketVersLigne(t) {
 async function recupererTicketsFiltres(req) {
     const api = apiClient(req);
     const { statut, priorite, id_createur, id_assigne } = req.query;
-    const params = {};
+    const params = { page: 1, par_page: 100 };
     if (statut) params.statut = statut;
     if (priorite) params.priorite = priorite;
     if (id_createur) params.id_createur = id_createur;
     if (id_assigne) params.id_assigne = id_assigne;
-    const { data } = await api.get('/tickets', { params });
-    return data;
+    // Récupérer toutes les pages pour l'export
+    let all = [];
+    let page = 1;
+    let totalPages = 1;
+    do {
+        params.page = page;
+        const { data } = await api.get('/tickets', { params });
+        if (Array.isArray(data)) {
+            all = data;
+            break;
+        }
+        all = all.concat(data.tickets || []);
+        totalPages = data.totalPages || 1;
+        page++;
+    } while (page <= totalPages && page <= 50);
+    return all;
 }
 
 router.get('/export.csv', exigerExport, async (req, res, next) => {
@@ -244,6 +267,17 @@ router.post('/:id/supprimer', async (req, res, next) => {
         await api.delete(`/tickets/${req.params.id}`);
         res.redirect('/tickets');
     } catch (err) { next(err); }
+});
+
+
+router.post('/:id/escalader', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        await api.post(`/tickets/${req.params.id}/escalader`, req.body || {});
+        res.redirect(`/tickets/${req.params.id}?succes=escalade`);
+    } catch (err) {
+        next(err);
+    }
 });
 
 module.exports = router;

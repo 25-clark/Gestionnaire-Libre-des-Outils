@@ -136,7 +136,11 @@ async function seed() {
             // Surveillance réseau automatique : activée par défaut, cycle
             // toutes les 5 minutes (voir utils/surveillance.js).
             surveillance_active: true,
-            surveillance_intervalle_minutes: 5
+            surveillance_intervalle_minutes: 5,
+            // Seed = environnement de démo prêt à l'emploi (pas d'assistant).
+            installation_terminee: true,
+            cgu_acceptees_le: new Date(),
+            credentials_actifs: false
         });
         console.log(`✅ Paramètres créés (mot de passe par défaut : ${MOT_DE_PASSE_DEFAUT})`);
 

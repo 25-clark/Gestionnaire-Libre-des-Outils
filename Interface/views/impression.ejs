@@ -1,59 +1,59 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= titre %></title>
-    <style>
-        * { box-sizing: border-box; }
-        body {
-            font-family: -apple-system, "Segoe UI", Arial, sans-serif;
-            padding: 28px;
-            color: #222;
-        }
-        h1 { font-size: 20px; margin: 0 0 4px; }
-        .sous-titre { color: #666; font-size: 13px; margin: 0 0 20px; }
-        table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-        th, td { border: 1px solid #ccc; padding: 6px 9px; text-align: left; vertical-align: top; }
-        th { background: #f2f3f5; font-weight: 600; }
-        tr:nth-child(even) td { background: #fafafa; }
-        .barre-impression { margin-bottom: 20px; display: flex; gap: 10px; align-items: center; }
-        .barre-impression button {
-            background: #1e5fa8; color: #fff; border: none; padding: 9px 16px;
-            border-radius: 6px; cursor: pointer; font-size: 14px;
-        }
-        .barre-impression a { color: #1e5fa8; font-size: 13px; text-decoration: none; }
-        @media print {
-            .barre-impression { display: none; }
-            body { padding: 0; }
-        }
-    </style>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title><%= titre %></title>
+ <style>
+ * { box-sizing: border-box; }
+ body {
+ font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+ padding: 28px;
+ color: #222;
+ }
+ h1 { font-size: 20px; margin: 0 0 4px; }
+ .sous-titre { color: #666; font-size: 13px; margin: 0 0 20px; }
+ table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+ th, td { border: 1px solid #ccc; padding: 6px 9px; text-align: left; vertical-align: top; }
+ th { background: #f2f3f5; font-weight: 600; }
+ tr:nth-child(even) td { background: #fafafa; }
+ .barre-impression { margin-bottom: 20px; display: flex; gap: 10px; align-items: center; }
+ .barre-impression button {
+ background: #1e5fa8; color: #fff; border: none; padding: 9px 16px;
+ border-radius: 6px; cursor: pointer; font-size: 14px;
+ }
+ .barre-impression a { color: #1e5fa8; font-size: 13px; text-decoration: none; }
+ @media print {
+ .barre-impression { display: none; }
+ body { padding: 0; }
+ }
+ </style>
 </head>
 <body>
-    <div class="barre-impression">
-        <button onclick="window.print()">🖨️ Exporter en PDF / Imprimer</button>
-        <a href="javascript:history.back()">← Retour</a>
-    </div>
+ <div class="barre-impression">
+ <button onclick="window.print()"><i class="bi bi-printer"></i> Exporter en PDF / Imprimer</button>
+ <a href="javascript:history.back()"><i class="bi bi-arrow-left"></i> Retour</a>
+ </div>
 
-    <h1><%= titre %></h1>
-    <p class="sous-titre">
-        Généré le <%= dateGeneration %><% if (typeof sousTitre !== 'undefined' && sousTitre) { %> — <%= sousTitre %><% } %>
-        <% if (typeof lignes !== 'undefined') { %> — <%= lignes.length %> ligne(s)<% } %>
-    </p>
+ <h1><%= titre %></h1>
+ <p class="sous-titre">
+ Généré le <%= dateGeneration %><% if (typeof sousTitre !== 'undefined' && sousTitre) { %> — <%= sousTitre %><% } %>
+ <% if (typeof lignes !== 'undefined') { %> — <%= lignes.length %> ligne(s)<% } %>
+ </p>
 
-    <table>
-        <thead>
-            <tr><% colonnes.forEach(function(c) { %><th><%= c %></th><% }) %></tr>
-        </thead>
-        <tbody>
-            <% lignes.forEach(function(ligne) { %>
-                <tr><% ligne.forEach(function(valeur) { %><td><%= valeur %></td><% }) %></tr>
-            <% }) %>
-        </tbody>
-    </table>
+ <table>
+ <thead>
+ <tr><% colonnes.forEach(function(c) { %><th><%= c %></th><% }) %></tr>
+ </thead>
+ <tbody>
+ <% lignes.forEach(function(ligne) { %>
+ <tr><% ligne.forEach(function(valeur) { %><td><%= valeur %></td><% }) %></tr>
+ <% }) %>
+ </tbody>
+ </table>
 
-    <% if (typeof autoImprimer !== 'undefined' && autoImprimer) { %>
-        <script>window.addEventListener('load', () => setTimeout(() => window.print(), 300));</script>
-    <% } %>
+ <% if (typeof autoImprimer !== 'undefined' && autoImprimer) { %>
+ <script>window.addEventListener('load', () => setTimeout(() => window.print(), 300));</script>
+ <% } %>
 </body>
 </html>

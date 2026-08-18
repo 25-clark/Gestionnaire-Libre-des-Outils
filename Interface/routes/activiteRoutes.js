@@ -232,4 +232,42 @@ router.get('/:id/utilisateurs/export-pdf', exigerExport, async (req, res, next) 
     } catch (err) { next(err); }
 });
 
+
+router.get('/:id/reglages', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const { data: activite } = await api.get(`/activites/${req.params.id}`);
+        res.render('activite/reglages', { titre: 'Réglages — ' + activite.nom, activite, erreur: null, succes: null });
+    } catch (err) { next(err); }
+});
+
+router.post('/:id/reglages', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const body = { ...req.body };
+        // normaliser selects inherit
+        const keys = ['credentials_actifs','surveillance_active','tickets_actifs','partage_outils','export_autorise','diagnostic_actif','mdp_complexite'];
+        for (const k of keys) {
+            if (body[k] === 'inherit' || body[k] === '') body[k] = null;
+            else if (body[k] === 'true') body[k] = true;
+            else if (body[k] === 'false') body[k] = false;
+        }
+        if (body.mdp_longueur_min === '') body.mdp_longueur_min = null;
+        if (body.max_tentatives_connexion === '') body.max_tentatives_connexion = null;
+        const { data: activite } = await api.put(`/activites/${req.params.id}/reglages`, body);
+        res.render('activite/reglages', { titre: 'Réglages — ' + activite.nom, activite, erreur: null, succes: 'Réglages enregistrés.' });
+    } catch (err) {
+        try {
+            const api = apiClient(req);
+            const { data: activite } = await api.get(`/activites/${req.params.id}`);
+            res.render('activite/reglages', {
+                titre: 'Réglages',
+                activite,
+                erreur: err.response?.data?.message || 'Erreur',
+                succes: null
+            });
+        } catch (e) { next(err); }
+    }
+});
+
 module.exports = router;
