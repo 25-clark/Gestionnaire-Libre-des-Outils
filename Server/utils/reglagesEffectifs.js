@@ -83,6 +83,7 @@ async function chargerGlobal() {
         partage_outils: true,
         export_autorise: true,
         diagnostic_actif: true,
+        totp_obligatoire: false,
         message_info: null
     };
 }
@@ -108,7 +109,8 @@ async function reglagesEffectifs(reglagesActivite = null, reglagesSousActivite =
         mdp_complexite: fusionComplexite(global.mdp_complexite, act.mdp_complexite),
         mdp_longueur_min: fusionLongueurMin(global.mdp_longueur_min, act.mdp_longueur_min),
         max_tentatives_connexion: fusionMaxTentatives(global.max_tentatives_connexion, act.max_tentatives_connexion),
-        message_info: act.message_info || null
+        message_info: act.message_info || null,
+        totp_obligatoire: global.totp_obligatoire || act.totp_obligatoire === true
     };
 
     // Fusion sous-activité sur activité
@@ -123,7 +125,8 @@ async function reglagesEffectifs(reglagesActivite = null, reglagesSousActivite =
             mdp_complexite: fusionComplexite(cur.mdp_complexite, sous.mdp_complexite),
             mdp_longueur_min: fusionLongueurMin(cur.mdp_longueur_min, sous.mdp_longueur_min),
             max_tentatives_connexion: fusionMaxTentatives(cur.max_tentatives_connexion, sous.max_tentatives_connexion),
-            message_info: sous.message_info || cur.message_info || null
+            message_info: sous.message_info || cur.message_info || null,
+            totp_obligatoire: cur.totp_obligatoire || sous.totp_obligatoire === true
         };
     }
 

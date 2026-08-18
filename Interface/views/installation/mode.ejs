@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Installation — Type · GLO</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/design-modern.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body class="page-login">
+<div class="carte-login" style="max-width:520px;">
+    <h1><i class="bi bi-database"></i> Type d'installation</h1>
+    <p class="sous-titre">Choisissez comment démarrer GLO dans votre organisation.</p>
+    <% if (erreur) { %><div class="message-erreur"><%= erreur %></div><% } %>
+    <% if (succes) { %><div class="message-succes"><%= succes %></div><% } %>
+
+    <div style="display:flex; flex-direction:column; gap:12px; margin:18px 0;">
+        <a href="/installation/auth" class="btn btn-primaire" style="text-align:left; padding:14px 16px;">
+            <i class="bi bi-stars"></i>
+            <span style="display:inline-block; margin-left:8px;">
+                <strong>Installation propre</strong><br>
+                <span style="font-weight:400; font-size:12px; opacity:.9;">Nouvelle base vide — création admin, activité, etc.</span>
+            </span>
+        </a>
+        <button type="button" class="btn btn-gris" id="btn-montrer-restore" style="text-align:left; padding:14px 16px;">
+            <i class="bi bi-upload"></i>
+            <span style="display:inline-block; margin-left:8px;">
+                <strong>Installation avec base existante</strong><br>
+                <span style="font-weight:400; font-size:12px;">Restaurer une sauvegarde GLO (.json)</span>
+            </span>
+        </button>
+    </div>
+
+    <div id="panel-restore" hidden>
+        <form action="/installation/restaurer" method="POST" enctype="multipart/form-data">
+            <label for="fichier">Fichier de sauvegarde GLO</label>
+            <input type="file" id="fichier" name="fichier" accept=".json,application/json" required>
+            <p style="font-size:12px; color:var(--gris);">
+                Vous pourrez enchaîner les étapes suivantes (auth, admin…) si la sauvegarde est incomplète.
+                Si des utilisateurs sont déjà présents, vous pourrez terminer l’installation plus rapidement.
+            </p>
+            <button type="submit" class="btn btn-primaire">Restaurer et continuer</button>
+        </form>
+    </div>
+
+    <p style="margin-top:16px; font-size:12px;"><a href="/installation/cgu">← Retour aux CGU</a></p>
+</div>
+<script>
+document.getElementById('btn-montrer-restore').addEventListener('click', function () {
+    document.getElementById('panel-restore').hidden = false;
+});
+</script>
+</body>
+</html>

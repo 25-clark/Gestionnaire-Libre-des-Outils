@@ -19,11 +19,45 @@ router.post('/login', async (req, res) => {
             req.session.apiCookie = setCookie[0].split(';')[0]; // ex: "connect.sid=xxx"
         }
 
+        if (response.data.needs_2fa) {
+            req.session.pending_2fa = true;
+            return res.redirect('/login/2fa');
+        }
+
         req.session.user = response.data.user;
+        if (response.data.doit_configurer_2fa) {
+            return res.redirect('/profil?setup2fa=1');
+        }
         res.redirect(req.session.user.doit_changer_mdp ? '/changer-mot-de-passe' : '/');
     } catch (err) {
         const message = err.response?.data?.message || 'Impossible de se connecter au serveur.';
         res.render('login', { titre: 'Connexion', erreur: message });
+    }
+});
+
+router.get('/login/2fa', (req, res) => {
+    if (!req.session.pending_2fa || !req.session.apiCookie) {
+        return res.redirect('/login');
+    }
+    res.render('login-2fa', { titre: 'Vérification 2FA', erreur: null });
+});
+
+router.post('/login/2fa', async (req, res) => {
+    try {
+        const api = apiClient(req);
+        const response = await api.post('/auth/2fa/verifier', { code: req.body.code });
+        const setCookie = response.headers['set-cookie'];
+        if (setCookie && setCookie.length) {
+            req.session.apiCookie = setCookie[0].split(';')[0];
+        }
+        delete req.session.pending_2fa;
+        req.session.user = response.data.user;
+        res.redirect(req.session.user.doit_changer_mdp ? '/changer-mot-de-passe' : '/');
+    } catch (err) {
+        res.render('login-2fa', {
+            titre: 'Vérification 2FA',
+            erreur: err.response?.data?.message || 'Code invalide.'
+        });
     }
 });
 
@@ -144,4 +178,39 @@ router.post('/profil', async (req, res, next) => {
     }
 });
 
+
+router.post('/profil/2fa/setup', async (req, res) => {
+    try {
+        if (!req.session.user) return res.status(401).json({ message: 'Non connecté' });
+        const api = apiClient(req);
+        const { data } = await api.post('/auth/2fa/setup');
+        res.json(data);
+    } catch (err) {
+        res.status(err.response?.status || 500).json(err.response?.data || { message: 'Erreur' });
+    }
+});
+router.post('/profil/2fa/activer', async (req, res) => {
+    try {
+        if (!req.session.user) return res.status(401).json({ message: 'Non connecté' });
+        const api = apiClient(req);
+        const { data } = await api.post('/auth/2fa/activer', req.body);
+        if (req.session.user) req.session.user.totp_actif = true;
+        res.json(data);
+    } catch (err) {
+        res.status(err.response?.status || 500).json(err.response?.data || { message: 'Erreur' });
+    }
+});
+router.post('/profil/2fa/desactiver', async (req, res) => {
+    try {
+        if (!req.session.user) return res.status(401).json({ message: 'Non connecté' });
+        const api = apiClient(req);
+        const { data } = await api.post('/auth/2fa/desactiver', req.body);
+        if (req.session.user) req.session.user.totp_actif = false;
+        res.json(data);
+    } catch (err) {
+        res.status(err.response?.status || 500).json(err.response?.data || { message: 'Erreur' });
+    }
+});
+
 module.exports = router;
+

@@ -88,6 +88,16 @@ module.exports = (sequelize) => {
         ldap_filtre_sous_groupes: { type: DataTypes.STRING, allowNull: true, defaultValue: '(objectClass=groupOfNames)' },
         // Active le module credentials sur les outils (désactivé par défaut).
         // Sans ça, aucune UI ni API credentials n'est exposée, même avec les droits rôle.
+        totp_disponible: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: true
+        },
+        totp_obligatoire: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
+        },
         credentials_actifs: {
             type: DataTypes.BOOLEAN,
             allowNull: false,

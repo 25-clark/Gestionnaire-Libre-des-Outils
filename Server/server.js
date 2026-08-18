@@ -24,8 +24,10 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
 const ldapRoutes = require('./routes/ldapRoutes');
 const setupRoutes = require('./routes/setupRoutes');
+const sauvegardeRoutes = require('./routes/sauvegardeRoutes');
 
 const app = express();
+app.disable('x-powered-by');
 
 app.use(cors({
     origin: process.env.CLIENT_URL || 'http://localhost:3000',
@@ -49,7 +51,7 @@ app.use(session({
 }));
 
 // Fichiers statiques (logos d'activités, images d'outils)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), { maxAge: '1d', etag: true }));
 
 // Routes API
 app.use('/api/auth', authRoutes);
@@ -67,6 +69,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/ldap', ldapRoutes);
 app.use('/api/setup', setupRoutes);
+app.use('/api/sauvegarde', sauvegardeRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 

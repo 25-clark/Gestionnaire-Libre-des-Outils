@@ -8,7 +8,10 @@
  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
  <link rel="manifest" href="/site.webmanifest">
  <title><%= typeof titre !== 'undefined' ? titre + ' · ' + nomApplication : nomApplication %></title>
- <link rel="stylesheet" href="/css/style.css">
+ <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/design-modern.css">
  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
  <% 
  var prefsTheme = (typeof prefs !== 'undefined' && prefs.theme) ? prefs.theme : 'clair';
@@ -46,8 +49,11 @@
 </script>
 <% if (currentUser) { %>
 <% var t = typeof t === 'function' ? t : function(k){ return k; }; %>
-<header class="topbar">
+<header class="topbar" id="topbar">
  <a href="/" class="logo"><img src="/favicon-32x32.png" alt=""><span><%= nomEntreprise ? nomEntreprise : 'GLO' %></span></a>
+    <button type="button" class="btn-nav-mobile" id="btn-nav-mobile" aria-label="Menu" aria-expanded="false">
+        <i class="bi bi-list" style="font-size:1.35rem;" aria-hidden="true"></i>
+    </button>
  <nav>
  <%/* —— Accueil —— */%>
  <a href="/"><%= t('nav.dashboard') %></a>
@@ -89,6 +95,19 @@
  </div>
  </div>
  <% } %>
+        <%/* —— Aide —— */%>
+        <div class="menu-deroulant">
+            <button type="button" class="lien-menu-deroulant"><%= typeof t === 'function' ? t('nav.help') : 'Aide' %> <i class="bi bi-chevron-down" style="font-size:0.75em;"></i></button>
+            <div class="contenu-menu-deroulant">
+                <a href="/aide/support"><i class="bi bi-life-preserver"></i> Support</a>
+                <a href="/aide/documentation"><i class="bi bi-book"></i> Documentation</a>
+                <a href="/aide/mise-a-jour"><i class="bi bi-arrow-repeat"></i> Mise à jour</a>
+                <a href="/aide/extensions"><i class="bi bi-puzzle"></i> Extensions</a>
+                <a href="/aide/soutien"><i class="bi bi-heart"></i> Soutien</a>
+                <a href="/aide/confidentialite"><i class="bi bi-shield-check"></i> Confidentialité</a>
+            </div>
+        </div>
+
  </nav>
 
  <form action="/recherche" method="GET" class="recherche-topbar">

@@ -5,6 +5,7 @@
 const DICT = {
     fr: {
         'nav.dashboard': 'Tableau de bord',
+        'nav.help': 'Aide',
         'nav.assistance': 'Assistance',
         'nav.administration': 'Administration',
         'nav.security': 'Administration',
@@ -45,6 +46,7 @@ const DICT = {
     },
     en: {
         'nav.dashboard': 'Dashboard',
+        'nav.help': 'Help',
         'nav.assistance': 'Support',
         'nav.administration': 'Administration',
         'nav.security': 'Administration',

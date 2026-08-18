@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const setupController = require('../controllers/setupController');
+const sauvegardeController = require('../controllers/sauvegardeController');
 const { Parametre } = require('../models');
 
 // Bloquer toute modification setup une fois l'installation terminée
@@ -20,6 +21,7 @@ router.use(seulementSiPasInstalle);
 
 router.get('/statut', setupController.statut);
 router.post('/cgu', setupController.accepterCgu);
+router.post('/restaurer', sauvegardeController.restaurerInstallation);
 router.post('/auth', setupController.choisirAuth);
 router.post('/admin', setupController.creerAdmin);
 router.post('/donnees', setupController.creerDonneesDemo);

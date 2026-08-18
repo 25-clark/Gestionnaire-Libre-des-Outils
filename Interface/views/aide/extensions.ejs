@@ -1,0 +1,19 @@
+<%- include('../partials/header') %>
+<div class="fil-ariane"><a href="/">Tableau de bord</a> <span class="sep">›</span> <a href="/aide/documentation">Aide</a> <span class="sep">›</span> <%= titre %></div>
+<div class="entete-page"><h1><i class="bi bi-question-circle"></i> <%= titre %></h1></div>
+<div class="carte" style="max-width:720px;">
+
+<p>Connecteurs pour un SI d'entreprise&nbsp;:</p>
+<ul>
+<li><strong>LDAP / Active Directory</strong> — intégré (Administration).</li>
+<li><strong>API REST</strong> — backend <code>/api/*</code>.</li>
+<li><strong>Export CSV / PDF</strong> — listes et journal.</li>
+<li><strong>Webhooks</strong> — feuille de route Teams/Slack.</li>
+</ul>
+
+<p style="margin-top:20px;">
+<a href="/aide/documentation" class="btn btn-gris btn-petit">Documentation</a>
+<a href="/aide/support" class="btn btn-gris btn-petit">Support</a>
+</p>
+</div>
+<%- include('../partials/footer') %>

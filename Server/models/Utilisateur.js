@@ -94,6 +94,20 @@ module.exports = (sequelize) => {
             allowNull: true
         },
         // Préférences de compte (thème, langue, etc.) stockées en JSON
+        totp_secret: {
+            type: DataTypes.STRING(128),
+            allowNull: true
+        },
+        totp_actif: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
+        },
+        favoris: {
+            type: DataTypes.JSON,
+            allowNull: true,
+            defaultValue: { outils: [], activites: [] }
+        },
         preferences: {
             type: DataTypes.JSON,
             allowNull: true,

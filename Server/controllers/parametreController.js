@@ -30,6 +30,8 @@ async function obtenirPublic(req, res, next) {
         res.json({
             nom_entreprise: parametre.nom_entreprise,
             credentials_actifs: !!parametre.credentials_actifs,
+            totp_disponible: parametre.totp_disponible !== false,
+            totp_obligatoire: !!parametre.totp_obligatoire,
             installation_terminee,
             ldap_actif: !!parametre.ldap_actif
         });
@@ -68,7 +70,9 @@ async function mettreAJour(req, res, next) {
             session_duree_heures,
             surveillance_active,
             surveillance_intervalle_minutes,
-            credentials_actifs
+            credentials_actifs,
+            totp_disponible,
+            totp_obligatoire
         } = req.body;
 
         const nouvelleLongueurMin = mdp_longueur_min !== undefined
@@ -107,7 +111,9 @@ async function mettreAJour(req, res, next) {
             surveillance_intervalle_minutes: surveillance_intervalle_minutes !== undefined
                 ? borner(surveillance_intervalle_minutes, 1, 1440, parametre.surveillance_intervalle_minutes)
                 : parametre.surveillance_intervalle_minutes,
-            credentials_actifs: credentials_actifs !== undefined ? !!credentials_actifs : parametre.credentials_actifs
+            credentials_actifs: credentials_actifs !== undefined ? !!credentials_actifs : parametre.credentials_actifs,
+            totp_disponible: totp_disponible !== undefined ? !!totp_disponible : parametre.totp_disponible,
+            totp_obligatoire: totp_obligatoire !== undefined ? !!totp_obligatoire : parametre.totp_obligatoire
         });
 
         await consigner({

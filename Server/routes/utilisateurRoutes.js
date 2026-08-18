@@ -22,5 +22,7 @@ router.post('/:id/reinitialiser-mdp', (req, res, next) => {
 // Mise à jour du profil (champs enrichis + préférences) — l'utilisateur peut
 // modifier son propre profil ; un admin peut modifier celui de n'importe qui.
 router.put('/:id/profil', utilisateurController.updateProfil);
+router.get('/:id/favoris', utilisateurController.getFavoris);
+router.post('/:id/favoris', utilisateurController.toggleFavori);
 
 module.exports = router;

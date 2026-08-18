@@ -264,5 +264,31 @@ router.post('/:id/maintenance', async (req, res, next) => {
     }
 });
 
+
+router.post('/:id/favori', async (req, res) => {
+    try {
+        const api = apiClient(req);
+        const uid = req.session.user.id;
+        const { data } = await api.post(`/utilisateurs/${uid}/favoris`, {
+            type: 'outil',
+            id_cible: parseInt(req.params.id, 10)
+        });
+        const wantsJson = (req.headers.accept || '').includes('application/json')
+            || req.headers['x-requested-with'] === 'XMLHttpRequest'
+            || req.query.ajax === '1';
+        if (wantsJson) return res.json(data);
+        const retour = req.body.retour || req.get('Referer') || '/';
+        const sep = retour.includes('?') ? '&' : '?';
+        res.redirect(retour + sep + 'epingle=' + (data.epingle ? '1' : '0'));
+    } catch (err) {
+        const msg = err.response?.data?.message || err.message || 'Erreur épinglage';
+        console.error('[favori outil]', msg);
+        if ((req.headers.accept || '').includes('application/json')) {
+            return res.status(err.response?.status || 500).json({ message: msg });
+        }
+        res.redirect((req.body.retour || req.get('Referer') || '/') + '?erreur_favori=1');
+    }
+});
+
 module.exports = router;
 

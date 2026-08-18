@@ -18,10 +18,6 @@ router.get('/', async (req, res, next) => {
         let utilisateurs = [];
         let tickets = [];
 
-        // Chaque catégorie n'est cherchée que si le rôle de l'utilisateur a le
-        // droit de lecture correspondant. Le Server applique en plus son
-        // propre périmètre d'accès (activités/sous-activités accessibles),
-        // donc un compte restreint ne voit ici que ce qu'il a le droit de voir.
         if (q) {
             const appels = [];
 
@@ -38,8 +34,9 @@ router.get('/', async (req, res, next) => {
             if (peutFaire(user, 'outils', 'read')) {
                 appels.push(
                     api.get(`/outils?q=${encodeURIComponent(q)}`).then(resp => {
-                        outils = resp.data.filter(o => o.active);
-                        archives = resp.data.filter(o => !o.active);
+                        const list = Array.isArray(resp.data) ? resp.data : (resp.data.outils || []);
+                        outils = list.filter(o => o.active);
+                        archives = list.filter(o => !o.active);
                     })
                 );
             }
@@ -49,11 +46,10 @@ router.get('/', async (req, res, next) => {
                 );
             }
             if (peutFaire(user, 'tickets', 'read')) {
-                // Le Server filtre déjà par visibilité réelle du ticket
-                // (créateur, assigné, ou périmètre accessible) — cf.
-                // utilisateurPeutVoirTicket dans ticketController.js.
                 appels.push(
-                    api.get(`/tickets?q=${encodeURIComponent(q)}`).then(resp => { tickets = resp.data; })
+                    api.get(`/tickets?q=${encodeURIComponent(q)}`).then(resp => {
+                        tickets = Array.isArray(resp.data) ? resp.data : (resp.data.tickets || []);
+                    })
                 );
             }
 
@@ -71,6 +67,88 @@ router.get('/', async (req, res, next) => {
             tickets
         });
     } catch (err) { next(err); }
+});
+
+// API JSON pour la palette Ctrl+K
+router.get('/api', async (req, res) => {
+    try {
+        const q = (req.query.q || '').trim();
+        if (!q) return res.json({ resultats: [] });
+
+        const api = apiClient(req);
+        const user = req.session.user;
+        const resultats = [];
+        const appels = [];
+
+        if (peutFaire(user, 'activites', 'read')) {
+            appels.push(
+                api.get('/activites', { params: { q } }).then(r => {
+                    (Array.isArray(r.data) ? r.data : []).slice(0, 6).forEach(a => {
+                        resultats.push({
+                            type: 'activite',
+                            icon: 'bi-folder',
+                            label: a.nom,
+                            meta: a.abbreviation || 'Activité',
+                            href: '/activites/' + a.id
+                        });
+                    });
+                }).catch(() => {})
+            );
+        }
+        if (peutFaire(user, 'outils', 'read')) {
+            appels.push(
+                api.get('/outils', { params: { q } }).then(r => {
+                    const list = Array.isArray(r.data) ? r.data : (r.data.outils || []);
+                    list.filter(o => o.active !== false).slice(0, 8).forEach(o => {
+                        resultats.push({
+                            type: 'outil',
+                            icon: 'bi-tools',
+                            label: o.nom,
+                            meta: 'Outil',
+                            href: o.lien || ('/activites')
+                        });
+                    });
+                }).catch(() => {})
+            );
+        }
+        if (peutFaire(user, 'tickets', 'read')) {
+            appels.push(
+                api.get('/tickets', { params: { q, par_page: 5 } }).then(r => {
+                    const list = Array.isArray(r.data) ? r.data : (r.data.tickets || []);
+                    list.slice(0, 5).forEach(t => {
+                        resultats.push({
+                            type: 'ticket',
+                            icon: 'bi-ticket-detailed',
+                            label: '#' + t.id + ' — ' + t.titre,
+                            meta: t.statut || 'Ticket',
+                            href: '/tickets/' + t.id
+                        });
+                    });
+                }).catch(() => {})
+            );
+        }
+        if (peutFaire(user, 'utilisateurs', 'read')) {
+            appels.push(
+                api.get('/utilisateurs', { params: { q } }).then(r => {
+                    (Array.isArray(r.data) ? r.data : []).slice(0, 5).forEach(u => {
+                        resultats.push({
+                            type: 'user',
+                            icon: 'bi-person',
+                            label: ((u.prenom || '') + ' ' + (u.nom || '')).trim(),
+                            meta: u.matricule || 'Utilisateur',
+                            href: '/utilisateurs'
+                        });
+                    });
+                }).catch(() => {})
+            );
+        }
+
+        await Promise.all(appels);
+        res.json({ resultats: resultats.slice(0, 20) });
+    } catch (err) {
+        console.error('[recherche/api]', err.message);
+        res.status(500).json({ resultats: [], message: 'Erreur recherche' });
+    }
 });
 
 module.exports = router;

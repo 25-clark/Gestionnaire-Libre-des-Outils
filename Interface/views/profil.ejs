@@ -137,4 +137,102 @@ document.getElementById('theme').addEventListener('change', function () {
 });
 </script>
 
+
+    <div class="carte" style="grid-column: 1 / -1;">
+        <h2><i class="bi bi-shield-lock"></i> Authentification à deux facteurs (2FA)</h2>
+        <p style="color:var(--gris);font-size:13px; max-width:640px;">
+            La 2FA ajoute un <strong>code à 6 chiffres</strong> (qui change toutes les 30 secondes)
+            en plus de votre mot de passe. Ce code est généré par une application sur votre téléphone.
+        </p>
+        <div id="bloc-2fa">
+            <p>Statut : <strong id="2fa-statut"><%= user.totp_actif ? 'Activée ✓' : 'Désactivée' %></strong></p>
+            <% if (!user.totp_actif) { %>
+            <button type="button" class="btn btn-primaire" id="btn-2fa-setup">Commencer la configuration</button>
+            <div id="2fa-setup-panel" hidden style="margin-top:16px; max-width:560px;">
+                <ol style="padding-left:20px; line-height:1.55; font-size:14px;">
+                    <li style="margin-bottom:10px;">
+                        <strong>Installez une application</strong> sur votre téléphone, par exemple&nbsp;:
+                        <em>Google Authenticator</em>, <em>Microsoft Authenticator</em> ou <em>Authy</em>
+                        (disponible gratuitement sur l’App Store / Play Store).
+                    </li>
+                    <li style="margin-bottom:10px;">
+                        <strong>Dans l’application, ajoutez un compte</strong> (souvent « + » ou « Ajouter »)
+                        puis choisissez <strong>« Scanner un QR code »</strong>.
+                    </li>
+                    <li style="margin-bottom:10px;">
+                        <strong>Scannez le QR code ci-dessous</strong> avec l’appareil photo de l’app.
+                        <div style="margin:12px 0; text-align:center;">
+                            <img id="2fa-qr" alt="QR code 2FA" width="180" height="180"
+                                 style="border:1px solid var(--gris-bordure); border-radius:12px; background:#fff; display:none;">
+                        </div>
+                        <details style="font-size:13px; color:var(--gris);">
+                            <summary style="cursor:pointer;">Impossible de scanner ? Saisie manuelle</summary>
+                            <p style="margin:8px 0 4px;">Copiez cette clé dans l’app (option « Saisir une clé ») :</p>
+                            <code id="2fa-secret" style="user-select:all; display:inline-block; padding:6px 10px; background:var(--gris-clair); border-radius:8px;"></code>
+                            <p style="margin:8px 0 0; font-size:12px;">Le lien technique (URI) sert uniquement aux apps avancées — vous pouvez l’ignorer.</p>
+                            <span id="2fa-uri" style="display:none;"></span>
+                        </details>
+                    </li>
+                    <li>
+                        <strong>L’app affiche un code à 6 chiffres</strong> qui change toutes les 30 secondes.
+                        Saisissez-le ici pour confirmer que tout fonctionne, puis cliquez sur Activer.
+                        <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                            <input type="text" id="2fa-code-activer" maxlength="6" inputmode="numeric" placeholder="123456" style="max-width:140px; letter-spacing:0.2em; font-size:18px; text-align:center;">
+                            <button type="button" class="btn btn-primaire" id="btn-2fa-activer">Activer la 2FA</button>
+                        </div>
+                    </li>
+                </ol>
+            </div>
+            <% } else { %>
+            <p style="font-size:13px; color:var(--gris);">À chaque connexion, GLO vous demandera le code affiché dans votre application.</p>
+            <label for="2fa-code-off">Pour désactiver : saisissez le code actuel de l’app</label>
+            <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                <input type="text" id="2fa-code-off" maxlength="6" inputmode="numeric" placeholder="123456" style="max-width:140px;">
+                <button type="button" class="btn btn-gris" id="btn-2fa-off">Désactiver la 2FA</button>
+            </div>
+            <% } %>
+            <p id="2fa-msg" style="font-size:13px;margin-top:10px;"></p>
+        </div>
+    </div>
+<script>
+(function(){
+  var msg = document.getElementById('2fa-msg');
+  function say(t, ok){ if(msg){ msg.textContent=t; msg.style.color=ok?'#047857':'#b91c1c'; } }
+  var btnSetup = document.getElementById('btn-2fa-setup');
+  if (btnSetup) btnSetup.addEventListener('click', function(){
+    fetch('/profil/2fa/setup', { method:'POST', credentials:'same-origin' })
+      .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
+      .then(function(x){
+        if(!x.ok) return say(x.d.message||'Erreur');
+        document.getElementById('2fa-setup-panel').hidden=false;
+        document.getElementById('2fa-secret').textContent=x.d.secret;
+        var uri = x.d.otpauth_url || '';
+        document.getElementById('2fa-uri').textContent=uri;
+        var qr = document.getElementById('2fa-qr');
+        if (qr && uri) {
+          qr.src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(uri);
+          qr.style.display = 'inline-block';
+        }
+        say('QR code prêt — scannez-le avec votre application Authenticator.', true);
+      }).catch(function(){ say('Erreur réseau'); });
+  });
+  var btnAct = document.getElementById('btn-2fa-activer');
+  if (btnAct) btnAct.addEventListener('click', function(){
+    var code = (document.getElementById('2fa-code-activer')||{}).value;
+    fetch('/profil/2fa/activer', { method:'POST', credentials:'same-origin',
+      headers:{'Content-Type':'application/json'}, body: JSON.stringify({code:code}) })
+      .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
+      .then(function(x){ if(x.ok){ say(x.d.message,true); location.reload(); } else say(x.d.message||'Code incorrect'); });
+  });
+  var btnOff = document.getElementById('btn-2fa-off');
+  if (btnOff) btnOff.addEventListener('click', function(){
+    var code = (document.getElementById('2fa-code-off')||{}).value;
+    fetch('/profil/2fa/desactiver', { method:'POST', credentials:'same-origin',
+      headers:{'Content-Type':'application/json'}, body: JSON.stringify({code:code}) })
+      .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
+      .then(function(x){ if(x.ok){ say(x.d.message,true); location.reload(); } else say(x.d.message||'Code incorrect'); });
+  });
+})();
+</script>
+
 <%- include('partials/footer') %>

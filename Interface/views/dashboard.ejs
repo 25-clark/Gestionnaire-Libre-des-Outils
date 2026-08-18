@@ -7,6 +7,25 @@
     <% } %>
 </div>
 
+
+<% if ((typeof outilsFavoris !== 'undefined' && outilsFavoris.length) || (typeof activitesFavoris !== 'undefined' && activitesFavoris.length)) { %>
+<div class="carte" style="margin-bottom:18px;">
+    <h2 style="margin:0 0 12px;font-size:15px;"><i class="bi bi-pin-angle-fill"></i> Épinglés</h2>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <% (activitesFavoris || []).forEach(function(a) { %>
+            <a href="/activites/<%= a.id %>" class="btn btn-gris btn-petit"><i class="bi bi-folder"></i> <%= a.nom %></a>
+        <% }) %>
+        <% (outilsFavoris || []).forEach(function(o) { %>
+            <% if (o.lien) { %>
+                <a href="<%= o.lien %>" target="_blank" rel="noopener" class="btn btn-gris btn-petit"><i class="bi bi-tools"></i> <%= o.nom %></a>
+            <% } else { %>
+                <span class="btn btn-gris btn-petit" style="opacity:0.85;"><i class="bi bi-tools"></i> <%= o.nom %></span>
+            <% } %>
+        <% }) %>
+    </div>
+</div>
+<% } %>
+
 <% if (!arborescence.length) { %>
     <div class="carte vide">Aucune activité pour le moment.</div>
 <% } %>
@@ -30,6 +49,7 @@
             <% } else { %>
                 <span class="btn-collapse-placeholder"></span>
             <% } %>
+            <button type="button" class="btn-collapse-activite btn-favori" data-favori-type="activite" data-favori-id="<%= activite.id %>" title="Épingler l'activité" style="border-style:dashed;"><i class="bi bi-pin-angle"></i></button>
             <a href="/activites/<%= activite.id %>" class="lien-entete-activite">
                 <span class="icone-dossier"><i class="bi bi-folder2"></i></span>
                 <h2><%= activite.nom %></h2>

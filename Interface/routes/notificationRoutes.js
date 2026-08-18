@@ -30,6 +30,7 @@ router.post('/:id/lue', async (req, res) => {
         const { data } = await api.post(`/notifications/${req.params.id}/lue`);
         if (data.lien) lien = data.lien;
     } catch { /* si ça échoue, on revient simplement à la liste */ }
+    delete req.session._notifBadge;
     res.redirect(lien);
 });
 
@@ -37,6 +38,7 @@ router.post('/toutes-lues', async (req, res) => {
     try {
         const api = apiClient(req);
         await api.post('/notifications/toutes-lues');
+        delete req.session._notifBadge;
     } catch { /* pas bloquant */ }
     res.redirect('/notifications');
 });

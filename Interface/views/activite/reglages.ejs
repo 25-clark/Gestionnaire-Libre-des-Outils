@@ -80,6 +80,14 @@
             </select>
         <% }) %>
 
+        
+        <label for="totp_obligatoire">2FA obligatoire sur cette activité</label>
+        <select id="totp_obligatoire" name="totp_obligatoire">
+            <option value="inherit" <%= sel('totp_obligatoire')==='inherit'?'selected':'' %>>Hériter (<%= eff.totp_obligatoire ? 'obligatoire' : 'optionnelle' %>)</option>
+            <option value="true" <%= sel('totp_obligatoire')==='true'?'selected':'' %>>Forcer la 2FA (plus strict)</option>
+            <option value="false" <%= sel('totp_obligatoire')==='false'?'selected':'' %>>Hériter uniquement</option>
+        </select>
+
         <h2 style="font-size:15px; color:var(--bleu-fonce); margin-top:22px;"><i class="bi bi-megaphone"></i> Message d’information</h2>
         <label for="message_info">Bandeau affiché aux utilisateurs de l’activité</label>
         <input type="text" id="message_info" name="message_info" maxlength="500"

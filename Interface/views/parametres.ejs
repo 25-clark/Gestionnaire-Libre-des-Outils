@@ -1,4 +1,7 @@
 <%- include('partials/header') %>
+<% if (typeof query !== 'undefined' && query.succes) { %><div class="message-succes"><%= query.succes %></div><% } %>
+<% if (typeof query !== 'undefined' && query.erreur) { %><div class="message-erreur"><%= query.erreur %></div><% } %>
+
 
 <div class="entete-page"><h1>Réglages généraux</h1></div>
 
@@ -83,7 +86,19 @@
  </p>
 
  
- <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
+ 
+        <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
+        <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 4px;"><i class="bi bi-shield-lock"></i> Authentification à deux facteurs (2FA)</h2>
+        <p style="color:var(--gris); font-size:13px;">TOTP (Google Authenticator, Microsoft Authenticator, etc.). Chaque utilisateur active la 2FA dans Mon profil.</p>
+        <div class="champ-case">
+            <input type="checkbox" id="totp_disponible" name="totp_disponible" <%= parametre.totp_disponible !== false ? 'checked' : '' %>>
+            <label for="totp_disponible">Autoriser la 2FA pour les utilisateurs</label>
+        </div>
+        <div class="champ-case">
+            <input type="checkbox" id="totp_obligatoire" name="totp_obligatoire" <%= parametre.totp_obligatoire ? 'checked' : '' %>>
+            <label for="totp_obligatoire">Rendre la 2FA obligatoire pour tous les comptes</label>
+        </div>
+<hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
  <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 4px;"><i class="bi bi-key"></i> Credentials des outils</h2>
  <p style="color:var(--gris); font-size:13px; margin-top:0;">
  Active les credentials personnels (login, mot de passe, clé API…) : chaque utilisateur gère les siens pour chaque outil. Rien n’est partagé entre comptes.
@@ -98,6 +113,24 @@
  <button type="submit" class="btn btn-primaire">Enregistrer</button>
  </div>
  </form>
+<div class="carte" style="margin-top:16px;">
+        <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
+        <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 4px;"><i class="bi bi-device-hdd"></i> Sauvegarde & restauration</h2>
+        <p style="color:var(--gris); font-size:13px;">
+            Exportez toutes les données GLO (utilisateurs, outils, tickets, réglages…) dans un fichier JSON,
+            ou restaurez une sauvegarde précédente. Réservé aux administrateurs.
+        </p>
+        <div class="actions-form" style="border:none; padding-top:0;">
+            <a href="/parametres/sauvegarde/export" class="btn btn-gris"><i class="bi bi-download"></i> Télécharger une sauvegarde</a>
+        </div>
+        <form action="/parametres/sauvegarde/restaurer" method="POST" enctype="multipart/form-data" style="margin-top:12px;"
+              onsubmit="return confirm('La restauration remplace les données actuelles. Continuer ?');">
+            <label for="fichier_sauvegarde">Restaurer depuis un fichier .json</label>
+            <input type="file" id="fichier_sauvegarde" name="fichier" accept=".json,application/json" required>
+            <button type="submit" class="btn btn-primaire" style="margin-top:8px;"><i class="bi bi-upload"></i> Restaurer</button>
+        </form>
+</div>
+
 </div>
 
 <%- include('partials/footer') %>

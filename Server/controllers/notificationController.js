@@ -18,7 +18,7 @@ async function getAll(req, res, next) {
 
 async function nombreNonLues(req, res, next) {
     try {
-        const nombre = await Notification.count({ where: { id_user: req.currentUser.id, lu: false } });
+        const nombre = await Notification.count({ where: { id_user: req.currentUser.id, lu: false }, col: 'id' });
         res.json({ nombre });
     } catch (err) { next(err); }
 }

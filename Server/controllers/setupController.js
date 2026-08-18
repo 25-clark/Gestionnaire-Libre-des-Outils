@@ -52,7 +52,7 @@ async function accepterCgu(req, res, next) {
             return res.status(400).json({ message: 'Vous devez accepter les CGU.' });
         }
         await p.update({ cgu_acceptees_le: new Date() });
-        res.json({ ok: true, etape: 'auth' });
+        res.json({ ok: true, etape: 'mode' });
     } catch (err) { next(err); }
 }
 

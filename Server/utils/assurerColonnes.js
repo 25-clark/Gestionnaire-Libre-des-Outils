@@ -81,6 +81,13 @@ async function assurerColonnes() {
     await ajouterColonne('activites', 'reglages', 'JSON NULL');
     await ajouterColonne('sous_activites', 'reglages', 'JSON NULL');
 
+
+    await ajouterColonne('utilisateurs', 'totp_secret', 'VARCHAR(128) NULL');
+    await ajouterColonne('utilisateurs', 'totp_actif', 'TINYINT(1) NOT NULL DEFAULT 0');
+    await ajouterColonne('utilisateurs', 'favoris', "JSON NULL");
+    await ajouterColonne('parametres', 'totp_disponible', 'TINYINT(1) NOT NULL DEFAULT 1');
+    await ajouterColonne('parametres', 'totp_obligatoire', 'TINYINT(1) NOT NULL DEFAULT 0');
+
     console.log('[schema] Vérification des colonnes terminée.');
 }
 

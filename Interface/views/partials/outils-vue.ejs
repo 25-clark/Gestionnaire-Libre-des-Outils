@@ -26,7 +26,9 @@
  data-creds='<%= JSON.stringify(o.credentials || []).replace(/'/g, "&#39;") %>'>Ouvrir ↗</a>
  <% } else { %>—<% } %>
  <% var hasCreds = o.credentials && (Array.isArray(o.credentials) ? o.credentials.length : true); %>
- <% if (peut('outils', 'update')) { %>
+ <button type="button" class="btn btn-gris btn-petit btn-favori" data-favori-type="outil" data-favori-id="<%= o.id %>" title="Épingler"><i class="bi bi-pin-angle"></i></button>
+                            <button type="button" class="btn btn-gris btn-petit btn-favori" data-favori-type="outil" data-favori-id="<%= o.id %>" title="Épingler"><i class="bi bi-pin-angle"></i></button>
+                            <% if (peut('outils', 'update')) { %>
                                 <a href="/outils/<%= o.id %>/maintenance?retour=<%= encodeURIComponent(typeof retour !== 'undefined' ? retour : '/') %>" class="btn btn-gris btn-petit" title="Maintenance / dérangement"><i class="bi bi-tools"></i></a>
                             <% } %>
                             <% if (credentialsActifs && peut('credentials', 'read')) { %>
@@ -48,7 +50,8 @@
  <td style="text-align:right; white-space:nowrap;">
  <% if (peut('tickets', 'create')) { %>
  <a href="/tickets/nouveau?id_outil=<%= o.id %>" class="btn btn-gris btn-petit" title="Signaler un problème sur cet outil"><i class="bi bi-ticket-detailed"></i> Signaler</a>
- <% if (peut('outils', 'update')) { %>
+ <button type="button" class="btn btn-gris btn-petit btn-favori" data-favori-type="outil" data-favori-id="<%= o.id %>" title="Épingler"><i class="bi bi-pin-angle"></i></button>
+                            <% if (peut('outils', 'update')) { %>
                                 <a href="/outils/<%= o.id %>/maintenance?retour=<%= encodeURIComponent(typeof retour !== 'undefined' ? retour : '/') %>" class="btn btn-gris btn-petit" title="Maintenance / dérangement"><i class="bi bi-tools"></i></a>
                             <% } %>
                             <% if (credentialsActifs && peut('credentials', 'read')) { %>
@@ -115,7 +118,8 @@
  <div style="display:flex; gap:4px;">
  <% if (peut('tickets', 'create')) { %>
  <a href="/tickets/nouveau?id_outil=<%= o.id %>" class="btn btn-gris btn-petit" title="Signaler un problème"><i class="bi bi-ticket-detailed"></i> </a>
- <% if (peut('outils', 'update')) { %>
+ <button type="button" class="btn btn-gris btn-petit btn-favori" data-favori-type="outil" data-favori-id="<%= o.id %>" title="Épingler"><i class="bi bi-pin-angle"></i></button>
+                            <% if (peut('outils', 'update')) { %>
                                 <a href="/outils/<%= o.id %>/maintenance?retour=<%= encodeURIComponent(typeof retour !== 'undefined' ? retour : '/') %>" class="btn btn-gris btn-petit" title="Maintenance / dérangement"><i class="bi bi-tools"></i></a>
                             <% } %>
                             <% if (credentialsActifs && peut('credentials', 'read')) { %>
@@ -129,7 +133,8 @@
  <a href="/diagnostic?cible=<%= encodeURIComponent(o.adresse) %>" class="btn btn-gris btn-petit" title="Tester la connectivité"><i class="bi bi-heart-pulse"></i> </a>
  <% } %>
  <% if (peut('outils', 'update')) { %>
- <form action="/outils/<%= o.id %>/toggle-active" method="POST" class="form-inline">
+ <button type="button" class="btn btn-gris btn-petit btn-favori" data-favori-type="outil" data-favori-id="<%= o.id %>" title="Épingler"><i class="bi bi-pin-angle"></i></button>
+                            <form action="/outils/<%= o.id %>/toggle-active" method="POST" class="form-inline">
  <input type="hidden" name="retour" value="<%= retour %>">
  <button type="submit" class="btn btn-gris btn-petit"><%= o.active ? 'Désactiver' : 'Activer' %></button>
  </form>
@@ -177,7 +182,8 @@
  <div class="actions-vignette">
  <% if (peut('tickets', 'create')) { %>
  <a href="/tickets/nouveau?id_outil=<%= o.id %>" title="Signaler un problème"><i class="bi bi-ticket-detailed"></i> </a>
- <% if (peut('outils', 'update')) { %>
+ <button type="button" class="btn btn-gris btn-petit btn-favori" data-favori-type="outil" data-favori-id="<%= o.id %>" title="Épingler"><i class="bi bi-pin-angle"></i></button>
+                            <% if (peut('outils', 'update')) { %>
                                 <a href="/outils/<%= o.id %>/maintenance?retour=<%= encodeURIComponent(typeof retour !== 'undefined' ? retour : '/') %>" class="btn btn-gris btn-petit" title="Maintenance / dérangement"><i class="bi bi-tools"></i></a>
                             <% } %>
                             <% if (credentialsActifs && peut('credentials', 'read')) { %>

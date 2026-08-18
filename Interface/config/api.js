@@ -1,30 +1,33 @@
 require('dotenv').config();
 const axios = require('axios');
+const http = require('http');
+const https = require('https');
 
 const API_URL = process.env.API_URL || 'http://localhost:4000/api';
 
-/**
- * L'Interface (EJS) et le Server (API) sont deux applications distinctes.
- * Le Server utilise une session (cookie "connect.sid") pour savoir qui est
- * connecté. On stocke ce cookie côté Interface (dans la session de
- * l'Interface elle-même) après le login, puis on le retransmet à chaque
- * appel API pour que le Server reconnaisse l'utilisateur.
- *
- * Utilisation : const api = apiClient(req); await api.get('/activites');
- */
+// Réutilise les connexions TCP vers l'API (moins de latence par requête)
+const httpAgent = new http.Agent({ keepAlive: true, maxSockets: 32 });
+const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 32 });
+
 function apiClient(req) {
-    const instance = axios.create({
+    return axios.create({
         baseURL: API_URL,
+        timeout: 15000,
+        httpAgent,
+        httpsAgent,
         headers: req.session && req.session.apiCookie
             ? { Cookie: req.session.apiCookie }
             : {}
     });
-    return instance;
 }
 
-// Client "nu", sans cookie, utilisé uniquement pour le login (avant d'avoir une session).
 function apiClientAnonyme() {
-    return axios.create({ baseURL: API_URL });
+    return axios.create({
+        baseURL: API_URL,
+        timeout: 10000,
+        httpAgent,
+        httpsAgent
+    });
 }
 
 module.exports = { apiClient, apiClientAnonyme, API_URL };

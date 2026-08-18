@@ -1,0 +1,19 @@
+<%- include('../partials/header') %>
+<div class="fil-ariane"><a href="/">Tableau de bord</a> <span class="sep">›</span> <a href="/aide/documentation">Aide</a> <span class="sep">›</span> <%= titre %></div>
+<div class="entete-page"><h1><i class="bi bi-question-circle"></i> <%= titre %></h1></div>
+<div class="carte" style="max-width:720px;">
+
+<p>Données traitées localement dans votre SI&nbsp;:</p>
+<ul>
+<li>Comptes, rôles, activités, outils, tickets, journal.</li>
+<li>Credentials personnels chiffrés (AES-256-GCM) si activés.</li>
+<li>Secrets 2FA côté serveur uniquement.</li>
+</ul>
+<p>Aucune donnée n'est envoyée vers un cloud GLO externe par défaut.</p>
+
+<p style="margin-top:20px;">
+<a href="/aide/documentation" class="btn btn-gris btn-petit">Documentation</a>
+<a href="/aide/support" class="btn btn-gris btn-petit">Support</a>
+</p>
+</div>
+<%- include('../partials/footer') %>

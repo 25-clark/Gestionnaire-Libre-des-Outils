@@ -2,6 +2,7 @@ const { Utilisateur, Role, Parametre } = require('../models');
 const { verifier, hacher, validerPolitiqueMotDePasse } = require('../utils/motDePasse');
 const { consigner } = require('../utils/journal');
 const { verifierBlocageIp, enregistrerEchecIp, reinitialiserIp } = require('../utils/limiteurIp');
+const { genererSecret, verifierTotp, otpauthUrl } = require('../utils/totp');
 
 // Réglages de sécurité toujours disponibles (créés à la volée s'ils
 // n'existent pas encore, comme dans parametreController.js).
@@ -108,11 +109,31 @@ async function login(req, res, next) {
             await user.update({ tentatives_echouees: 0, bloque_jusqu_a: null });
         }
 
-        req.session.userId = user.id;
-        // Durée de session configurable (Réglages généraux), appliquée à
-        // CETTE session — pas besoin de redémarrer le serveur pour qu'un
-        // changement prenne effet.
-        req.session.cookie.maxAge = parametre.session_duree_heures * 60 * 60 * 1000;
+        const totpDispo = parametre.totp_disponible !== false;
+        const totpOblig = !!parametre.totp_obligatoire;
+        const userTotpActif = !!user.totp_actif && !!user.totp_secret;
+
+        // 2FA activé pour ce compte, ou obligatoire globalement
+        if (totpDispo && (userTotpActif || totpOblig)) {
+            if (totpOblig && !userTotpActif) {
+                // Connexion autorisée mais devra configurer 2FA (flag session)
+                req.session.userId = user.id;
+                req.session.cookie.maxAge = parametre.session_duree_heures * 60 * 60 * 1000;
+                req.session.doit_configurer_2fa = true;
+            } else if (userTotpActif) {
+                req.session.pending2faUserId = user.id;
+                req.session.pending2faExpire = Date.now() + 5 * 60 * 1000;
+                return res.json({
+                    message: 'Code d\'authentification à deux facteurs requis.',
+                    needs_2fa: true
+                });
+            }
+        }
+
+        if (!req.session.userId) {
+            req.session.userId = user.id;
+            req.session.cookie.maxAge = parametre.session_duree_heures * 60 * 60 * 1000;
+        }
 
         await consigner({
             user,
@@ -124,17 +145,19 @@ async function login(req, res, next) {
 
         const userSansMdp = user.toJSON();
         delete userSansMdp.mot_de_passe;
-        // Normaliser preferences (JSON parfois string selon MySQL)
+        delete userSansMdp.totp_secret;
         if (userSansMdp.preferences && typeof userSansMdp.preferences === 'string') {
             try { userSansMdp.preferences = JSON.parse(userSansMdp.preferences); } catch { userSansMdp.preferences = { theme: 'clair', langue: 'fr' }; }
         }
         if (!userSansMdp.preferences || typeof userSansMdp.preferences !== 'object') {
             userSansMdp.preferences = { theme: 'clair', langue: 'fr' };
         }
+        userSansMdp.totp_actif = !!user.totp_actif;
 
         return res.json({
             message: 'Connexion réussie.',
-            user: userSansMdp
+            user: userSansMdp,
+            doit_configurer_2fa: !!req.session.doit_configurer_2fa
         });
     } catch (err) {
         next(err);
@@ -160,7 +183,10 @@ function logout(req, res, next) {
 }
 
 async function me(req, res) {
-    res.json({ user: req.currentUser });
+    const u = req.currentUser && req.currentUser.toJSON ? req.currentUser.toJSON() : { ...req.currentUser };
+    delete u.mot_de_passe;
+    delete u.totp_secret;
+    res.json({ user: u });
 }
 
 // Changement de mot de passe par l'utilisateur lui-même : à froid (menu
@@ -206,4 +232,95 @@ async function changerMotDePasse(req, res, next) {
     } catch (err) { next(err); }
 }
 
-module.exports = { login, logout, me, changerMotDePasse };
+
+async function verifier2fa(req, res, next) {
+    try {
+        const { code } = req.body;
+        const pendingId = req.session.pending2faUserId;
+        const exp = req.session.pending2faExpire || 0;
+        if (!pendingId || Date.now() > exp) {
+            return res.status(401).json({ message: 'Session 2FA expirée. Reconnectez-vous.' });
+        }
+        const user = await Utilisateur.scope('avecMotDePasse').findByPk(pendingId, { include: [{ model: Role }] });
+        if (!user || !user.totp_secret) {
+            return res.status(401).json({ message: '2FA invalide.' });
+        }
+        if (!verifierTotp(user.totp_secret, code)) {
+            return res.status(401).json({ message: 'Code 2FA incorrect.' });
+        }
+        const parametre = await obtenirParametres();
+        delete req.session.pending2faUserId;
+        delete req.session.pending2faExpire;
+        req.session.userId = user.id;
+        req.session.cookie.maxAge = parametre.session_duree_heures * 60 * 60 * 1000;
+
+        await consigner({
+            user,
+            action: 'connexion',
+            ressource: 'auth',
+            id_ressource: user.id,
+            libelle: `Connexion 2FA de ${user.prenom} ${user.nom} (${user.matricule})`
+        });
+
+        const userSansMdp = user.toJSON();
+        delete userSansMdp.mot_de_passe;
+        delete userSansMdp.totp_secret;
+        userSansMdp.totp_actif = true;
+        res.json({ message: 'Connexion réussie.', user: userSansMdp });
+    } catch (err) { next(err); }
+}
+
+async function setup2fa(req, res, next) {
+    try {
+        const parametre = await obtenirParametres();
+        if (parametre.totp_disponible === false) {
+            return res.status(403).json({ message: 'La 2FA est désactivée dans les réglages généraux.' });
+        }
+        const user = await Utilisateur.findByPk(req.currentUser.id);
+        const secret = genererSecret();
+        req.session.pendingTotpSecret = secret;
+        const label = user.matricule || user.email || String(user.id);
+        const url = otpauthUrl({ secret, label, issuer: parametre.nom_entreprise || 'GLO' });
+        res.json({ secret, otpauth_url: url });
+    } catch (err) { next(err); }
+}
+
+async function activer2fa(req, res, next) {
+    try {
+        const { code } = req.body;
+        const secret = req.session.pendingTotpSecret;
+        if (!secret) return res.status(400).json({ message: 'Démarrez d\'abord la configuration 2FA.' });
+        if (!verifierTotp(secret, code)) {
+            return res.status(400).json({ message: 'Code invalide. Vérifiez votre application d\'authentification.' });
+        }
+        const user = await Utilisateur.findByPk(req.currentUser.id);
+        await user.update({ totp_secret: secret, totp_actif: true });
+        delete req.session.pendingTotpSecret;
+        delete req.session.doit_configurer_2fa;
+        res.json({ message: 'Authentification à deux facteurs activée.', totp_actif: true });
+    } catch (err) { next(err); }
+}
+
+async function desactiver2fa(req, res, next) {
+    try {
+        const parametre = await obtenirParametres();
+        if (parametre.totp_obligatoire) {
+            return res.status(403).json({ message: 'La 2FA est obligatoire dans les réglages généraux.' });
+        }
+        const { code, mot_de_passe } = req.body;
+        const user = await Utilisateur.scope('avecMotDePasse').findByPk(req.currentUser.id);
+        if (user.totp_actif && user.totp_secret) {
+            if (!verifierTotp(user.totp_secret, code)) {
+                return res.status(400).json({ message: 'Code 2FA incorrect.' });
+            }
+        }
+        if (mot_de_passe && !verifier(mot_de_passe, user.mot_de_passe)) {
+            return res.status(400).json({ message: 'Mot de passe incorrect.' });
+        }
+        await user.update({ totp_secret: null, totp_actif: false });
+        res.json({ message: '2FA désactivée.', totp_actif: false });
+    } catch (err) { next(err); }
+}
+
+module.exports = { login, logout, me, changerMotDePasse, verifier2fa, setup2fa, activer2fa, desactiver2fa };
+

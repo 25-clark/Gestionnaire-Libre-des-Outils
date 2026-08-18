@@ -242,4 +242,70 @@ async function updateProfil(req, res, next) {
     } catch (err) { next(err); }
 }
 
-module.exports = { getAll, getById, create, remove, reinitialiserMotDePasse, updateProfil };
+
+
+
+
+function normaliserFavoris(f) {
+    if (!f) return { outils: [], activites: [] };
+    if (typeof f === 'string') {
+        try { f = JSON.parse(f); } catch { return { outils: [], activites: [] }; }
+    }
+    if (typeof f !== 'object') return { outils: [], activites: [] };
+    return {
+        outils: Array.isArray(f.outils) ? f.outils.map(Number).filter(n => n > 0) : [],
+        activites: Array.isArray(f.activites) ? f.activites.map(Number).filter(n => n > 0) : []
+    };
+}
+
+async function toggleFavori(req, res, next) {
+    try {
+        const id = parseInt(req.params.id, 10);
+        const monId = parseInt(req.currentUser.id, 10);
+        if (monId !== id && !isAdmin(req.currentUser)) {
+            return res.status(403).json({ message: 'Action non autorisée.' });
+        }
+        const type = req.body.type;
+        const id_cible = parseInt(req.body.id_cible, 10);
+        if (!['outil', 'activite'].includes(type) || !id_cible) {
+            return res.status(400).json({ message: 'type (outil|activite) et id_cible requis.' });
+        }
+        const user = await Utilisateur.findByPk(id);
+        if (!user) return res.status(404).json({ message: 'Utilisateur introuvable.' });
+
+        const fav = normaliserFavoris(user.favoris);
+        const key = type === 'outil' ? 'outils' : 'activites';
+        const idx = fav[key].indexOf(id_cible);
+        let epingle = false;
+        if (idx >= 0) {
+            fav[key].splice(idx, 1);
+            epingle = false;
+        } else {
+            fav[key] = [id_cible].concat(fav[key].filter(x => x !== id_cible)).slice(0, 50);
+            epingle = true;
+        }
+
+        // Forcer la détection JSON Sequelize
+        user.set('favoris', fav);
+        user.changed('favoris', true);
+        await user.save();
+
+        res.json({ favoris: fav, epingle, type, id_cible });
+    } catch (err) { next(err); }
+}
+
+async function getFavoris(req, res, next) {
+    try {
+        const id = parseInt(req.params.id, 10);
+        const monId = parseInt(req.currentUser.id, 10);
+        if (monId !== id && !isAdmin(req.currentUser)) {
+            return res.status(403).json({ message: 'Action non autorisée.' });
+        }
+        const user = await Utilisateur.findByPk(id);
+        if (!user) return res.status(404).json({ message: 'Utilisateur introuvable.' });
+        res.json(normaliserFavoris(user.favoris));
+    } catch (err) { next(err); }
+}
+
+module.exports = { getAll, getById, create, remove, reinitialiserMotDePasse, updateProfil, toggleFavori, getFavoris };
+
