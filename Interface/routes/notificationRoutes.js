@@ -43,4 +43,14 @@ router.post('/toutes-lues', async (req, res) => {
     res.redirect('/notifications');
 });
 
+router.post('/vider', async (req, res) => {
+    try {
+        const api = apiClient(req);
+        await api.post('/notifications/vider');
+        delete req.session._notifBadge;
+    } catch { /* pas bloquant */ }
+    res.redirect('/notifications');
+});
+
+
 module.exports = router;

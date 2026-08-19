@@ -1,8 +1,34 @@
 const { Ticket, TicketMessage, TicketImage, Outil, Activite, SousActivite, Utilisateur } = require('../models');
-const { isAdmin, normaliserPermissions } = require('../middlewares/auth');
+const { isAdmin, userHasPermission, normaliserPermissions } = require('../middlewares/auth');
 const { getPerimetreAcces } = require('../utils/perimetre');
 const { consigner } = require('../utils/journal');
 const { notifier } = require('../utils/notification');
+
+function normaliserIds(arr) {
+    if (!arr) return [];
+    if (!Array.isArray(arr)) arr = [arr];
+    return arr.map(x => parseInt(x, 10)).filter(n => n > 0);
+}
+
+function ticketAssigneesUsers(ticket) {
+    const fromJson = normaliserIds(ticket.assignees_users);
+    if (fromJson.length) return fromJson;
+    if (ticket.id_assigne) return [ticket.id_assigne];
+    return [];
+}
+
+function ticketAssigneesRoles(ticket) {
+    return normaliserIds(ticket.assignees_roles);
+}
+
+function userRolesIds(user) {
+    const ids = [];
+    if (user.Role) ids.push(user.Role.id);
+    if (user.rolesEffectifs) user.rolesEffectifs.forEach(r => ids.push(r.id));
+    if (user.Roles) user.Roles.forEach(r => ids.push(r.id));
+    return [...new Set(ids)];
+}
+
 const { calculerSlaEcheance, statutSla, trouverAdmins } = require('../utils/slaTickets');
 
 const STATUTS_VALIDES = ['ouvert', 'en_cours', 'resolu', 'ferme'];
@@ -138,6 +164,8 @@ async function create(req, res, next) {
             return res.status(400).json({ message: 'Le titre et la description sont requis.' });
         }
 
+        const assignees_users = normaliserIds(req.body.assignees_users || req.body.id_assigne);
+        const assignees_roles = normaliserIds(req.body.assignees_roles);
         const ticket = await Ticket.create({
             titre,
             description,
@@ -145,8 +173,10 @@ async function create(req, res, next) {
             id_outil: id_outil || null,
             id_activite: id_activite || null,
             id_sous_activite: id_sous_activite || null,
-            id_createur: req.currentUser.id
-        ,
+            id_createur: req.currentUser.id,
+            id_assigne: assignees_users[0] || null,
+            assignees_users,
+            assignees_roles,
             sla_echeance: calculerSlaEcheance(PRIORITES_VALIDES.includes(priorite) ? priorite : 'normale')
         });
 
@@ -196,23 +226,32 @@ async function update(req, res, next) {
 
         // Autorisé pour : admin, ceux qui ont tickets.update, le créateur, ou
         // l'assigné actuel (peut au moins avancer son propre dossier).
-        const permissionsRole = normaliserPermissions(req.currentUser.Role?.permissions);
-        const permissionRole = !!(permissionsRole.tickets && permissionsRole.tickets.update);
-        const autorise = isAdmin(req.currentUser) || permissionRole
-            || ticket.id_createur === req.currentUser.id || ticket.id_assigne === req.currentUser.id;
+        const assigne = ticketAssigneesUsers(ticket).includes(req.currentUser.id)
+            || ticketAssigneesRoles(ticket).some(r => userRolesIds(req.currentUser).includes(r));
+        const autorise = isAdmin(req.currentUser)
+            || userHasPermission(req.currentUser, 'tickets', 'update')
+            || ticket.id_createur === req.currentUser.id
+            || ticket.id_assigne === req.currentUser.id
+            || assigne;
         if (!autorise) return res.status(403).json({ message: "Vous n'avez pas le droit de modifier ce ticket." });
 
-        const { statut, priorite, id_assigne } = req.body;
+        const { statut, priorite, id_assigne, assignees_users, assignees_roles } = req.body;
         const changements = {};
         if (statut !== undefined && STATUTS_VALIDES.includes(statut)) changements.statut = statut;
         if (priorite !== undefined && PRIORITES_VALIDES.includes(priorite)) {
             changements.priorite = priorite;
-            // Recalcule le SLA à partir de maintenant si priorité change
             changements.sla_echeance = calculerSlaEcheance(priorite);
         }
 
-        const ancienAssigne = ticket.id_assigne;
-        if (id_assigne !== undefined) changements.id_assigne = id_assigne || null;
+        const anciens = ticketAssigneesUsers(ticket);
+        if (assignees_users !== undefined || assignees_roles !== undefined || id_assigne !== undefined) {
+            const users = assignees_users !== undefined ? normaliserIds(assignees_users)
+                : (id_assigne !== undefined ? normaliserIds([id_assigne]) : ticketAssigneesUsers(ticket));
+            const roles = assignees_roles !== undefined ? normaliserIds(assignees_roles) : ticketAssigneesRoles(ticket);
+            changements.assignees_users = users;
+            changements.assignees_roles = roles;
+            changements.id_assigne = users[0] || null;
+        }
 
         await ticket.update(changements);
 
@@ -224,9 +263,11 @@ async function update(req, res, next) {
             libelle: `Ticket #${ticket.id} "${ticket.titre}" modifié par ${req.currentUser.prenom} ${req.currentUser.nom}`
         });
 
-        if (changements.id_assigne && changements.id_assigne !== ancienAssigne && changements.id_assigne !== req.currentUser.id) {
+        const nouveauxAss = changements.assignees_users || [];
+        for (const uid of nouveauxAss) {
+            if (anciens.includes(uid) || uid === req.currentUser.id) continue;
             await notifier({
-                id_user: changements.id_assigne,
+                id_user: uid,
                 type: 'info',
                 message: `On vous a assigné le ticket #${ticket.id} "${ticket.titre}".`,
                 lien: `/tickets/${ticket.id}`
@@ -294,7 +335,9 @@ async function ajouterMessage(req, res, next) {
         // discussion avance sans que personne n'ait à revenir voir par hasard.
         const destinataires = new Set();
         if (ticket.id_createur !== req.currentUser.id) destinataires.add(ticket.id_createur);
-        if (ticket.id_assigne && ticket.id_assigne !== req.currentUser.id) destinataires.add(ticket.id_assigne);
+        ticketAssigneesUsers(ticket).forEach(uid => {
+            if (uid !== req.currentUser.id) destinataires.add(uid);
+        });
 
         for (const idDestinataire of destinataires) {
             await notifier({
@@ -377,4 +420,25 @@ async function escalader(req, res, next) {
     } catch (err) { next(err); }
 }
 
-module.exports = { getAll, getById, create, escalader, update, remove, ajouterMessage, utilisateurPeutVoirTicket };
+
+async function modifierMessage(req, res, next) {
+    try {
+        const message = await TicketMessage.findByPk(req.params.messageId);
+        if (!message) return res.status(404).json({ message: 'Message introuvable.' });
+        if (message.id_user !== req.currentUser.id && !isAdmin(req.currentUser)) {
+            return res.status(403).json({ message: 'Vous ne pouvez modifier que vos propres messages.' });
+        }
+        const ageMs = Date.now() - new Date(message.createdAt).getTime();
+        if (ageMs > 5 * 60 * 1000 && !isAdmin(req.currentUser)) {
+            return res.status(403).json({ message: 'Délai de modification dépassé (5 minutes).' });
+        }
+        const contenu = (req.body.contenu || '').trim();
+        if (!contenu) return res.status(400).json({ message: 'Le message ne peut pas être vide.' });
+        await message.update({ contenu });
+        const complet = await TicketMessage.findByPk(message.id, { include: [{ model: Utilisateur, as: 'Auteur' }] });
+        res.json(complet);
+    } catch (err) { next(err); }
+}
+
+module.exports = { getAll, getById, create, escalader, update, remove, ajouterMessage, modifierMessage, utilisateurPeutVoirTicket };
+

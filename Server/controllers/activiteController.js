@@ -2,6 +2,7 @@ const { Activite, SousActivite, Utilisateur, Outil } = require('../models');
 const { getIdsActivitesAccessibles } = require('../middlewares/auth');
 const { consigner } = require('../utils/journal');
 const { reglagesEffectifs, normaliserPourSauvegarde } = require('../utils/reglagesEffectifs');
+const { hacher, verifier } = require('../utils/motDePasse');
 
 // Construit récursivement l'arbre des sous-activités d'une activité.
 function construireArbre(sousActivites, idParent = null) {
@@ -68,9 +69,23 @@ async function getById(req, res, next) {
         });
         if (!activite) return res.status(404).json({ message: 'Activité introuvable.' });
         const json = activite.toJSON();
-        const reg = await reglagesEffectifs(json.reglages, null);
+        let reglagesLocaux = json.reglages || {};
+        if (typeof reglagesLocaux === 'string') {
+            try { reglagesLocaux = JSON.parse(reglagesLocaux); } catch { reglagesLocaux = {}; }
+        }
+        if (!reglagesLocaux || typeof reglagesLocaux !== 'object') reglagesLocaux = {};
+        json.reglages = reglagesLocaux;
+
+        const reg = await reglagesEffectifs(reglagesLocaux, null);
         json.reglages_effectifs = reg.effectifs;
         json.reglages_globaux = reg.global;
+        json.acces_protege = reglagesLocaux.acces_protege === true
+            || reglagesLocaux.acces_protege === 'true'
+            || reglagesLocaux.acces_protege === 1
+            || reglagesLocaux.acces_protege === '1';
+        json.acces_indice = reglagesLocaux.acces_indice || null;
+        // Ne jamais exposer le hash
+        if (json.reglages && json.reglages.acces_hash) delete json.reglages.acces_hash;
         res.json(json);
     } catch (err) { next(err); }
 }
@@ -175,8 +190,40 @@ async function updateReglages(req, res, next) {
     try {
         const activite = await Activite.findByPk(req.params.id);
         if (!activite) return res.status(404).json({ message: 'Activité introuvable.' });
-        const reglages = await normaliserPourSauvegarde(req.body.reglages || req.body);
-        await activite.update({ reglages });
+        const body = req.body.reglages || req.body || {};
+        const reglages = await normaliserPourSauvegarde(body);
+
+        // Sécurité d'accès à l'activité (clé / mot de passe)
+        let existants = activite.reglages || {};
+        if (typeof existants === 'string') {
+            try { existants = JSON.parse(existants); } catch { existants = {}; }
+        }
+        const protege = body.acces_protege === true || body.acces_protege === 'true' || body.acces_protege === 'on' || body.acces_protege === '1';
+        reglages.acces_protege = protege;
+        if (body.acces_indice !== undefined) {
+            reglages.acces_indice = String(body.acces_indice || '').trim() || null;
+        } else if (existants.acces_indice) {
+            reglages.acces_indice = existants.acces_indice;
+        }
+        const nouvelleCle = (body.acces_cle || body.acces_mot_de_passe || '').trim();
+        if (protege) {
+            if (nouvelleCle) {
+                reglages.acces_hash = hacher(nouvelleCle);
+            } else if (existants.acces_hash) {
+                reglages.acces_hash = existants.acces_hash; // conserver
+            } else {
+                return res.status(400).json({ message: 'Veuillez définir une clé d\'accès pour protéger cette activité.' });
+            }
+        } else {
+            delete reglages.acces_hash;
+            delete reglages.acces_indice;
+            reglages.acces_protege = false;
+        }
+
+        // Forcer la détection du changement JSON (Sequelize ne voit pas toujours les mutations d'objet)
+        activite.set('reglages', reglages);
+        activite.changed('reglages', true);
+        await activite.save();
         await consigner({
             user: req.currentUser,
             action: 'modification',
@@ -185,13 +232,36 @@ async function updateReglages(req, res, next) {
             libelle: `Réglages locaux de l'activité "${activite.nom}" modifiés`
         });
         const json = activite.toJSON();
-        json.reglages = reglages;
+        json.reglages = { ...reglages };
+        delete json.reglages.acces_hash;
         const reg = await reglagesEffectifs(reglages, null);
         json.reglages_effectifs = reg.effectifs;
         json.reglages_globaux = reg.global;
+        json.acces_protege = !!reglages.acces_protege;
+        json.acces_indice = reglages.acces_indice || null;
         res.json(json);
     } catch (err) { next(err); }
 }
 
-module.exports = { getAll, getArborescence, getById, create, update, remove, updateReglages };
+/** Vérifie la clé d'accès d'une activité protégée. */
+async function verifierAcces(req, res, next) {
+    try {
+        const activite = await Activite.findByPk(req.params.id);
+        if (!activite) return res.status(404).json({ message: 'Activité introuvable.' });
+        let reg = activite.reglages || {};
+        if (typeof reg === 'string') {
+            try { reg = JSON.parse(reg); } catch { reg = {}; }
+        }
+        if (!reg.acces_protege || !reg.acces_hash) {
+            return res.json({ ok: true, protege: false });
+        }
+        const cle = (req.body.cle || req.body.mot_de_passe || '').trim();
+        if (!cle || !verifier(cle, reg.acces_hash)) {
+            return res.status(403).json({ message: 'Clé d\'accès incorrecte.' });
+        }
+        res.json({ ok: true, protege: true, id: activite.id, nom: activite.nom });
+    } catch (err) { next(err); }
+}
+
+module.exports = { getAll, getArborescence, getById, create, update, remove, updateReglages, verifierAcces };
 

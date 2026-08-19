@@ -1,4 +1,4 @@
-const { Utilisateur, Role, Activite, Outil, Parametre, Journal, sequelize } = require('../models');
+const { Utilisateur, Role, Activite, Outil, Parametre, Journal, sequelize, UtilisateurRole } = require('../models');
 const { isAdmin, getIdsActivitesAccessibles } = require('../middlewares/auth');
 const { hacher } = require('../utils/motDePasse');
 const { consigner } = require('../utils/journal');
@@ -86,11 +86,18 @@ async function getAll(req, res, next) {
 async function getById(req, res, next) {
     try {
         const utilisateur = await Utilisateur.findByPk(req.params.id, {
-            include: [{ model: Role }, { model: Activite }, { model: Outil }]
+            include: [
+                { model: Role },
+                { model: Role, as: 'Roles' },
+                { model: Activite },
+                { model: Outil }
+            ]
         });
         if (!utilisateur) return res.status(404).json({ message: 'Utilisateur introuvable.' });
         const json = utilisateur.toJSON();
         json.preferences = normaliserPreferences(json.preferences);
+        delete json.mot_de_passe;
+        delete json.totp_secret;
         res.json(json);
     } catch (err) { next(err); }
 }
@@ -279,9 +286,27 @@ async function updateProfil(req, res, next) {
             throw e;
         }
 
+        // Rôles additionnels (table utilisateur_roles)
+        if (adminOuGestionnaire && req.body.id_roles !== undefined) {
+            let ids = req.body.id_roles;
+            if (!Array.isArray(ids)) ids = ids ? [ids] : [];
+            ids = ids.map(Number).filter(n => n > 0);
+            // Exclure le rôle principal pour éviter le doublon
+            const principal = data.id_role || utilisateur.id_role;
+            ids = ids.filter(n => n !== principal);
+            await UtilisateurRole.destroy({ where: { id_user: id } });
+            for (const rid of ids) {
+                await UtilisateurRole.create({ id_user: id, id_role: rid });
+            }
+        }
+
         const { Role } = require('../models');
         const fresh = await Utilisateur.findByPk(id, {
-            include: [{ model: Role, attributes: ['id', 'nom', 'abbreviation', 'permissions'] }]
+            include: [
+                { model: Role, attributes: ['id', 'nom', 'abbreviation', 'permissions'] },
+                { model: Role, as: 'Roles', attributes: ['id', 'nom', 'abbreviation'] },
+                { model: Role, as: 'Roles', attributes: ['id', 'nom', 'abbreviation', 'permissions'] }
+            ]
         });
         const json = fresh.toJSON();
         json.preferences = normaliserPreferences(json.preferences);

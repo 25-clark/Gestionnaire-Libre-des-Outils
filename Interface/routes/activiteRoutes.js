@@ -1,5 +1,52 @@
 const express = require('express');
 const router = express.Router();
+
+function activiteDebloquee(req, id) {
+    if (!req.session.activitesDebloquees) req.session.activitesDebloquees = {};
+    return !!req.session.activitesDebloquees[String(id)];
+}
+function marquerDebloquee(req, id) {
+    if (!req.session.activitesDebloquees) req.session.activitesDebloquees = {};
+    req.session.activitesDebloquees[String(id)] = Date.now();
+}
+function estAdminSession(req) {
+    const u = req.session.user;
+    if (!u) return false;
+    if (u.Role && u.Role.abbreviation === 'ADMIN') return true;
+    if (u.Roles && u.Roles.some(r => r && r.abbreviation === 'ADMIN')) return true;
+    return false;
+}
+function estActiviteProtegee(activite) {
+    if (!activite) return false;
+    if (activite.acces_protege === true || activite.acces_protege === 'true' || activite.acces_protege === 1) return true;
+    let reg = activite.reglages;
+    if (typeof reg === 'string') {
+        try { reg = JSON.parse(reg); } catch { reg = null; }
+    }
+    if (!reg || typeof reg !== 'object') return false;
+    return reg.acces_protege === true || reg.acces_protege === 'true' || reg.acces_protege === 1 || reg.acces_protege === '1';
+}
+
+
+function filArianeActivite(activite, suite) {
+    const crumbs = [
+        { label: 'Tableau de bord', href: '/' },
+        { label: (activite && activite.nom) ? activite.nom : 'Activité', href: activite && activite.id ? '/activites/' + activite.id : undefined }
+    ];
+    if (suite) {
+        if (Array.isArray(suite)) crumbs.push(...suite);
+        else crumbs.push(suite);
+    }
+    // Dernier élément sans lien (page courante)
+    if (crumbs.length) {
+        const last = crumbs[crumbs.length - 1];
+        if (last.href && !suite) delete last.href;
+        else if (suite) delete crumbs[crumbs.length - 1].href;
+    }
+    return crumbs;
+}
+
+
 const { requireLogin, peutFaire } = require('../middlewares/requireLogin');
 
 // Garde-fou serveur en plus du bouton masqué côté vue : empêche d'atteindre
@@ -39,6 +86,10 @@ router.post('/:id/favori', async (req, res) => {
 
 // Formulaire de création
 router.get('/nouveau', (req, res) => {
+    res.locals.breadcrumbs = [
+        { label: 'Tableau de bord', href: '/' },
+        { label: 'Nouvelle activité' }
+    ];
     res.render('activite/form', { titre: 'Nouvelle activité', activite: null, erreur: null });
 });
 
@@ -101,11 +152,25 @@ router.get('/:id', async (req, res, next) => {
                 : resp.data.filter(o => o.active);
         }
 
+        // Activité protégée par clé d'accès
+        // Seul l'ADMIN global contourne la clé. Les autres (même créateur / droits read) doivent la saisir.
+        if (estActiviteProtegee(activite) && !estAdminSession(req) && !activiteDebloquee(req, activite.id)) {
+            res.locals.breadcrumbs = filArianeActivite(activite, { label: 'Accès' });
+            return res.render('activite/deverrouiller', {
+                titre: 'Activité protégée',
+                activite: {
+                    id: activite.id,
+                    nom: activite.nom,
+                    acces_protege: true,
+                    acces_indice: activite.acces_indice || (activite.reglages && activite.reglages.acces_indice) || null
+                },
+                erreur: null,
+                retour: req.originalUrl
+            });
+        }
+
         res.locals.page = 'activite';
-        res.locals.breadcrumbs = [
-            { label: 'Tableau de bord', href: '/' },
-            { label: activite.nom }
-        ];
+        res.locals.breadcrumbs = filArianeActivite(activite);
         res.render('activite/detail', {
             titre: activite.nom,
             activite,
@@ -125,6 +190,7 @@ router.get('/:id/modifier', async (req, res, next) => {
     try {
         const api = apiClient(req);
         const { data: activite } = await api.get(`/activites/${req.params.id}`);
+        res.locals.breadcrumbs = filArianeActivite(activite, { label: 'Modifier' });
         res.render('activite/form', { titre: 'Modifier l\'activité', activite, erreur: null });
     } catch (err) {
         next(err);
@@ -138,9 +204,11 @@ router.post('/:id/modifier', uploadLogo.single('logo'), async (req, res) => {
         await api.put(`/activites/${req.params.id}`, { ...req.body, logo });
         res.redirect(`/activites/${req.params.id}`);
     } catch (err) {
+        const activiteErr = { id: req.params.id, ...req.body };
+        res.locals.breadcrumbs = filArianeActivite(activiteErr, { label: 'Modifier' });
         res.render('activite/form', {
             titre: "Modifier l'activité",
-            activite: { id: req.params.id, ...req.body },
+            activite: activiteErr,
             erreur: err.response?.data?.message || 'Erreur lors de la modification.'
         });
     }
@@ -262,6 +330,10 @@ router.get('/:id/reglages', async (req, res, next) => {
     try {
         const api = apiClient(req);
         const { data: activite } = await api.get(`/activites/${req.params.id}`);
+        if (estActiviteProtegee(activite) && !estAdminSession(req) && !activiteDebloquee(req, activite.id)) {
+            return res.redirect(`/activites/${activite.id}/deverrouiller?retour=${encodeURIComponent(req.originalUrl)}`);
+        }
+        res.locals.breadcrumbs = filArianeActivite(activite, { label: 'Réglages' });
         res.render('activite/reglages', { titre: 'Réglages — ' + activite.nom, activite, erreur: null, succes: null });
     } catch (err) { next(err); }
 });
@@ -270,6 +342,7 @@ router.post('/:id/reglages', async (req, res, next) => {
     try {
         const api = apiClient(req);
         const body = { ...req.body };
+        body.acces_protege = req.body.acces_protege === 'true' || req.body.acces_protege === 'on';
         // normaliser selects inherit
         const keys = ['credentials_actifs','surveillance_active','tickets_actifs','partage_outils','export_autorise','diagnostic_actif','mdp_complexite'];
         for (const k of keys) {
@@ -280,6 +353,7 @@ router.post('/:id/reglages', async (req, res, next) => {
         if (body.mdp_longueur_min === '') body.mdp_longueur_min = null;
         if (body.max_tentatives_connexion === '') body.max_tentatives_connexion = null;
         const { data: activite } = await api.put(`/activites/${req.params.id}/reglages`, body);
+        res.locals.breadcrumbs = filArianeActivite(activite, { label: 'Réglages' });
         res.render('activite/reglages', { titre: 'Réglages — ' + activite.nom, activite, erreur: null, succes: 'Réglages enregistrés.' });
     } catch (err) {
         try {
@@ -297,5 +371,55 @@ router.post('/:id/reglages', async (req, res, next) => {
 
 
 
+
+
+router.get('/:id/deverrouiller', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const { data: activite } = await api.get(`/activites/${req.params.id}`);
+        if (!estActiviteProtegee(activite)) return res.redirect(`/activites/${req.params.id}`);
+        if (estAdminSession(req) || activiteDebloquee(req, activite.id)) {
+            return res.redirect(req.query.retour || `/activites/${req.params.id}`);
+        }
+        res.locals.breadcrumbs = filArianeActivite(activite, { label: 'Accès' });
+        res.render('activite/deverrouiller', {
+            titre: 'Activité protégée',
+            activite: {
+                id: activite.id,
+                nom: activite.nom,
+                acces_protege: true,
+                acces_indice: activite.acces_indice || (activite.reglages && activite.reglages.acces_indice) || null
+            },
+            erreur: null,
+            retour: req.query.retour || `/activites/${req.params.id}`
+        });
+    } catch (err) { next(err); }
+});
+
+router.post('/:id/deverrouiller', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        await api.post(`/activites/${req.params.id}/verifier-acces`, { cle: req.body.cle });
+        marquerDebloquee(req, req.params.id);
+        return res.redirect(req.body.retour || `/activites/${req.params.id}`);
+    } catch (err) {
+        try {
+            const api = apiClient(req);
+            const { data: activite } = await api.get(`/activites/${req.params.id}`);
+            res.locals.breadcrumbs = filArianeActivite(activite, { label: 'Accès' });
+            res.render('activite/deverrouiller', {
+                titre: 'Activité protégée',
+                activite: {
+                    id: activite.id,
+                    nom: activite.nom,
+                    acces_protege: true,
+                    acces_indice: activite.acces_indice || (activite.reglages && activite.reglages.acces_indice) || null
+                },
+                erreur: (err.response && err.response.data && err.response.data.message) || 'Clé d\'accès incorrecte.',
+                retour: req.body.retour || `/activites/${req.params.id}`
+            });
+        } catch (e) { next(err); }
+    }
+});
 
 module.exports = router;

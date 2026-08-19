@@ -1,4 +1,4 @@
-const { Utilisateur, Role, SousActivite, UtilisateurActivite, UtilisateurSousActivite } = require('../models');
+const { Utilisateur, Role, SousActivite, UtilisateurActivite, UtilisateurSousActivite, UtilisateurRole } = require('../models');
 
 /**
  * Vérifie que l'utilisateur est connecté (session active) et attache
@@ -11,13 +11,26 @@ async function requireAuth(req, res, next) {
         }
 
         const user = await Utilisateur.findByPk(req.session.userId, {
-            include: [{ model: Role }]
+            include: [
+                { model: Role },
+                { model: Role, as: 'Roles' }
+            ]
         });
 
         if (!user) {
             req.session.destroy(() => {});
             return res.status(401).json({ message: 'Session invalide, veuillez vous reconnecter.' });
         }
+
+        // Liste effective des rôles (principal + secondaires)
+        const roles = [];
+        if (user.Role) roles.push(user.Role);
+        if (user.Roles && user.Roles.length) {
+            user.Roles.forEach(r => {
+                if (!roles.some(x => x.id === r.id)) roles.push(r);
+            });
+        }
+        user.rolesEffectifs = roles;
 
         req.currentUser = user;
         next();
@@ -31,7 +44,27 @@ async function requireAuth(req, res, next) {
  * peut toujours tout faire, sans passer par le détail des permissions.
  */
 function isAdmin(user) {
-    return !!user && !!user.Role && user.Role.abbreviation === 'ADMIN';
+    if (!user) return false;
+    if (user.Role && user.Role.abbreviation === 'ADMIN') return true;
+    if (user.rolesEffectifs && user.rolesEffectifs.some(r => r.abbreviation === 'ADMIN')) return true;
+    if (user.Roles && user.Roles.some(r => r.abbreviation === 'ADMIN')) return true;
+    return false;
+}
+
+/**
+ * Permission effective multi-rôles : le REFUS l'emporte.
+ * L'action n'est autorisée que si TOUS les rôles de l'utilisateur l'accordent
+ * (intersection). Un seul rôle sans la case cochée = accès refusé.
+ */
+function userHasPermission(user, resource, action) {
+    if (!user) return false;
+    if (isAdmin(user)) return true;
+    const roles = user.rolesEffectifs || (user.Role ? [user.Role] : []);
+    if (!roles.length) return false;
+    return roles.every(role => {
+        const perms = normaliserPermissions(role.permissions);
+        return !!(perms[resource] && perms[resource][action]);
+    });
 }
 
 /**
@@ -65,26 +98,14 @@ function checkPermission(resource, action) {
             return res.status(401).json({ message: 'Non authentifié.' });
         }
 
-        if (isAdmin(user)) {
+        if (userHasPermission(user, resource, action)) {
             return next();
         }
 
-        const permissions = normaliserPermissions(user.Role.permissions);
-        const resourcePerms = permissions[resource] || {};
+        const message = `Accès refusé : action "${action}" non autorisée sur "${resource}" (refus prioritaire en multi-rôles).`;
 
-        if (resourcePerms[action]) {
-            return next();
-        }
-
-        const message = `Accès refusé : action "${action}" non autorisée sur "${resource}".`;
-
-        // En dev, on donne un indice concret pour diagnostiquer rapidement
-        // un rôle mal configuré (case à cocher oubliée, rôle non re-seedé...).
         if (process.env.NODE_ENV !== 'production') {
-            console.warn(
-                `[checkPermission] refusé pour ${user.matricule} (rôle "${user.Role.nom}") sur ${resource}.${action} — permissions actuelles :`,
-                JSON.stringify(permissions[resource] || 'aucune entrée pour cette ressource')
-            );
+            console.warn(`[checkPermission] refusé pour ${user.matricule} sur ${resource}.${action}`);
         }
 
         return res.status(403).json({ message });
@@ -223,6 +244,7 @@ function checkAccesLectureSousActivite() {
 }
 
 module.exports = {
+    userHasPermission,
     requireAuth,
     isAdmin,
     checkPermission,

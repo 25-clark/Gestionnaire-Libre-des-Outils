@@ -229,9 +229,14 @@ router.get('/:id', async (req, res, next) => {
         // rester simple — l'assignation "au bon périmètre" reste au jugement
         // de qui assigne).
         let utilisateurs = [];
+        let roles = [];
         if (peutFaire(req.session.user, 'tickets', 'update') || estAdmin(req.session.user)) {
-            const resp = await api.get('/utilisateurs');
-            utilisateurs = resp.data;
+            const [uRes, rRes] = await Promise.all([
+                api.get('/utilisateurs'),
+                api.get('/roles').catch(() => ({ data: [] }))
+            ]);
+            utilisateurs = uRes.data || [];
+            roles = rRes.data || [];
         }
 
         res.locals.breadcrumbs = [
@@ -244,6 +249,7 @@ router.get('/:id', async (req, res, next) => {
             titre: `#${ticket.id} ${ticket.titre}`,
             ticket,
             utilisateurs,
+            roles,
             LIBELLES_STATUT,
             LIBELLES_PRIORITE,
             erreur: null
@@ -254,7 +260,28 @@ router.get('/:id', async (req, res, next) => {
 router.post('/:id/modifier', async (req, res, next) => {
     try {
         const api = apiClient(req);
-        await api.put(`/tickets/${req.params.id}`, req.body);
+        const body = { ...req.body };
+        // Multi-select HTML → tableaux
+        if (body.assignees_users && !Array.isArray(body.assignees_users)) {
+            body.assignees_users = [body.assignees_users];
+        }
+        if (body.assignees_roles && !Array.isArray(body.assignees_roles)) {
+            body.assignees_roles = [body.assignees_roles];
+        }
+        if (Array.isArray(body.assignees_users)) {
+            body.id_assigne = body.assignees_users[0] || null;
+        }
+        await api.put(`/tickets/${req.params.id}`, body);
+        res.redirect(`/tickets/${req.params.id}`);
+    } catch (err) { next(err); }
+});
+
+router.post('/:id/messages/:messageId/modifier', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        await api.put(`/tickets/${req.params.id}/messages/${req.params.messageId}`, {
+            contenu: req.body.contenu
+        });
         res.redirect(`/tickets/${req.params.id}`);
     } catch (err) { next(err); }
 });

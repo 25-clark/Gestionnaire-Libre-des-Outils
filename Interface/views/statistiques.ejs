@@ -57,7 +57,7 @@
  <span style="color:var(--gris);"><%= r.total %></span>
  </div>
  <div style="background:var(--gris-clair); border-radius:6px; height:8px; overflow:hidden;">
- <div style="background:var(--bleu); height:100%; width:<%= maxRole ? Math.round((r.total / maxRole) * 100) : 0 %>%;"></div>
+ <div class="barre-stat" style="width:<%= maxRole ? Math.round((r.total / maxRole) * 100) : 0 %>%"></div>
  </div>
  </div>
  <% }) %>

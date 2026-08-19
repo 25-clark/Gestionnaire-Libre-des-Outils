@@ -17,12 +17,18 @@ const Ticket = require('./Ticket')(sequelize);
 const TicketMessage = require('./TicketMessage')(sequelize);
 const TicketImage = require('./TicketImage')(sequelize);
 const UtilisateurOutilCredential = require('./UtilisateurOutilCredential')(sequelize);
+const UtilisateurRole = require('./UtilisateurRole')(sequelize);
 
 // ========================= ASSOCIATIONS =========================
 
 // ---- Role <-> Utilisateur ----
 Role.hasMany(Utilisateur, { foreignKey: 'id_role' });
 Utilisateur.belongsTo(Role, { foreignKey: 'id_role' });
+// Rôles multiples (table de liaison)
+Utilisateur.belongsToMany(Role, { through: UtilisateurRole, foreignKey: 'id_user', otherKey: 'id_role', as: 'Roles' });
+Role.belongsToMany(Utilisateur, { through: UtilisateurRole, foreignKey: 'id_role', otherKey: 'id_user', as: 'UtilisateursMulti' });
+UtilisateurRole.belongsTo(Utilisateur, { foreignKey: 'id_user' });
+UtilisateurRole.belongsTo(Role, { foreignKey: 'id_role' });
 
 // ---- Utilisateur <-> Activite (création) ----
 // Une activité appartient à l'utilisateur qui l'a créée.
@@ -149,6 +155,7 @@ Outil.hasMany(UtilisateurOutilCredential, { foreignKey: 'id_outil', as: 'credent
 UtilisateurOutilCredential.belongsTo(Outil, { foreignKey: 'id_outil' });
 
 module.exports = {
+    UtilisateurRole,
     sequelize,
     Role,
     Utilisateur,

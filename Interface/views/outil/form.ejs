@@ -1,27 +1,30 @@
 <%- include('../partials/header') %>
+<% var estEdition = !!(typeof outil !== 'undefined' && outil && outil.id); %>
 <div class="entete-page"><h1><%= titre %></h1></div>
 
 <div class="carte" style="max-width:560px;">
  <% if (erreur) { %>
  <div class="message-erreur"><%= erreur %></div>
  <% } %>
+ <% if (!estEdition) { %>
  <p style="color:var(--gris); font-size:13px; margin-top:-4px;">
- En cas d'erreur de saisie, il faudra supprimer puis recréer l'outil (pas de modification possible,
- seule l'activation/désactivation et les credentials sont modifiables).
+ Renseignez le nom de l'outil ainsi que, le cas échéant, son URL d'accès et son adresse réseau (IP ou nom d'hôte) pour le diagnostic.
  </p>
+ <% } %>
 
- <form action="/outils" method="POST" enctype="multipart/form-data" id="form-outil">
+ <form action="<%= estEdition ? '/outils/' + outil.id + '/modifier' : '/outils' %>" method="POST" enctype="multipart/form-data" id="form-outil">
  <input type="hidden" name="id_activite" value="<%= id_activite %>">
- <input type="hidden" name="credentials" id="credentials-json" value="[]">
+ <input type="hidden" name="retour" value="<%= typeof retour !== 'undefined' ? retour : '/' %>">
+ <% if (!estEdition) { %><input type="hidden" name="credentials" id="credentials-json" value="[]"><% } %>
 
  <label for="nom">Nom de l'outil</label>
- <input type="text" id="nom" name="nom" required>
+ <input type="text" id="nom" name="nom" required value="<%= estEdition ? (outil.nom || '') : '' %>">
 
  <label for="lien">Lien (optionnel)</label>
- <input type="url" id="lien" name="lien" placeholder="https://...">
+ <input type="url" id="lien" name="lien" placeholder="https://..." value="<%= estEdition ? (outil.lien || '') : '' %>">
 
  <label for="adresse">Adresse IP / nom d'hôte (optionnel)</label>
- <input type="text" id="adresse" name="adresse" placeholder="192.168.1.10 ou routeur.local">
+ <input type="text" id="adresse" name="adresse" placeholder="192.168.1.10 ou routeur.local" value="<%= estEdition ? (outil.adresse || '') : '' %>">
  <p style="color:var(--gris); font-size:13px; margin-top:-6px;">
  Permet de tester la joignabilité de l'outil (ping, traceroute...) depuis l'onglet Diagnostic réseau.
  </p>
@@ -55,7 +58,7 @@
  <% } %>
 
  <div class="actions-form" style="margin-top:18px;">
- <button type="submit" class="btn btn-primaire">Créer</button>
+ <button type="submit" class="btn btn-primaire"><%= estEdition ? "Enregistrer" : "Créer" %></button>
  <a href="<%= id_activite ? '/activites/' + id_activite + '?onglet=outils' : '/' %>" class="btn btn-gris">Annuler</a>
  </div>
  </form>

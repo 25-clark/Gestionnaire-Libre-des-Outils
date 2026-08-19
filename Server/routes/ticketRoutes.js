@@ -13,6 +13,7 @@ router.post('/:id/escalader', checkPermission('tickets', 'update'), ticketContro
 router.put('/:id', ticketController.update); // droits vérifiés dans le contrôleur (créateur/assigné/permission)
 router.delete('/:id', checkPermission('tickets', 'delete'), ticketController.remove);
 
-router.post('/:id/messages', ticketController.ajouterMessage); // droits vérifiés dans le contrôleur
+router.post('/:id/messages', ticketController.ajouterMessage);
+router.put('/:id/messages/:messageId', ticketController.modifierMessage);
 
 module.exports = router;

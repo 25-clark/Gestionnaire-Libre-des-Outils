@@ -17,7 +17,10 @@ function requireLogin(req, res, next) {
 // Permet de cacher/afficher des boutons dans les vues selon le rôle,
 // sans bloquer l'accès (le blocage réel est fait par le Server/API).
 function estAdmin(user) {
-    return !!user && !!user.Role && user.Role.abbreviation === 'ADMIN';
+    if (!user) return false;
+    if (user.Role && user.Role.abbreviation === 'ADMIN') return true;
+    const extra = user.Roles || user.rolesEffectifs || [];
+    return extra.some(r => r && r.abbreviation === 'ADMIN');
 }
 
 /**
@@ -30,14 +33,27 @@ function estAdmin(user) {
  */
 function peutFaire(user, resource, action) {
     if (estAdmin(user)) return true;
-    if (!user || !user.Role || !user.Role.permissions) return false;
+    if (!user) return false;
 
-    let permissions = user.Role.permissions;
-    if (typeof permissions === 'string') {
-        try { permissions = JSON.parse(permissions); } catch { return false; }
+    // Multi-rôles : intersection (refus > accord)
+    const roles = [];
+    if (user.Role) roles.push(user.Role);
+    if (user.Roles && Array.isArray(user.Roles)) {
+        user.Roles.forEach(r => { if (!roles.some(x => x.id === r.id)) roles.push(r); });
     }
+    if (user.rolesEffectifs && Array.isArray(user.rolesEffectifs)) {
+        user.rolesEffectifs.forEach(r => { if (!roles.some(x => x.id === r.id)) roles.push(r); });
+    }
+    if (!roles.length) return false;
 
-    return !!(permissions[resource] && permissions[resource][action]);
+    return roles.every(role => {
+        let permissions = role.permissions;
+        if (!permissions) return false;
+        if (typeof permissions === 'string') {
+            try { permissions = JSON.parse(permissions); } catch { return false; }
+        }
+        return !!(permissions[resource] && permissions[resource][action]);
+    });
 }
 
 module.exports = { requireLogin, estAdmin, peutFaire };

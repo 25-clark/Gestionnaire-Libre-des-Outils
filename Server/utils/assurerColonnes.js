@@ -88,6 +88,20 @@ async function assurerColonnes() {
     await ajouterColonne('parametres', 'totp_disponible', 'TINYINT(1) NOT NULL DEFAULT 1');
     await ajouterColonne('parametres', 'totp_obligatoire', 'TINYINT(1) NOT NULL DEFAULT 0');
 
+
+    await ajouterColonne('tickets', 'assignees_users', 'JSON NULL');
+    await ajouterColonne('tickets', 'assignees_roles', 'JSON NULL');
+    try {
+        await sequelize.query(`CREATE TABLE IF NOT EXISTS utilisateur_roles (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            id_user INT NOT NULL,
+            id_role INT NOT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_user_role (id_user, id_role)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`);
+    } catch (e) { console.warn('[schema] utilisateur_roles', e.message); }
+
     console.log('[schema] Vérification des colonnes terminée.');
 }
 

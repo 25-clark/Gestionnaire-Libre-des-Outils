@@ -46,10 +46,23 @@
  <% var peutIdentite = peut('profil', 'update_identite') || peut('utilisateurs', 'update'); %>
  <input type="text" id="matricule" name="matricule" value="<%= user.matricule || '' %>" <%= peutIdentite ? '' : 'disabled readonly' %> class="<%= peutIdentite ? '' : 'champ-lecture' %>">
 
- <label for="role_affiche">Rôle</label>
+ <label for="role_affiche">Rôle principal</label>
  <select id="role_affiche" disabled class="champ-lecture">
- <option selected><%= user.Role ? (user.Role.nom + ' (' + user.Role.abbreviation + ')') : '—' %></option>
+ <option selected><%= user.Role ? (user.Role.nom + (user.Role.abbreviation ? ' (' + user.Role.abbreviation + ')' : '')) : '—' %></option>
  </select>
+ <% var rolesAdd = (user.Roles || []).filter(function(r) {
+      return !user.Role || r.id !== user.Role.id;
+    }); %>
+ <% if (rolesAdd.length) { %>
+ <label style="margin-top:10px;">Rôles additionnels</label>
+ <div class="roles-chips" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">
+  <% rolesAdd.forEach(function(r) { %>
+  <span class="role-chip role-chip-readonly">
+    <span class="role-chip-label"><%= r.nom %><% if (r.abbreviation) { %> <em>(<%= r.abbreviation %>)</em><% } %></span>
+  </span>
+  <% }) %>
+ </div>
+ <% } %>
 
  <label for="nom_affiche">Nom</label>
  <input type="text" id="nom" name="nom" value="<%= user.nom || '' %>" <%= peutIdentite ? '' : 'disabled readonly' %> class="<%= peutIdentite ? '' : 'champ-lecture' %>">

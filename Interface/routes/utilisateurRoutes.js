@@ -120,12 +120,15 @@ router.get('/:id/modifier', async (req, res, next) => {
 router.post('/:id/modifier', async (req, res, next) => {
     try {
         const api = apiClient(req);
+        let id_roles = req.body.id_roles;
+        if (id_roles && !Array.isArray(id_roles)) id_roles = [id_roles];
         await api.put(`/utilisateurs/${req.params.id}`, {
             matricule: req.body.matricule,
             nom: req.body.nom,
             prenom: req.body.prenom,
             id_role: req.body.id_role,
-            id_activite: req.body.id_activite || null
+            id_activite: req.body.id_activite || null,
+            id_roles: id_roles || []
         });
         const retour = req.body.id_activite
             ? `/activites/${req.body.id_activite}?onglet=utilisateurs`

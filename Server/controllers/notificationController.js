@@ -40,4 +40,13 @@ async function marquerToutesLues(req, res, next) {
     } catch (err) { next(err); }
 }
 
-module.exports = { getAll, nombreNonLues, marquerLue, marquerToutesLues };
+
+async function vider(req, res, next) {
+    try {
+        await Notification.destroy({ where: { id_user: req.currentUser.id } });
+        res.json({ message: 'Toutes les notifications ont été supprimées.' });
+    } catch (err) { next(err); }
+}
+
+module.exports = { getAll, nombreNonLues, marquerLue, marquerToutesLues, vider };
+

@@ -90,6 +90,34 @@
                value="<%= loc.message_info || '' %>"
                placeholder="Ex. Maintenance planifiée vendredi — privilégier les tickets urgents">
 
+        
+        <h2 style="font-size:15px; color:var(--bleu-fonce); margin-top:22px;"><i class="bi bi-shield-lock"></i> Sécurité d’accès</h2>
+        <p style="color:var(--gris); font-size:13px;">
+            Protégez cette activité par une <strong>clé d’accès</strong>.
+            Elle s’ajoute aux droits déjà accordés (rôle + appartenance à l’activité) : même un utilisateur
+            autorisé à voir l’activité devra saisir la clé. Seul le rôle <strong>ADMIN</strong> contourne cette protection.
+            La clé est stockée sous forme de hash (jamais en clair).
+        </p>
+        <label style="display:flex; align-items:center; gap:8px; font-weight:500; cursor:pointer;">
+            <input type="checkbox" name="acces_protege" id="acces_protege" value="true"
+                <%= loc.acces_protege === true || loc.acces_protege === 'true' ? 'checked' : '' %>>
+            Exiger une clé d’accès pour ouvrir cette activité
+        </label>
+        <% var cleVisible = (loc.acces_protege === true || loc.acces_protege === 'true'); %>
+        <div id="bloc-cle-acces" class="<%= cleVisible ? '' : 'est-masque' %>" style="margin-top:10px;">
+            <label for="acces_cle">Clé d’accès <% if (loc.acces_hash || loc.acces_protege) { %><span style="font-weight:400;color:var(--gris);">(laisser vide pour conserver l’actuelle)</span><% } %></label>
+            <input type="password" id="acces_cle" name="acces_cle" autocomplete="new-password" placeholder="••••••••">
+            <label for="acces_indice">Indice (optionnel)</label>
+            <input type="text" id="acces_indice" name="acces_indice" value="<%= loc.acces_indice || '' %>" placeholder="Ex. code équipe Q3">
+        </div>
+        <script>
+        (function(){
+          var cb = document.getElementById('acces_protege');
+          var bloc = document.getElementById('bloc-cle-acces');
+          if (cb && bloc) cb.addEventListener('change', function(){ bloc.classList.toggle('est-masque', !cb.checked); });
+        })();
+        </script>
+
         <div class="actions-form">
             <button type="submit" class="btn btn-primaire">Enregistrer les réglages</button>
             <a href="/activites/<%= activite.id %>" class="btn btn-gris">Retour</a>

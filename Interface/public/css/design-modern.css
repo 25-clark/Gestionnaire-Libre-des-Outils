@@ -708,3 +708,89 @@ body.theme-sombre .fil-ariane .fil-actuel {
 }
 .fil-ariane .fil-muted { opacity: 0.85; }
 .fil-ariane .sep { margin: 0 6px; opacity: 0.6; }
+
+.outil-selectable {
+  cursor: pointer;
+  transition: box-shadow .15s, border-color .15s, transform .12s;
+}
+.outil-selectable.selectionne {
+  border-color: var(--primary, #3b82f6) !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.35);
+}
+.outils-actions-barre {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--gris-clair, #f8fafc);
+  border-radius: 10px;
+  border: 1px solid var(--gris-bordure, #e2e8f0);
+}
+
+/* Pastilles de rôles additionnels */
+.roles-chips { align-items: center; }
+.role-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px 5px 12px;
+  border-radius: 999px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e3a5f;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+.role-chip em {
+  font-style: normal;
+  opacity: 0.7;
+  font-weight: 400;
+}
+.role-chip-x {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 2px;
+  border-radius: 50%;
+}
+.role-chip-x:hover {
+  color: #b91c1c;
+  background: rgba(185, 28, 28, 0.08);
+}
+.role-chip-readonly {
+  padding-right: 12px;
+}
+body.theme-sombre .role-chip {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.35);
+  color: #e2e8f0;
+}
+
+.est-masque { display: none !important; }
+.notif-item.notif-sep { border-bottom: 1px solid var(--gris-bordure, #e2e8f0); }
+.notif-btn {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 14px 16px;
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.notif-btn.notif-non-lue { background: #f0f6ff; }
+.notif-msg {
+  display: block;
+  font-size: 14px;
+  color: var(--gris-fonce, #333);
+}
+.notif-msg-bold { font-weight: 600; }
+body.theme-sombre .notif-btn.notif-non-lue { background: rgba(59, 130, 246, 0.12); }
+
+.barre-stat { background: var(--bleu, #2563eb); height: 100%; border-radius: 4px; }

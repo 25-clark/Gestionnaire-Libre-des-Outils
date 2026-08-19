@@ -1,4 +1,5 @@
 <%- include('../partials/header') %>
+<% var utilisateur = typeof utilisateur !== 'undefined' ? utilisateur : null; %>
 <% var estEdition = !!(utilisateur && utilisateur.id); %>
 <div class="entete-page"><h1><%= titre %></h1></div>
 
@@ -8,7 +9,7 @@
  <% } %>
  <% if (!estEdition) { %>
  <p style="color:var(--gris); font-size:13px; margin-top:-4px;">
- Un mot de passe par défaut lui sera attribué (voir Réglages) ; il devra le changer à sa première connexion.
+ Un mot de passe temporaire sera attribué automatiquement (configurable dans Réglages généraux). L'utilisateur devra le modifier lors de sa première connexion.
  </p>
  <% } %>
 
@@ -23,13 +24,120 @@
  <label for="prenom">Prénom</label>
  <input type="text" id="prenom" name="prenom" required value="<%= estEdition ? utilisateur.prenom : '' %>">
 
- <label for="id_role">Rôle</label>
+ <label for="id_role">Rôle principal</label>
  <select id="id_role" name="id_role" required>
  <option value="">— Choisir un rôle —</option>
  <% roles.forEach(function(r) { %>
  <option value="<%= r.id %>" <%= estEdition && String(utilisateur.id_role) === String(r.id) ? 'selected' : '' %>><%= r.nom %></option>
  <% }) %>
  </select>
+ <label for="select-role-extra">Rôles additionnels <span style="font-weight:400;color:var(--gris);">(optionnel)</span></label>
+ <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+   <select id="select-role-extra" style="flex:1; min-width:180px;">
+     <option value="">— Ajouter un rôle —</option>
+     <% roles.forEach(function(r) { %>
+     <option value="<%= r.id %>" data-nom="<%= r.nom %>" data-abbr="<%= r.abbreviation || '' %>"><%= r.nom %><%= r.abbreviation ? ' (' + r.abbreviation + ')' : '' %></option>
+     <% }) %>
+   </select>
+   <button type="button" class="btn btn-gris btn-petit" id="btn-ajouter-role" title="Ajouter ce rôle">
+     <i class="bi bi-plus-lg"></i> Ajouter
+   </button>
+ </div>
+ <div id="roles-extra-chips" class="roles-chips" style="margin-top:10px; display:flex; flex-wrap:wrap; gap:8px; min-height:8px;"></div>
+ <div id="roles-extra-inputs"></div>
+ <% var rolesExtraInit = [];
+    if (estEdition && utilisateur.Roles && utilisateur.Roles.length) {
+      utilisateur.Roles.forEach(function(r) {
+        if (String(r.id) !== String(utilisateur.id_role)) {
+          rolesExtraInit.push({ id: r.id, nom: r.nom, abbreviation: r.abbreviation || '' });
+        }
+      });
+    }
+ %>
+ <script>
+ (function () {
+   var select = document.getElementById('select-role-extra');
+   var btn = document.getElementById('btn-ajouter-role');
+   var chips = document.getElementById('roles-extra-chips');
+   var inputs = document.getElementById('roles-extra-inputs');
+   var principal = document.getElementById('id_role');
+   var roles = {};
+
+   function syncInputs() {
+     inputs.innerHTML = '';
+     Object.keys(roles).forEach(function (id) {
+       var inp = document.createElement('input');
+       inp.type = 'hidden';
+       inp.name = 'id_roles';
+       inp.value = id;
+       inputs.appendChild(inp);
+     });
+   }
+
+   function render() {
+     chips.innerHTML = '';
+     Object.keys(roles).forEach(function (id) {
+       var r = roles[id];
+       var chip = document.createElement('span');
+       chip.className = 'role-chip';
+       chip.innerHTML = '<span class="role-chip-label">' + (r.nom || '') +
+         (r.abbreviation ? ' <em>(' + r.abbreviation + ')</em>' : '') +
+         '</span><button type="button" class="role-chip-x" data-id="' + id + '" title="Retirer" aria-label="Retirer">&times;</button>';
+       chips.appendChild(chip);
+     });
+     // Masquer dans le select les rôles déjà choisis + le principal
+     var pid = principal ? principal.value : '';
+     Array.prototype.forEach.call(select.options, function (opt) {
+       if (!opt.value) return;
+       opt.disabled = !!roles[opt.value] || opt.value === pid;
+     });
+     syncInputs();
+   }
+
+   function ajouter(id, nom, abbreviation) {
+     if (!id) return;
+     if (principal && String(id) === String(principal.value)) {
+       alert('Ce rôle est déjà le rôle principal.');
+       return;
+     }
+     if (roles[id]) return;
+     roles[id] = { id: id, nom: nom, abbreviation: abbreviation || '' };
+     select.value = '';
+     render();
+   }
+
+   btn.addEventListener('click', function () {
+     var opt = select.options[select.selectedIndex];
+     if (!opt || !opt.value) return;
+     ajouter(opt.value, opt.getAttribute('data-nom') || opt.text, opt.getAttribute('data-abbr') || '');
+   });
+
+   chips.addEventListener('click', function (e) {
+     var b = e.target.closest('.role-chip-x');
+     if (!b) return;
+     delete roles[b.getAttribute('data-id')];
+     render();
+   });
+
+   if (principal) {
+     principal.addEventListener('change', function () {
+       var pid = principal.value;
+       if (pid && roles[pid]) delete roles[pid];
+       render();
+     });
+   }
+
+   // Initialisation depuis le serveur
+   var init = <%= JSON.stringify(rolesExtraInit) %>;
+   (init || []).forEach(function (r) {
+     if (r && r.id) roles[String(r.id)] = { id: String(r.id), nom: r.nom, abbreviation: r.abbreviation || '' };
+   });
+   render();
+ })();
+ </script>
+ <p style="font-size:12px;color:var(--gris);margin-top:8px;">
+   Choisissez un rôle dans la liste puis cliquez sur <strong>Ajouter</strong>. En cas de conflit de permissions entre plusieurs rôles, le <strong>refus</strong> l’emporte.
+ </p>
 
  <label>Activité principale</label>
  <% if (activite && !estEdition) { %>

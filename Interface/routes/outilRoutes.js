@@ -287,5 +287,56 @@ router.post('/:id/maintenance', async (req, res, next) => {
 
 
 
+
+router.get('/:id/modifier', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const { data: outil } = await api.get(`/outils/${req.params.id}`);
+        const [{ data: activites }, { data: sousActivites }] = await Promise.all([
+            api.get('/activites'),
+            api.get('/sous-activites').catch(() => ({ data: [] }))
+        ]);
+        res.render('outil/form', {
+            titre: 'Modifier l\'outil',
+            outil,
+            activites,
+            sousActivites: sousActivites || [],
+            id_activite: (outil.activites && outil.activites[0]) ? outil.activites[0].id : '',
+            id_sous_activite: (outil.sousActivites && outil.sousActivites[0]) ? outil.sousActivites[0].id : '',
+            erreur: null,
+            retour: req.query.retour || req.get('Referer') || '/'
+        });
+    } catch (err) { next(err); }
+});
+
+router.post('/:id/modifier', uploadOutilImage.single('image'), async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const body = { ...req.body };
+        if (req.file) body.image = `/uploads/outils/${req.file.filename}`;
+        // Form may send activites as multi
+        if (body.activites && !Array.isArray(body.activites)) body.activites = [body.activites];
+        if (body.sousActivites && !Array.isArray(body.sousActivites)) body.sousActivites = [body.sousActivites];
+        await api.put(`/outils/${req.params.id}`, body);
+        res.redirect(req.body.retour || req.get('Referer') || '/');
+    } catch (err) {
+        try {
+            const api = apiClient(req);
+            const { data: outil } = await api.get(`/outils/${req.params.id}`);
+            const { data: activites } = await api.get('/activites');
+            res.render('outil/form', {
+                titre: 'Modifier l\'outil',
+                outil: { ...outil, ...req.body },
+                activites,
+                sousActivites: [],
+                id_activite: req.body.id_activite || '',
+                id_sous_activite: req.body.id_sous_activite || '',
+                erreur: err.response?.data?.message || 'Erreur',
+                retour: req.body.retour || '/'
+            });
+        } catch (e) { next(err); }
+    }
+});
+
 module.exports = router;
 

@@ -12,5 +12,7 @@ router.get('/', notificationController.getAll);
 router.get('/non-lues/nombre', notificationController.nombreNonLues);
 router.post('/:id/lue', notificationController.marquerLue);
 router.post('/toutes-lues', notificationController.marquerToutesLues);
+router.delete('/', notificationController.vider);
+router.post('/vider', notificationController.vider);
 
 module.exports = router;

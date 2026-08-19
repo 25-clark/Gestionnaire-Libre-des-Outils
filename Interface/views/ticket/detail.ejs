@@ -64,15 +64,48 @@
  <div class="carte vide">Aucun message pour l'instant.</div>
  <% } else { %>
  <div style="display:flex; flex-direction:column; gap:10px;">
- <% ticket.messages.forEach(function(m) { %>
- <div class="carte" style="padding:12px 16px;">
+ <% ticket.messages.forEach(function(m) {
+   var estAuteur = currentUser && m.id_user === currentUser.id;
+   var ageMs = Date.now() - new Date(m.createdAt).getTime();
+   var peutEditer = estAuteur && ageMs <= 5 * 60 * 1000;
+ %>
+ <div class="carte" style="padding:12px 16px;" data-message-id="<%= m.id %>">
  <p style="margin:0 0 6px; font-size:13px; color:var(--bleu-fonce); font-weight:600;">
  <%= m.Auteur ? m.Auteur.prenom + ' ' + m.Auteur.nom : 'Utilisateur supprimé' %>
  <span style="font-weight:400; color:var(--gris);"> · <%= new Date(m.createdAt).toLocaleString('fr-FR') %></span>
+ <% if (peutEditer) { %>
+ <button type="button" class="btn btn-gris btn-petit btn-edit-msg" style="margin-left:8px;" data-id="<%= m.id %>">Modifier</button>
+ <% } %>
  </p>
- <p style="margin:0; font-size:14px; white-space:pre-wrap;"><%= m.contenu %></p>
+ <p class="msg-contenu" style="margin:0; font-size:14px; white-space:pre-wrap;"><%= m.contenu %></p>
+ <form class="form-edit-msg" action="/tickets/<%= ticket.id %>/messages/<%= m.id %>/modifier" method="POST" hidden style="margin-top:8px;">
+  <textarea name="contenu" rows="3" required><%= m.contenu %></textarea>
+  <div class="actions-form">
+   <button type="submit" class="btn btn-primaire btn-petit">Enregistrer</button>
+   <button type="button" class="btn btn-gris btn-petit btn-cancel-edit">Annuler</button>
+  </div>
+ </form>
  </div>
  <% }) %>
+<script>
+document.querySelectorAll('.btn-edit-msg').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var card = btn.closest('.carte');
+    card.querySelector('.msg-contenu').hidden = true;
+    card.querySelector('.form-edit-msg').hidden = false;
+    btn.hidden = true;
+  });
+});
+document.querySelectorAll('.btn-cancel-edit').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var card = btn.closest('.carte');
+    card.querySelector('.msg-contenu').hidden = false;
+    card.querySelector('.form-edit-msg').hidden = true;
+    var editBtn = card.querySelector('.btn-edit-msg');
+    if (editBtn) editBtn.hidden = false;
+  });
+});
+</script>
  </div>
  <% } %>
 
@@ -105,19 +138,26 @@
  <% }) %>
  </select>
 
- <% if (utilisateurs.length) { %>
- <label for="id_assigne">Assigné à</label>
- <select id="id_assigne" name="id_assigne" onchange="this.form.submit()">
- <option value="">— Non assigné —</option>
- <% utilisateurs.forEach(function(u) { %>
- <option value="<%= u.id %>" <%= ticket.Assigne && ticket.Assigne.id === u.id ? 'selected' : '' %>><%= u.prenom %> <%= u.nom %></option>
+ <% var selUsers = Array.isArray(ticket.assignees_users) ? ticket.assignees_users.map(Number) : (ticket.Assigne ? [ticket.Assigne.id] : []); %>
+ <% var selRoles = Array.isArray(ticket.assignees_roles) ? ticket.assignees_roles.map(Number) : []; %>
+ <label for="assignees_users">Assigné aux utilisateurs</label>
+ <select id="assignees_users" name="assignees_users" multiple size="5" style="min-height:100px;">
+ <% (utilisateurs || []).forEach(function(u) { %>
+ <option value="<%= u.id %>" <%= selUsers.indexOf(u.id) >= 0 ? 'selected' : '' %>><%= u.prenom %> <%= u.nom %></option>
  <% }) %>
  </select>
- <% } else { %>
- <p style="font-size:13px; color:var(--gris); margin:10px 0 0;">
- Assigné à : <strong><%= ticket.Assigne ? ticket.Assigne.prenom + ' ' + ticket.Assigne.nom : 'Personne' %></strong>
- </p>
+ <p style="font-size:12px;color:var(--gris);">Maintenir Ctrl (ou Cmd) pour sélectionner plusieurs personnes.</p>
+ <% if (typeof roles !== 'undefined' && roles && roles.length) { %>
+ <label for="assignees_roles">Assigné aux rôles</label>
+ <select id="assignees_roles" name="assignees_roles" multiple size="4" style="min-height:80px;">
+ <% roles.forEach(function(r) { %>
+ <option value="<%= r.id %>" <%= selRoles.indexOf(r.id) >= 0 ? 'selected' : '' %>><%= r.nom %></option>
+ <% }) %>
+ </select>
  <% } %>
+ <div class="actions-form">
+ <button type="submit" class="btn btn-primaire btn-petit">Enregistrer l'assignation</button>
+ </div>
  </form>
  </div>
  </div>

@@ -1,266 +1,259 @@
 <% if (!outils.length) { %>
- <div class="carte vide"><%= typeof messageVide !== 'undefined' ? messageVide : "Aucun outil pour l'instant." %></div>
+<div class="carte vide"><%= typeof messageVide !== 'undefined' ? messageVide : "Aucun outil n'est disponible pour le moment." %></div>
 <% } else { %>
+<% var retourUrl = typeof retour !== 'undefined' ? retour : '/'; %>
 
- <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
- <div class="vue-switch">
- <button type="button" class="vue-btn" data-vue="liste"><i class="bi bi-list-ul"></i> Liste</button>
- <button type="button" class="vue-btn" data-vue="cartes"><i class="bi bi-grid"></i> Cartes</button>
- <button type="button" class="vue-btn" data-vue="vignettes">⬚ Vignettes</button>
- </div>
- </div>
+<div class="outils-toolbar-top" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+  <div class="vue-switch">
+    <button type="button" class="vue-btn" data-vue="liste"><i class="bi bi-list-ul"></i> Liste</button>
+    <button type="button" class="vue-btn" data-vue="cartes"><i class="bi bi-grid"></i> Cartes</button>
+    <button type="button" class="vue-btn" data-vue="vignettes"><i class="bi bi-grid-3x3-gap"></i> Vignettes</button>
+  </div>
+  <div id="outils-actions-barre" class="outils-actions-barre" hidden>
+    <span class="outils-sel-label" style="font-size:13px;color:var(--gris);margin-right:8px;">Outil sélectionné :</span>
+    <span id="outils-sel-nom" style="font-weight:600;margin-right:10px;"></span>
+    <div id="outils-sel-actions" style="display:inline-flex;flex-wrap:wrap;gap:6px;"></div>
+  </div>
+</div>
 
- <!-- Vue Liste -->
- <div class="vue-panneau" data-vue="liste">
- <div class="carte">
- <table class="tableau">
- <thead><tr><th></th><th>Nom</th><th>Lien</th><th>Propriétaire</th><th>Statut</th><th>Réseau</th><th></th></tr></thead>
- <tbody>
- <% outils.forEach(function(o) { %>
- <tr>
- <td><% if (o.image) { %><img src="<%= o.image %>" class="miniature"><% } %></td>
- <td><%= o.nom %><% if (o.en_derangement) { %> <span class="badge-derangement" title="<%= o.derangement_message || o.note_maintenance || 'Dérangement en cours' %>"><i class="bi bi-exclamation-triangle"></i> Maintenance</span><% } %></td>
- <td>
- <% if (o.lien) { %>
- <a href="<%= o.lien %>" target="_blank" rel="noopener" class="lien-ouvrir-outil"
- data-creds='<%= JSON.stringify(o.credentials || []).replace(/'/g, "&#39;") %>'>Ouvrir ↗</a>
- <% } else { %>—<% } %>
- <% var hasCreds = o.credentials && (Array.isArray(o.credentials) ? o.credentials.length : true); %>
- 
-                            <% var _ep = (typeof favorisOutilsIds !== 'undefined' && favorisOutilsIds.map(Number).indexOf(Number(o.id)) >= 0); %>
-<button type="button" class="btn btn-gris btn-petit btn-favori<%= _ep ? ' est-epingle' : '' %>" data-favori-type="outil" data-favori-id="<%= o.id %>" title="<%= _ep ? 'Retirer des épinglés' : 'Épingler' %>"><i class="bi <%= _ep ? 'bi-pin-angle-fill' : 'bi-pin-angle' %>"></i></button>
-                            <% if (peut('outils', 'update')) { %>
-                                <a href="/outils/<%= o.id %>/maintenance?retour=<%= encodeURIComponent(typeof retour !== 'undefined' ? retour : '/') %>" class="btn btn-gris btn-petit" title="Maintenance / dérangement"><i class="bi bi-tools"></i></a>
-                            <% } %>
-                            <% if (credentialsActifs && peut('credentials', 'read')) { %>
- <a href="/outils/<%= o.id %>/credentials?retour=<%= encodeURIComponent(retour) %>"
- class="btn btn-gris btn-petit" title="Credentials" style="margin-left:4px;"><i class="bi bi-key"></i> </a>
- <% } %>
- </td>
- <td><%= o.Utilisateur ? o.Utilisateur.prenom + ' ' + o.Utilisateur.nom : '—' %></td>
- <td>
- <% if (o.active) { %>
- <span class="pastille pastille-active">Actif</span>
- <% } else { %>
- <span class="pastille pastille-inactive">Désactivé</span>
- <% } %>
- </td>
- <td style="white-space:nowrap;">
- <%- include('statut-reseau', { o: o, retour: retour }) %>
- </td>
- <td style="text-align:right; white-space:nowrap;">
- <% if (peut('tickets', 'create')) { %>
- <a href="/tickets/nouveau?id_outil=<%= o.id %>" class="btn btn-gris btn-petit" title="Signaler un problème sur cet outil"><i class="bi bi-ticket-detailed"></i> Signaler</a>
- 
-                            <% if (peut('outils', 'update')) { %>
-                                <a href="/outils/<%= o.id %>/maintenance?retour=<%= encodeURIComponent(typeof retour !== 'undefined' ? retour : '/') %>" class="btn btn-gris btn-petit" title="Maintenance / dérangement"><i class="bi bi-tools"></i></a>
-                            <% } %>
-                            <% if (credentialsActifs && peut('credentials', 'read')) { %>
- <a href="/outils/<%= o.id %>/credentials?retour=<%= encodeURIComponent(retour) %>" class="btn btn-gris btn-petit" title="Credentials de l'outil"><i class="bi bi-key"></i> Credentials</a>
- <% } %>
- <% if (peut('partage', 'create') || peut('partage', 'delete')) { %>
- <a href="/outils/<%= o.id %>/partager?retour=<%= encodeURIComponent(retour) %>" class="btn btn-gris btn-petit" title="Partager cet outil"><i class="bi bi-link-45deg"></i> Partager</a>
- <% } %>
- <% } %>
- <% if (o.adresse) { %>
- <a href="/diagnostic?cible=<%= encodeURIComponent(o.adresse) %>" class="btn btn-gris btn-petit" title="Tester la connectivité de <%= o.adresse %>"><i class="bi bi-heart-pulse"></i> Tester</a>
- <% } %>
- <% if (peut('outils', 'update')) { %>
- <form action="/outils/<%= o.id %>/toggle-active" method="POST" class="form-inline">
- <input type="hidden" name="retour" value="<%= retour %>">
- <button type="submit" class="btn btn-gris btn-petit"><%= o.active ? 'Désactiver' : 'Activer' %></button>
- </form>
- <% } %>
- <% if (peut('outils', 'delete')) { %>
- <form action="/outils/<%= o.id %>/supprimer" method="POST" class="form-inline"
- onsubmit="return confirm('Supprimer cet outil ?');">
- <input type="hidden" name="retour" value="<%= retour %>">
- <button type="submit" class="btn btn-danger btn-petit">Supprimer</button>
- </form>
- <% } %>
- </td>
- </tr>
- <% }) %>
- </tbody>
- </table>
- </div>
- </div>
+<!-- Vue Liste -->
+<div class="vue-panneau" data-vue="liste">
+  <div class="carte">
+    <table class="tableau">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Nom</th>
+          <th>Lien</th>
+          <th>Propriétaire</th>
+          <th>Statut</th>
+          <th>Réseau</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% outils.forEach(function(o) {
+          var _ep = (typeof favorisOutilsIds !== 'undefined' && favorisOutilsIds.map(Number).indexOf(Number(o.id)) >= 0);
+        %>
+        <tr>
+          <td><% if (o.image) { %><img src="<%= o.image %>" class="miniature" alt=""><% } %></td>
+          <td>
+            <%= o.nom %>
+            <% if (o.en_derangement) { %>
+              <span class="badge-derangement" title="<%= o.derangement_message || o.note_maintenance || 'Intervention en cours' %>">
+                <i class="bi bi-exclamation-triangle"></i> Maintenance
+              </span>
+            <% } %>
+          </td>
+          <td>
+            <% if (o.lien) { %>
+              <a href="<%= o.lien %>" target="_blank" rel="noopener" class="lien-ouvrir-outil"
+                 data-creds='<%= JSON.stringify(o.credentials || []).replace(/'/g, "&#39;") %>'>Ouvrir</a>
+            <% } else { %>—<% } %>
+          </td>
+          <td><%= o.Utilisateur ? (o.Utilisateur.prenom + ' ' + o.Utilisateur.nom) : '—' %></td>
+          <td>
+            <% if (o.active) { %><span class="pastille pastille-active">Actif</span>
+            <% } else { %><span class="pastille pastille-inactive">Inactif</span><% } %>
+          </td>
+          <td style="white-space:nowrap;"><%- include('statut-reseau', { o: o, retour: retourUrl }) %></td>
+          <td style="white-space:nowrap;">
+            <button type="button" class="btn btn-gris btn-petit btn-favori<%= _ep ? ' est-epingle' : '' %>"
+                    data-favori-type="outil" data-favori-id="<%= o.id %>"
+                    title="<%= _ep ? 'Retirer des favoris' : 'Ajouter aux favoris' %>">
+              <i class="bi <%= _ep ? 'bi-pin-angle-fill' : 'bi-pin-angle' %>"></i>
+            </button>
+            <% if (peut('outils', 'update')) { %>
+              <a href="/outils/<%= o.id %>/modifier?retour=<%= encodeURIComponent(retourUrl) %>" class="btn btn-gris btn-petit" title="Modifier l'outil"><i class="bi bi-pencil"></i></a>
+              <a href="/outils/<%= o.id %>/maintenance?retour=<%= encodeURIComponent(retourUrl) %>" class="btn btn-gris btn-petit" title="Maintenance / dérangement"><i class="bi bi-tools"></i></a>
+            <% } %>
+            <% if (typeof credentialsActifs !== 'undefined' && credentialsActifs && peut('credentials', 'read')) { %>
+              <a href="/outils/<%= o.id %>/credentials?retour=<%= encodeURIComponent(retourUrl) %>" class="btn btn-gris btn-petit" title="Identifiants"><i class="bi bi-key"></i></a>
+            <% } %>
+            <% if (peut('partage', 'create') || peut('partage', 'delete')) { %>
+              <a href="/outils/<%= o.id %>/partager?retour=<%= encodeURIComponent(retourUrl) %>" class="btn btn-gris btn-petit" title="Partager"><i class="bi bi-share"></i></a>
+            <% } %>
+            <% if (o.adresse) { %>
+              <a href="/diagnostic?cible=<%= encodeURIComponent(o.adresse) %>" class="btn btn-gris btn-petit" title="Diagnostic réseau"><i class="bi bi-heart-pulse"></i></a>
+            <% } %>
+            <% if (peut('outils', 'update')) { %>
+              <form action="/outils/<%= o.id %>/toggle-active" method="POST" class="form-inline" style="display:inline;">
+                <input type="hidden" name="retour" value="<%= retourUrl %>">
+                <button type="submit" class="btn btn-gris btn-petit" title="<%= o.active ? 'Désactiver' : 'Activer' %>"><%= o.active ? 'Désactiver' : 'Activer' %></button>
+              </form>
+            <% } %>
+            <% if (peut('outils', 'delete')) { %>
+              <form action="/outils/<%= o.id %>/supprimer" method="POST" class="form-inline" style="display:inline;"
+                    onsubmit="return confirm('Confirmer la suppression définitive de cet outil ?');">
+                <input type="hidden" name="retour" value="<%= retourUrl %>">
+                <button type="submit" class="btn btn-danger btn-petit" title="Supprimer"><i class="bi bi-trash"></i></button>
+              </form>
+            <% } %>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
 
- <!-- Vue Cartes -->
- <div class="vue-panneau" data-vue="cartes">
- <div class="grille-cartes">
- <% outils.forEach(function(o) { %>
- <div class="carte-outil">
- <div class="image-outil">
- <% if (o.image) { %>
- <img src="<%= o.image %>" alt="<%= o.nom %>">
- <% } else { %>
- <span class="icone-defaut"><i class="bi bi-tools"></i> </span>
- <% } %>
- </div>
- <div class="corps-carte">
- <span class="nom-outil"><%= o.nom %></span>
- <span class="proprietaire-outil"><%= o.Utilisateur ? o.Utilisateur.prenom + ' ' + o.Utilisateur.nom : '—' %></span>
- <% if (o.active) { %>
- <span class="pastille pastille-active" style="width:fit-content;">Actif</span>
- <% } else { %>
- <span class="pastille pastille-inactive" style="width:fit-content;">Désactivé</span>
- <% } %>
- <% if (o.adresse) { %>
- <div style="margin-top:2px;"><%- include('statut-reseau', { o: o, retour: retour }) %></div>
- <% } %>
- </div>
- <div class="pied-carte">
- <% if (o.lien) { %>
- <a href="<%= o.lien %>" target="_blank" rel="noopener" style="font-size:12px;" class="lien-ouvrir-outil" data-creds='<%= JSON.stringify(o.credentials || []).replace(/'/g, "&#39;") %>'>Ouvrir ↗</a>
- <% } else { %>
- <span></span>
- <% } %>
- <div style="display:flex; gap:4px;">
- <% if (peut('tickets', 'create')) { %>
- <a href="/tickets/nouveau?id_outil=<%= o.id %>" class="btn btn-gris btn-petit" title="Signaler un problème"><i class="bi bi-ticket-detailed"></i> </a>
- 
-                            <% var _ep = (typeof favorisOutilsIds !== 'undefined' && favorisOutilsIds.map(Number).indexOf(Number(o.id)) >= 0); %>
-<button type="button" class="btn btn-gris btn-petit btn-favori<%= _ep ? ' est-epingle' : '' %>" data-favori-type="outil" data-favori-id="<%= o.id %>" title="<%= _ep ? 'Retirer des épinglés' : 'Épingler' %>"><i class="bi <%= _ep ? 'bi-pin-angle-fill' : 'bi-pin-angle' %>"></i></button>
-                            <% if (peut('outils', 'update')) { %>
-                                <a href="/outils/<%= o.id %>/maintenance?retour=<%= encodeURIComponent(typeof retour !== 'undefined' ? retour : '/') %>" class="btn btn-gris btn-petit" title="Maintenance / dérangement"><i class="bi bi-tools"></i></a>
-                            <% } %>
-                            <% if (credentialsActifs && peut('credentials', 'read')) { %>
- <a href="/outils/<%= o.id %>/credentials?retour=<%= encodeURIComponent(retour) %>" class="btn btn-gris btn-petit" title="Credentials"><i class="bi bi-key"></i> </a>
- <% } %>
- <% if (peut('partage', 'create') || peut('partage', 'delete')) { %>
- <a href="/outils/<%= o.id %>/partager?retour=<%= encodeURIComponent(retour) %>" class="btn btn-gris btn-petit" title="Partager cet outil"><i class="bi bi-link-45deg"></i> </a>
- <% } %>
- <% } %>
- <% if (o.adresse) { %>
- <a href="/diagnostic?cible=<%= encodeURIComponent(o.adresse) %>" class="btn btn-gris btn-petit" title="Tester la connectivité"><i class="bi bi-heart-pulse"></i> </a>
- <% } %>
- <% if (peut('outils', 'update')) { %>
- 
-                            <form action="/outils/<%= o.id %>/toggle-active" method="POST" class="form-inline">
- <input type="hidden" name="retour" value="<%= retour %>">
- <button type="submit" class="btn btn-gris btn-petit"><%= o.active ? 'Désactiver' : 'Activer' %></button>
- </form>
- <% } %>
- <% if (peut('outils', 'delete')) { %>
- <form action="/outils/<%= o.id %>/supprimer" method="POST" class="form-inline"
- onsubmit="return confirm('Supprimer cet outil ?');">
- <input type="hidden" name="retour" value="<%= retour %>">
- <button type="submit" class="btn btn-danger btn-petit">Suppr.</button>
- </form>
- <% } %>
- </div>
- </div>
- </div>
- <% }) %>
- </div>
- </div>
+<!-- Vue Cartes -->
+<div class="vue-panneau" data-vue="cartes">
+  <div class="grille-cartes">
+    <% outils.forEach(function(o) {
+      var _ep = (typeof favorisOutilsIds !== 'undefined' && favorisOutilsIds.map(Number).indexOf(Number(o.id)) >= 0);
+    %>
+    <div class="carte-outil outil-selectable"
+         data-outil-id="<%= o.id %>"
+         data-outil-nom="<%= o.nom %>"
+         data-outil-lien="<%= o.lien || '' %>"
+         data-outil-active="<%= o.active ? '1' : '0' %>"
+         data-outil-adresse="<%= o.adresse || '' %>"
+         data-outil-epingle="<%= _ep ? '1' : '0' %>"
+         data-peut-update="<%= peut('outils','update') ? '1' : '0' %>"
+         data-peut-delete="<%= peut('outils','delete') ? '1' : '0' %>"
+         data-peut-creds="<%= (typeof credentialsActifs !== 'undefined' && credentialsActifs && peut('credentials','read')) ? '1' : '0' %>"
+         data-peut-partage="<%= (peut('partage','create') || peut('partage','delete')) ? '1' : '0' %>"
+         data-retour="<%= retourUrl %>">
+      <% if (o.image) { %><img src="<%= o.image %>" class="carte-outil-img" alt=""><% } %>
+      <h3><%= o.nom %></h3>
+      <% if (o.en_derangement) { %><span class="badge-derangement"><i class="bi bi-exclamation-triangle"></i> Maintenance</span><% } %>
+      <p class="meta"><%= o.Utilisateur ? (o.Utilisateur.prenom + ' ' + o.Utilisateur.nom) : '—' %></p>
+      <p><% if (o.active) { %><span class="pastille pastille-active">Actif</span><% } else { %><span class="pastille pastille-inactive">Inactif</span><% } %></p>
+      <%- include('statut-reseau', { o: o, retour: retourUrl }) %>
+      <p style="font-size:12px;color:var(--gris);margin-top:8px;">Cliquez pour sélectionner · double-clic pour ouvrir</p>
+    </div>
+    <% }) %>
+  </div>
+</div>
 
- <!-- Vue Vignettes -->
- <div class="vue-panneau" data-vue="vignettes">
- <div class="grille-vignettes">
- <% outils.forEach(function(o) { %>
- <div class="vignette-outil" title="<%= o.nom %> — <%= o.Utilisateur ? o.Utilisateur.prenom + ' ' + o.Utilisateur.nom : '—' %>">
- <span class="point-statut <%= o.active ? 'actif' : 'inactif' %>"></span>
- <div class="image-vignette">
- <% if (o.image) { %>
- <img src="<%= o.image %>" alt="<%= o.nom %>">
- <% } else { %>
- <span class="icone-defaut"><i class="bi bi-tools"></i> </span>
- <% } %>
- </div>
- <span class="nom-vignette"><%= o.nom %></span>
- <% if (o.adresse) { %>
- <div style="margin-top:3px;">
- <% if (o.dernier_statut === 'en_ligne') { %>
- <span class="pastille-reseau en-ligne" style="font-size:10px; padding:1px 6px;"><i class="bi bi-circle-fill text-statut-ok"></i> </span>
- <% } else if (o.dernier_statut === 'hors_ligne') { %>
- <span class="pastille-reseau hors-ligne" style="font-size:10px; padding:1px 6px;"><i class="bi bi-circle-fill text-statut-ko"></i> </span>
- <% } else { %>
- <span class="pastille-reseau inconnu" style="font-size:10px; padding:1px 6px;"><i class="bi bi-circle text-statut-na"></i> </span>
- <% } %>
- </div>
- <% } %>
- <% if (o.adresse || peut('outils', 'update') || peut('outils', 'delete') || peut('tickets', 'create')) { %>
- <div class="actions-vignette">
+<!-- Vue Vignettes -->
+<div class="vue-panneau" data-vue="vignettes">
+  <div class="grille-vignettes">
+    <% outils.forEach(function(o) {
+      var _ep = (typeof favorisOutilsIds !== 'undefined' && favorisOutilsIds.map(Number).indexOf(Number(o.id)) >= 0);
+    %>
+    <div class="vignette-outil outil-selectable"
+         data-outil-id="<%= o.id %>"
+         data-outil-nom="<%= o.nom %>"
+         data-outil-lien="<%= o.lien || '' %>"
+         data-outil-active="<%= o.active ? '1' : '0' %>"
+         data-outil-adresse="<%= o.adresse || '' %>"
+         data-outil-epingle="<%= _ep ? '1' : '0' %>"
+         data-peut-update="<%= peut('outils','update') ? '1' : '0' %>"
+         data-peut-delete="<%= peut('outils','delete') ? '1' : '0' %>"
+         data-peut-creds="<%= (typeof credentialsActifs !== 'undefined' && credentialsActifs && peut('credentials','read')) ? '1' : '0' %>"
+         data-peut-partage="<%= (peut('partage','create') || peut('partage','delete')) ? '1' : '0' %>"
+         data-retour="<%= retourUrl %>">
+      <% if (o.image) { %><img src="<%= o.image %>" alt=""><% } else { %><i class="bi bi-tools" style="font-size:1.5rem;"></i><% } %>
+      <span class="vignette-nom"><%= o.nom %></span>
+      <% if (o.en_derangement) { %><i class="bi bi-exclamation-triangle" title="Maintenance" style="color:#d97706;"></i><% } %>
+    </div>
+    <% }) %>
+  </div>
+</div>
 
+<script>
+(function () {
+  var boutons = document.querySelectorAll('.vue-btn');
+  var panneaux = document.querySelectorAll('.vue-panneau');
+  var cle = 'glo-vue-outils';
+  var barre = document.getElementById('outils-actions-barre');
+  var selNom = document.getElementById('outils-sel-nom');
+  var selActions = document.getElementById('outils-sel-actions');
+  var selected = null;
 
- <% if (peut('tickets', 'create')) { %>
- <a href="/tickets/nouveau?id_outil=<%= o.id %>" title="Signaler un problème"><i class="bi bi-ticket-detailed"></i> </a>
- 
-                            <% var _ep = (typeof favorisOutilsIds !== 'undefined' && favorisOutilsIds.map(Number).indexOf(Number(o.id)) >= 0); %>
-<button type="button" class="btn btn-gris btn-petit btn-favori<%= _ep ? ' est-epingle' : '' %>" data-favori-type="outil" data-favori-id="<%= o.id %>" title="<%= _ep ? 'Retirer des épinglés' : 'Épingler' %>"><i class="bi <%= _ep ? 'bi-pin-angle-fill' : 'bi-pin-angle' %>"></i></button>
-                            <% if (peut('outils', 'update')) { %>
-                                <a href="/outils/<%= o.id %>/maintenance?retour=<%= encodeURIComponent(typeof retour !== 'undefined' ? retour : '/') %>" class="btn btn-gris btn-petit" title="Maintenance / dérangement"><i class="bi bi-tools"></i></a>
-                            <% } %>
-                            <% if (credentialsActifs && peut('credentials', 'read')) { %>
- <a href="/outils/<%= o.id %>/credentials?retour=<%= encodeURIComponent(retour) %>" title="Credentials"><i class="bi bi-key"></i> </a>
- <% } %>
- <% if (peut('partage', 'create') || peut('partage', 'delete')) { %>
- <a href="/outils/<%= o.id %>/partager?retour=<%= encodeURIComponent(retour) %>" title="Partager cet outil"><i class="bi bi-link-45deg"></i> </a>
- <% } %>
- <% } %>
- <% if (o.adresse) { %>
- <a href="/diagnostic?cible=<%= encodeURIComponent(o.adresse) %>" title="Tester la connectivité"><i class="bi bi-heart-pulse"></i> </a>
- <% } %>
- <% if (peut('outils', 'update')) { %>
- <form action="/outils/<%= o.id %>/toggle-active" method="POST" class="form-inline">
- <input type="hidden" name="retour" value="<%= retour %>">
- <button type="submit" title="<%= o.active ? 'Désactiver' : 'Activer' %>"><%= o.active ? '⏸' : '▶' %></button>
- </form>
- <% } %>
- <% if (peut('outils', 'delete')) { %>
- <form action="/outils/<%= o.id %>/supprimer" method="POST" class="form-inline"
- onsubmit="return confirm('Supprimer cet outil ?');">
- <input type="hidden" name="retour" value="<%= retour %>">
- <button type="submit" title="Supprimer"><i class="bi bi-trash"></i></button>
- </form>
- <% } %>
- </div>
- <% } %>
- </div>
- <% }) %>
- </div>
- </div>
+  function activer(vue) {
+    panneaux.forEach(function (p) { p.style.display = (p.dataset.vue === vue) ? '' : 'none'; });
+    boutons.forEach(function (b) { b.classList.toggle('actif', b.dataset.vue === vue); });
+    try { localStorage.setItem(cle, vue); } catch (e) {}
+    // barre d'actions seulement pour cartes / vignettes
+    if (vue === 'liste') {
+      if (barre) barre.hidden = true;
+      document.querySelectorAll('.outil-selectable.selectionne').forEach(function (el) {
+        el.classList.remove('selectionne');
+      });
+      selected = null;
+    } else if (selected && barre) {
+      barre.hidden = false;
+    }
+  }
 
- <script>
- (function () {
- var boutons = document.querySelectorAll('.vue-btn');
- var panneaux = document.querySelectorAll('.vue-panneau');
- var cle = 'glo-vue-outils';
+  boutons.forEach(function (b) {
+    b.addEventListener('click', function () { activer(b.dataset.vue); });
+  });
 
- function activer(vue) {
- panneaux.forEach(function (p) { p.style.display = (p.dataset.vue === vue) ? '' : 'none'; });
- boutons.forEach(function (b) { b.classList.toggle('actif', b.dataset.vue === vue); });
- try { localStorage.setItem(cle, vue); } catch (e) {}
- }
+  var sauvegarde = null;
+  try { sauvegarde = localStorage.getItem(cle); } catch (e) {}
+  activer((sauvegarde && ['liste', 'cartes', 'vignettes'].indexOf(sauvegarde) >= 0) ? sauvegarde : 'liste');
 
- boutons.forEach(function (b) {
- b.addEventListener('click', function () { activer(b.dataset.vue); });
- });
+  function buildActions(el) {
+    var id = el.getAttribute('data-outil-id');
+    var nom = el.getAttribute('data-outil-nom') || '';
+    var lien = el.getAttribute('data-outil-lien') || '';
+    var active = el.getAttribute('data-outil-active') === '1';
+    var adresse = el.getAttribute('data-outil-adresse') || '';
+    var ep = el.getAttribute('data-outil-epingle') === '1';
+    var retour = el.getAttribute('data-retour') || '/';
+    var html = '';
+    html += '<button type="button" class="btn btn-gris btn-petit btn-favori' + (ep ? ' est-epingle' : '') + '" data-favori-type="outil" data-favori-id="' + id + '" title="' + (ep ? 'Retirer des favoris' : 'Ajouter aux favoris') + '"><i class="bi ' + (ep ? 'bi-pin-angle-fill' : 'bi-pin-angle') + '"></i></button>';
+    if (lien) {
+      html += '<a class="btn btn-primaire btn-petit lien-ouvrir-outil" href="' + lien + '" target="_blank" rel="noopener">Ouvrir</a>';
+    }
+    if (el.getAttribute('data-peut-update') === '1') {
+      html += '<a class="btn btn-gris btn-petit" href="/outils/' + id + '/modifier?retour=' + encodeURIComponent(retour) + '" title="Modifier"><i class="bi bi-pencil"></i></a>';
+      html += '<a class="btn btn-gris btn-petit" href="/outils/' + id + '/maintenance?retour=' + encodeURIComponent(retour) + '" title="Maintenance / dérangement"><i class="bi bi-tools"></i></a>';
+      html += '<form action="/outils/' + id + '/toggle-active" method="POST" class="form-inline" style="display:inline;"><input type="hidden" name="retour" value="' + retour.replace(/"/g, '&quot;') + '"><button type="submit" class="btn btn-gris btn-petit">' + (active ? 'Désactiver' : 'Activer') + '</button></form>';
+    }
+    if (el.getAttribute('data-peut-creds') === '1') {
+      html += '<a class="btn btn-gris btn-petit" href="/outils/' + id + '/credentials?retour=' + encodeURIComponent(retour) + '" title="Identifiants"><i class="bi bi-key"></i></a>';
+    }
+    if (el.getAttribute('data-peut-partage') === '1') {
+      html += '<a class="btn btn-gris btn-petit" href="/outils/' + id + '/partager?retour=' + encodeURIComponent(retour) + '" title="Partager"><i class="bi bi-share"></i></a>';
+    }
+    if (adresse) {
+      html += '<a class="btn btn-gris btn-petit" href="/diagnostic?cible=' + encodeURIComponent(adresse) + '" title="Diagnostic réseau"><i class="bi bi-heart-pulse"></i></a>';
+    }
+    if (el.getAttribute('data-peut-delete') === '1') {
+      html += '<form action="/outils/' + id + '/supprimer" method="POST" class="form-inline" style="display:inline;" onsubmit="return confirm(\'Confirmer la suppression définitive de cet outil ?\');"><input type="hidden" name="retour" value="' + retour.replace(/"/g, '&quot;') + '"><button type="submit" class="btn btn-danger btn-petit"><i class="bi bi-trash"></i></button></form>';
+    }
+    if (selNom) selNom.textContent = nom;
+    if (selActions) selActions.innerHTML = html;
+    if (barre) barre.hidden = false;
+  }
 
- var sauvegarde = null;
- try { sauvegarde = localStorage.getItem(cle); } catch (e) {}
- activer((sauvegarde && ['liste', 'cartes', 'vignettes'].includes(sauvegarde)) ? sauvegarde : 'liste');
- })();
- </script>
+  document.querySelectorAll('.outil-selectable').forEach(function (el) {
+    el.addEventListener('click', function (e) {
+      if (e.target.closest('a,button,form')) return;
+      document.querySelectorAll('.outil-selectable.selectionne').forEach(function (x) { x.classList.remove('selectionne'); });
+      el.classList.add('selectionne');
+      selected = el;
+      buildActions(el);
+    });
+    el.addEventListener('dblclick', function (e) {
+      e.preventDefault();
+      var lien = el.getAttribute('data-outil-lien');
+      if (lien) window.open(lien, '_blank', 'noopener');
+    });
+  });
+})();
+</script>
 <% } %>
 
 <script>
 document.addEventListener('click', function (e) {
- var a = e.target.closest && e.target.closest('a.lien-ouvrir-outil');
- if (!a) return;
- var raw = a.getAttribute('data-creds');
- if (!raw) return;
- try {
- var creds = JSON.parse(raw);
- if (!Array.isArray(creds) || !creds.length) return;
- var parts = creds.filter(function (c) { return c && c.valeur; })
- .map(function (c) { return (c.label || 'Champ') + ' : ' + c.valeur; });
- if (parts.length && typeof gloCopier === 'function') {
- // Copie sans bloquer l'ouverture du lien
- setTimeout(function () { gloCopier(parts.join('\n')); }, 50);
- }
- } catch (_) {}
+  var a = e.target.closest && e.target.closest('a.lien-ouvrir-outil');
+  if (!a) return;
+  var raw = a.getAttribute('data-creds');
+  if (!raw) return;
+  try {
+    var creds = JSON.parse(raw);
+    if (!Array.isArray(creds) || !creds.length) return;
+    var parts = creds.filter(function (c) { return c && c.valeur; })
+      .map(function (c) { return (c.label || 'Champ') + ' : ' + c.valeur; });
+    if (parts.length && typeof gloCopier === 'function') {
+      setTimeout(function () { gloCopier(parts.join('\n')); }, 50);
+    }
+  } catch (_) {}
 });
 </script>

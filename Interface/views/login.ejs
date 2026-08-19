@@ -9,7 +9,7 @@
 <body class="page-login">
  <div class="carte-login">
  <h1><i class="bi bi-folder"></i> <% if (nomEntreprise) { %><%= nomEntreprise %><% } else { %>Gestionnaire <span class="accent">Outils</span><% } %></h1>
- <p class="sous-titre">Connectez-vous avec votre matricule</p>
+ <p class="sous-titre">Authentification requise — saisissez votre matricule et votre mot de passe</p>
 
  <% if (erreur) { %>
  <div class="message-erreur"><%= erreur %></div>
@@ -22,7 +22,7 @@
  <label for="mot_de_passe">Mot de passe</label>
  <input type="password" id="mot_de_passe" name="mot_de_passe" required>
 
- <button type="submit" class="btn btn-primaire">Se connecter</button>
+ <button type="submit" class="btn btn-primaire">Connexion</button>
  </form>
  </div>
 </body>

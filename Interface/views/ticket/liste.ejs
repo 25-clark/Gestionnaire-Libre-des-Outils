@@ -112,7 +112,7 @@
 </div>
 
 <% if (!tickets.length) { %>
- <div class="carte vide">Aucun ticket ne correspond à ces filtres.</div>
+ <div class="carte vide">Aucun ticket ne correspond à vos critères ne correspond à ces filtres.</div>
 <% } else { %>
  <div class="carte">
  <p style="font-size:13px; color:var(--gris); margin:0 0 10px;">
@@ -325,6 +325,45 @@
  document.getElementById('form-filtres-tickets').submit();
  });
  });
+
+
+ // Garder le panneau filtres ouvert + mémoriser la dernière combinaison appliquée
+ var KEY_OPEN = 'glo_tickets_filtres_open';
+ var KEY_LAST = 'glo_tickets_filtres_last';
+ var panel = document.getElementById('form-filtres-tickets');
+ try {
+   if (localStorage.getItem(KEY_OPEN) === '1' && panel) {
+     panel.classList.add('est-ouvert');
+     panel.style.display = '';
+   }
+ } catch (e) {}
+ // Au submit, mémoriser
+ if (panel) {
+   panel.addEventListener('submit', function () {
+     try {
+       localStorage.setItem(KEY_OPEN, '1');
+       var fd = new FormData(panel);
+       var o = {};
+       fd.forEach(function (v, k) { if (v) o[k] = v; });
+       localStorage.setItem(KEY_LAST, JSON.stringify(o));
+     } catch (e) {}
+   });
+ }
+ // Si page sans query active, réappliquer dernière combinaison
+ try {
+   var qs = window.location.search || '';
+   var hasFilter = /[?&](statut|priorite|id_createur|id_assigne)=/.test(qs);
+   if (!hasFilter) {
+     var last = JSON.parse(localStorage.getItem(KEY_LAST) || 'null');
+     if (last && Object.keys(last).length) {
+       var p = new URLSearchParams();
+       Object.keys(last).forEach(function (k) { if (last[k]) p.set(k, last[k]); });
+       if ([].some.call(p.keys(), function(){return true;})) {
+         window.location.replace('/tickets?' + p.toString());
+       }
+     }
+   }
+ } catch (e) {}
 
  renderSaved();
 })();

@@ -470,4 +470,52 @@ async function updateMaintenance(req, res, next) {
     } catch (err) { next(err); }
 }
 
-module.exports = { getAll, getById, create, toggleActive, remove, verifierStatut, historiqueStatut, partager, retirerPartageActivite, retirerPartageSousActivite, updateCredentials, updateMaintenance };
+
+async function update(req, res, next) {
+    try {
+        const outil = await Outil.findByPk(req.params.id);
+        if (!outil) return res.status(404).json({ message: 'Outil introuvable.' });
+
+        const { nom, lien, adresse, activites, sousActivites } = req.body;
+        const data = {};
+        if (nom !== undefined) {
+            if (!String(nom).trim()) return res.status(400).json({ message: 'Le nom est requis.' });
+            data.nom = String(nom).trim();
+        }
+        if (lien !== undefined) data.lien = lien || null;
+        if (adresse !== undefined) data.adresse = adresse || null;
+        if (req.file) data.image = `/uploads/outils/${req.file.filename}`;
+        else if (req.body.image !== undefined) data.image = req.body.image || null;
+
+        await outil.update(data);
+
+        if (activites !== undefined) {
+            let ids = activites;
+            if (typeof ids === 'string') {
+                try { ids = JSON.parse(ids); } catch { ids = ids ? [ids] : []; }
+            }
+            if (!Array.isArray(ids)) ids = [];
+            await outil.setActivites(ids.map(Number).filter(Boolean));
+        }
+        if (sousActivites !== undefined) {
+            let ids = sousActivites;
+            if (typeof ids === 'string') {
+                try { ids = JSON.parse(ids); } catch { ids = ids ? [ids] : []; }
+            }
+            if (!Array.isArray(ids)) ids = [];
+            await outil.setSousActivites(ids.map(Number).filter(Boolean));
+        }
+
+        const complet = await Outil.findByPk(outil.id, {
+            include: [
+                { model: Utilisateur },
+                { model: Activite, as: 'activites' },
+                { model: SousActivite, as: 'sousActivites' }
+            ]
+        });
+        res.json(await enrichirOutilCredentials(complet, req.currentUser));
+    } catch (err) { next(err); }
+}
+
+module.exports = { getAll, getById, create, update, toggleActive, remove, verifierStatut, historiqueStatut, partager, retirerPartageActivite, retirerPartageSousActivite, updateCredentials, updateMaintenance };
+

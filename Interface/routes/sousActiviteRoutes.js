@@ -126,9 +126,15 @@ router.get('/:id', async (req, res, next) => {
         }
 
         res.locals.page = 'sousActivite';
+        const nomAct = (activite && activite.nom)
+            || (sousActivite.Activite && sousActivite.Activite.nom)
+            || 'Activité';
+        const idAct = (activite && activite.id)
+            || (sousActivite.Activite && sousActivite.Activite.id)
+            || sousActivite.id_activite;
         res.locals.breadcrumbs = [
             { label: 'Tableau de bord', href: '/' },
-            { label: (sousActivite.Activite && sousActivite.Activite.nom) ? sousActivite.Activite.nom : 'Activité', href: sousActivite.Activite ? '/activites/' + sousActivite.Activite.id : '/' },
+            { label: nomAct, href: idAct ? '/activites/' + idAct : undefined },
             { label: sousActivite.nom }
         ];
         res.render('sousActivite/detail', {

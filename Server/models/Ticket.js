@@ -36,6 +36,9 @@ module.exports = (sequelize) => {
         id_sous_activite: { type: DataTypes.INTEGER, allowNull: true },
         id_createur: { type: DataTypes.INTEGER, allowNull: false },
         id_assigne: { type: DataTypes.INTEGER, allowNull: true },
+        // Multi-assignation (utilisateurs et/ou rôles)
+        assignees_users: { type: DataTypes.JSON, allowNull: true, defaultValue: [] },
+        assignees_roles: { type: DataTypes.JSON, allowNull: true, defaultValue: [] },
         // SLA : échéance calculée à la création / changement de priorité
         sla_echeance: { type: DataTypes.DATE, allowNull: true },
         // Dernière relance automatique (notification)
