@@ -13,6 +13,33 @@ const { envoyerCsv } = require('../utils/csv');
 
 router.use(requireLogin);
 
+function activiteDebloquee(req, id) {
+    if (!req.session.activitesDebloquees) req.session.activitesDebloquees = {};
+    return !!req.session.activitesDebloquees[String(id)];
+}
+function estAdminSession(req) {
+    const u = req.session.user;
+    if (!u) return false;
+    if (u.Role && u.Role.abbreviation === 'ADMIN') return true;
+    if (u.Roles && Array.isArray(u.Roles) && u.Roles.some(r => r && r.abbreviation === 'ADMIN')) return true;
+    return false;
+}
+function estActiviteProtegee(activite) {
+    if (!activite) return false;
+    if (activite.acces_protege === true || activite.acces_protege === 'true' || activite.acces_protege === 1) return true;
+    let reg = activite.reglages;
+    if (typeof reg === 'string') {
+        try { reg = JSON.parse(reg); } catch { reg = null; }
+    }
+    if (!reg || typeof reg !== 'object') return false;
+    return reg.acces_protege === true
+        || reg.acces_protege === 'true'
+        || reg.acces_protege === 1
+        || reg.acces_protege === '1';
+}
+
+
+
 // Formulaire de création (id_activite et id_parent optionnel passés en query)
 router.get('/nouveau', async (req, res, next) => {
     try {
@@ -103,6 +130,13 @@ router.get('/:id', async (req, res, next) => {
             construireFilAriane(api, sousActivite)
         ]);
 
+        // Hérite de la clé d'accès et des réglages locaux de l'activité parente
+        if (estActiviteProtegee(activite) && !estAdminSession(req) && !activiteDebloquee(req, activite.id)) {
+            return res.redirect(
+                '/activites/' + activite.id + '/deverrouiller?retour=' + encodeURIComponent(req.originalUrl)
+            );
+        }
+
         let enfants = [];
         let utilisateurs = [];
         let outils = [];
@@ -157,6 +191,12 @@ router.get('/:id/modifier', async (req, res, next) => {
     try {
         const api = apiClient(req);
         const { data: sousActivite } = await api.get(`/sous-activites/${req.params.id}`);
+        try {
+            const { data: actParent } = await api.get(`/activites/${sousActivite.id_activite}`);
+            if (estActiviteProtegee(actParent) && !estAdminSession(req) && !activiteDebloquee(req, actParent.id)) {
+                return res.redirect('/activites/' + actParent.id + '/deverrouiller?retour=' + encodeURIComponent(req.originalUrl));
+            }
+        } catch (_) { /* continue */ }
         const { data: toutesSousActivites } = await api.get(`/sous-activites?id_activite=${sousActivite.id_activite}`);
         // Une sous-activité ne peut pas être son propre parent : on l'exclut des options.
         const sousActivitesDisponibles = toutesSousActivites.filter(sa => sa.id !== sousActivite.id);
