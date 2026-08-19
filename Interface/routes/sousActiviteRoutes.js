@@ -126,6 +126,11 @@ router.get('/:id', async (req, res, next) => {
         }
 
         res.locals.page = 'sousActivite';
+        res.locals.breadcrumbs = [
+            { label: 'Tableau de bord', href: '/' },
+            { label: (sousActivite.Activite && sousActivite.Activite.nom) ? sousActivite.Activite.nom : 'Activité', href: sousActivite.Activite ? '/activites/' + sousActivite.Activite.id : '/' },
+            { label: sousActivite.nom }
+        ];
         res.render('sousActivite/detail', {
             titre: sousActivite.nom,
             sousActivite,

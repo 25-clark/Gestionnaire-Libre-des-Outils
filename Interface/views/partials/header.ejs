@@ -49,6 +49,12 @@
 </script>
 <% if (currentUser) { %>
 <% var t = typeof t === 'function' ? t : function(k){ return k; }; %>
+<% var nav = (typeof nav !== 'undefined' && nav) ? nav : { section: null, item: null }; %>
+<% function navActif(section, item) {
+     if (item && nav.item === item) return true;
+     if (section && nav.section === section && !item) return true;
+     return false;
+   } %>
 <header class="topbar" id="topbar">
  <a href="/" class="logo"><img src="/favicon-32x32.png" alt=""><span><%= nomEntreprise ? nomEntreprise : 'GLO' %></span></a>
     <button type="button" class="btn-nav-mobile" id="btn-nav-mobile" aria-label="Menu" aria-expanded="false">
@@ -56,20 +62,22 @@
     </button>
  <nav>
  <%/* —— Accueil —— */%>
- <a href="/"><%= t('nav.dashboard') %></a>
+ <a href="/" class="<%= navActif('dashboard','dashboard') || nav.item==='dashboard' ? 'nav-actif' : '' %>"><%= t('nav.dashboard') %></a>
 
  <%/* —— Assistance : tickets + diagnostic —— */%>
  <% var itemsAssistance = []; %>
  <% if (peut('tickets', 'read')) itemsAssistance.push({ href: '/tickets', label: t('nav.tickets'), icon: 'bi-ticket-detailed' }); %>
  <% if (peut('diagnostic', 'read')) itemsAssistance.push({ href: '/diagnostic', label: t('nav.diagnostic'), icon: 'bi-hdd-network' }); %>
  <% if (itemsAssistance.length === 1) { %>
- <a href="<%= itemsAssistance[0].href %>"><%= itemsAssistance[0].label %></a>
+ <a href="<%= itemsAssistance[0].href %>" class="<%= (itemsAssistance[0].href==='/tickets' && nav.item==='tickets') || (itemsAssistance[0].href==='/diagnostic' && nav.item==='diagnostic') ? 'nav-actif' : '' %>"><%= itemsAssistance[0].label %></a>
  <% } else if (itemsAssistance.length > 1) { %>
- <div class="menu-deroulant">
- <button type="button" class="lien-menu-deroulant"><%= t('nav.assistance') %> <i class="bi bi-chevron-down" style="font-size:0.75em;"></i></button>
+ <div class="menu-deroulant<%= nav.section==='assistance' ? ' menu-actif' : '' %>">
+ <button type="button" class="lien-menu-deroulant<%= nav.section==='assistance' ? ' nav-actif' : '' %>"><%= t('nav.assistance') %> <i class="bi bi-chevron-down" style="font-size:0.75em;"></i></button>
  <div class="contenu-menu-deroulant">
- <% itemsAssistance.forEach(function(item) { %>
- <a href="<%= item.href %>"><% if (item.icon) { %><i class="bi <%= item.icon %>"></i> <% } %><%= item.label %></a>
+ <% itemsAssistance.forEach(function(item) {
+   var itemActif = (item.href==='/tickets' && nav.item==='tickets') || (item.href==='/diagnostic' && nav.item==='diagnostic');
+ %>
+ <a href="<%= item.href %>" class="<%= itemActif ? 'nav-actif' : '' %>"><% if (item.icon) { %><i class="bi <%= item.icon %>"></i> <% } %><%= item.label %></a>
  <% }) %>
  </div>
  </div>
@@ -86,27 +94,50 @@
  <% itemsAdmin.push({ href: '/parametres', label: t('nav.settings'), icon: 'bi-gear' }); %>
  <% } %>
  <% if (itemsAdmin.length) { %>
- <div class="menu-deroulant">
- <button type="button" class="lien-menu-deroulant"><%= t('nav.administration') %> <i class="bi bi-chevron-down" style="font-size:0.75em;"></i></button>
+ <div class="menu-deroulant<%= nav.section==='administration' ? ' menu-actif' : '' %>">
+ <button type="button" class="lien-menu-deroulant<%= nav.section==='administration' ? ' nav-actif' : '' %>"><%= t('nav.administration') %> <i class="bi bi-chevron-down" style="font-size:0.75em;"></i></button>
  <div class="contenu-menu-deroulant">
- <% itemsAdmin.forEach(function(item) { %>
- <a href="<%= item.href %>"><% if (item.icon) { %><i class="bi <%= item.icon %>"></i> <% } %><%= item.label %></a>
+ <% itemsAdmin.forEach(function(item) {
+   var map = { '/roles': 'roles', '/acces': 'acces', '/journal': 'journal', '/statistiques': 'stats', '/ldap': 'ldap', '/parametres': 'settings' };
+   var itemActif = nav.item && map[item.href] === nav.item;
+ %>
+ <a href="<%= item.href %>" class="<%= itemActif ? 'nav-actif' : '' %>"><% if (item.icon) { %><i class="bi <%= item.icon %>"></i> <% } %><%= item.label %></a>
  <% }) %>
  </div>
  </div>
  <% } %>
-        <%/* —— Aide —— */%>
-        <div class="menu-deroulant">
-            <button type="button" class="lien-menu-deroulant"><%= typeof t === 'function' ? t('nav.help') : 'Aide' %> <i class="bi bi-chevron-down" style="font-size:0.75em;"></i></button>
+        <%/* —— Aide (items selon permissions.aide du rôle) —— */%>
+        <%
+          var aidePerms = null;
+          if (currentUser && currentUser.Role && currentUser.Role.permissions) {
+            var _p = currentUser.Role.permissions;
+            if (typeof _p === 'string') { try { _p = JSON.parse(_p); } catch(e) { _p = {}; } }
+            aidePerms = _p.aide || null;
+          }
+          var itemsAide = [
+            { key: 'support', href: '/aide/support', label: 'Support', icon: 'bi-life-preserver' },
+            { key: 'documentation', href: '/aide/documentation', label: 'Documentation', icon: 'bi-book' },
+            { key: 'mise-a-jour', href: '/aide/mise-a-jour', label: 'Mise à jour', icon: 'bi-arrow-repeat' },
+            { key: 'extensions', href: '/aide/extensions', label: 'Extensions', icon: 'bi-puzzle' },
+            { key: 'soutien', href: '/aide/soutien', label: 'Soutien', icon: 'bi-heart' },
+            { key: 'confidentialite', href: '/aide/confidentialite', label: 'Confidentialité', icon: 'bi-shield-check' }
+          ];
+          // Rétrocompat : pas de config aide = tout visible. Sinon uniquement les cases cochées.
+          var itemsAideVisibles = itemsAide.filter(function(it) {
+            if (!aidePerms) return true;
+            return !!aidePerms[it.key];
+          });
+        %>
+        <% if (itemsAideVisibles.length) { %>
+        <div class="menu-deroulant<%= nav.section==='aide' ? ' menu-actif' : '' %>">
+            <button type="button" class="lien-menu-deroulant<%= nav.section==='aide' ? ' nav-actif' : '' %>"><%= typeof t === 'function' ? t('nav.help') : 'Aide' %> <i class="bi bi-chevron-down" style="font-size:0.75em;"></i></button>
             <div class="contenu-menu-deroulant">
-                <a href="/aide/support"><i class="bi bi-life-preserver"></i> Support</a>
-                <a href="/aide/documentation"><i class="bi bi-book"></i> Documentation</a>
-                <a href="/aide/mise-a-jour"><i class="bi bi-arrow-repeat"></i> Mise à jour</a>
-                <a href="/aide/extensions"><i class="bi bi-puzzle"></i> Extensions</a>
-                <a href="/aide/soutien"><i class="bi bi-heart"></i> Soutien</a>
-                <a href="/aide/confidentialite"><i class="bi bi-shield-check"></i> Confidentialité</a>
+                <% itemsAideVisibles.forEach(function(item) { %>
+                <a href="<%= item.href %>" class="<%= nav.item===item.key ? 'nav-actif' : '' %>"><i class="bi <%= item.icon %>"></i> <%= item.label %></a>
+                <% }) %>
             </div>
         </div>
+        <% } %>
 
  </nav>
 
@@ -117,14 +148,14 @@
 
  <div class="utilisateur">
  <% if (peut('notifications', 'read')) { %>
- <a href="/notifications" class="lien-notifications" title="<%= t('nav.notifications') %>">
+ <a href="/notifications" class="lien-notifications<%= nav.item==='notifications' ? ' nav-actif' : '' %>" title="<%= t('nav.notifications') %>">
  <i class="bi bi-bell"></i>
  <% if (notificationsNonLues > 0) { %>
  <span class="badge-notif"><%= notificationsNonLues > 9 ? '9+' : notificationsNonLues %></span>
  <% } %>
  </a>
  <% } %>
- <div class="menu-deroulant menu-utilisateur">
+ <div class="menu-deroulant menu-utilisateur<%= nav.section==='profil' ? ' menu-actif' : '' %>">
  <button type="button" class="lien-menu-deroulant lien-utilisateur">
  <span class="nom-utilisateur"><%= currentUser.prenom %> <%= currentUser.nom %></span>
  <% if (currentUser.Role) { %>
@@ -134,7 +165,7 @@
  </button>
  <div class="contenu-menu-deroulant contenu-menu-utilisateur">
  <% if (peut('profil', 'read')) { %>
- <a href="/profil"><i class="bi bi-person"></i> <%= t('nav.profile') %></a>
+ <a href="/profil" class="<%= nav.item==='profil' ? 'nav-actif' : '' %>"><i class="bi bi-person"></i> <%= t('nav.profile') %></a>
  <% } %>
  <form action="/logout" method="POST" class="form-logout-menu">
  <button type="submit"><i class="bi bi-box-arrow-right"></i> <%= t('nav.logout') %></button>
@@ -145,3 +176,4 @@
 </header>
 <% } %>
 <div class="conteneur">
+<%- include('fil-ariane') %>

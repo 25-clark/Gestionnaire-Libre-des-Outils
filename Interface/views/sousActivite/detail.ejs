@@ -1,14 +1,4 @@
 <%- include('../partials/header') %>
-
-<div class="fil-ariane">
- <a href="/">Tableau de bord</a> <span class="sep">›</span>
- <a href="/activites/<%= activite.id %>"><%= activite.nom %></a>
- <% ancetres.forEach(function(ancetre) { %>
- <span class="sep">›</span> <a href="/sous-activites/<%= ancetre.id %>"><%= ancetre.nom %></a>
- <% }) %>
- <span class="sep">›</span> <%= sousActivite.nom %>
-</div>
-
 <div class="entete-page">
  <h1><i class="bi bi-folder2-open"></i> <%= sousActivite.nom %></h1>
  <% if (peut('sous_activites', 'update') || peut('sous_activites', 'delete') || peut('partage', 'create')) { %>

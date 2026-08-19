@@ -96,4 +96,66 @@ router.post('/:id/reinitialiser-mdp', async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
+
+router.get('/:id/modifier', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const [{ data: utilisateur }, { data: roles }, { data: activites }] = await Promise.all([
+            api.get(`/utilisateurs/${req.params.id}`),
+            api.get('/roles'),
+            api.get('/activites')
+        ]);
+        res.render('utilisateur/form', {
+            titre: 'Modifier l\'utilisateur',
+            utilisateur,
+            roles,
+            activite: null,
+            activites,
+            id_activite: utilisateur.id_activite || '',
+            erreur: null
+        });
+    } catch (err) { next(err); }
+});
+
+router.post('/:id/modifier', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        await api.put(`/utilisateurs/${req.params.id}`, {
+            matricule: req.body.matricule,
+            nom: req.body.nom,
+            prenom: req.body.prenom,
+            id_role: req.body.id_role,
+            id_activite: req.body.id_activite || null
+        });
+        const retour = req.body.id_activite
+            ? `/activites/${req.body.id_activite}?onglet=utilisateurs`
+            : `/activites/${req.body.id_activite || ''}?onglet=utilisateurs`;
+        // Recharger user for redirect
+        try {
+            const { data: u } = await api.get(`/utilisateurs/${req.params.id}`);
+            if (u.id_activite) return res.redirect(`/activites/${u.id_activite}?onglet=utilisateurs`);
+        } catch (_) {}
+        res.redirect('/');
+    } catch (err) {
+        try {
+            const api = apiClient(req);
+            const [{ data: utilisateur }, { data: roles }, { data: activites }] = await Promise.all([
+                api.get(`/utilisateurs/${req.params.id}`),
+                api.get('/roles'),
+                api.get('/activites')
+            ]);
+            res.render('utilisateur/form', {
+                titre: 'Modifier l\'utilisateur',
+                utilisateur: { ...utilisateur, ...req.body },
+                roles,
+                activite: null,
+                activites,
+                id_activite: req.body.id_activite || '',
+                erreur: err.response?.data?.message || 'Erreur lors de la modification.'
+            });
+        } catch (e) { next(err); }
+    }
+});
+
+
 module.exports = router;

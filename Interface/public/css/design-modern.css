@@ -602,3 +602,109 @@ body.theme-sombre .glo-palette-box { background: #0f172a; }
 .btn-favori.est-epingle i {
     color: #d97706 !important;
 }
+
+/* Épinglés — arborescence */
+.carte-epingles .arbre-epingles {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.entete-epingle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+.lien-epingle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: inherit;
+    font-weight: 600;
+}
+.icone-epingle-activite {
+    color: #d97706;
+    font-size: 1.15em;
+}
+.sous-arbre-outils { margin-left: 28px; }
+.noeud-epingle-outil {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+}
+.noeud-epingle-outil.orphelin {
+    padding: 6px 0;
+}
+.btn-favori-mini {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: #d97706;
+    padding: 2px 4px;
+    line-height: 1;
+}
+.btn-favori.est-epingle,
+.btn-favori.est-epingle i,
+.btn-favori-mini.est-epingle,
+.btn-favori-mini.est-epingle i {
+    color: #d97706 !important;
+}
+.btn-favori.est-epingle {
+    border-color: #fbbf24 !important;
+    background: #fffbeb !important;
+}
+
+/* Navigation active */
+.topbar nav a.nav-actif,
+.topbar .lien-menu-deroulant.nav-actif {
+    opacity: 1 !important;
+    font-weight: 600;
+    position: relative;
+}
+.topbar nav > a.nav-actif::after,
+.topbar .menu-deroulant.menu-actif > .lien-menu-deroulant::after {
+    content: '';
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 2px;
+    height: 2px;
+    background: var(--orange, #f59e0b);
+    border-radius: 2px;
+}
+.topbar .lien-menu-deroulant {
+    position: relative;
+}
+.contenu-menu-deroulant a.nav-actif {
+    background: var(--bleu-clair, #eff6ff);
+    color: var(--bleu-fonce, #1e3a5f);
+    font-weight: 600;
+}
+body.theme-sombre .contenu-menu-deroulant a.nav-actif {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+}
+.lien-notifications.nav-actif {
+    opacity: 1;
+}
+.fil-ariane {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px;
+    font-size: 13px;
+    color: var(--gris, #64748b);
+    margin: 0 0 14px;
+    padding: 0;
+}
+.fil-ariane .fil-actuel {
+    color: var(--bleu-fonce, #1e3a5f);
+    font-weight: 600;
+}
+body.theme-sombre .fil-ariane .fil-actuel {
+    color: #e2e8f0;
+}
+.fil-ariane .fil-muted { opacity: 0.85; }
+.fil-ariane .sep { margin: 0 6px; opacity: 0.6; }

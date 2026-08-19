@@ -234,6 +234,12 @@ router.get('/:id', async (req, res, next) => {
             utilisateurs = resp.data;
         }
 
+        res.locals.breadcrumbs = [
+            { label: 'Tableau de bord', href: '/' },
+            { label: 'Assistance' },
+            { label: 'Tickets', href: '/tickets' },
+            { label: '#' + (ticket && ticket.id ? ticket.id : '') }
+        ];
         res.render('ticket/detail', {
             titre: `#${ticket.id} ${ticket.titre}`,
             ticket,

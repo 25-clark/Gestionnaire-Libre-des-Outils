@@ -201,23 +201,40 @@ async function remove(req, res, next) {
 // Mise à jour des champs de profil (email, téléphone, etc.) et préférences.
 // L'utilisateur peut modifier son propre profil ; un admin peut modifier
 // celui de n'importe quel utilisateur.
+function peutModifierIdentite(user) {
+    if (!user) return false;
+    if (isAdmin(user)) return true;
+    const perms = (user.Role && user.Role.permissions) ? user.Role.permissions : {};
+    const profil = perms.profil || {};
+    return !!(profil.update_identite || profil.update);
+}
+
+function peutModifierUtilisateurs(user) {
+    if (!user) return false;
+    if (isAdmin(user)) return true;
+    const perms = (user.Role && user.Role.permissions) ? user.Role.permissions : {};
+    const u = perms.utilisateurs || {};
+    return !!u.update;
+}
+
 async function updateProfil(req, res, next) {
     try {
-        const { isAdmin } = require('../middlewares/auth');
         const id = parseInt(req.params.id, 10);
-        if (req.currentUser.id !== id && !isAdmin(req.currentUser)) {
+        const soi = parseInt(req.currentUser.id, 10) === id;
+        const adminOuGestionnaire = peutModifierUtilisateurs(req.currentUser);
+
+        if (!soi && !adminOuGestionnaire) {
             return res.status(403).json({ message: 'Vous ne pouvez modifier que votre propre profil.' });
         }
 
         const utilisateur = await Utilisateur.findByPk(id);
         if (!utilisateur) return res.status(404).json({ message: 'Utilisateur introuvable.' });
 
-        const champs = ['email', 'telephone', 'fonction', 'adresse'];
         const data = {};
-        for (const champ of champs) {
+        const champsContact = ['email', 'telephone', 'fonction', 'adresse'];
+        for (const champ of champsContact) {
             if (req.body[champ] !== undefined) data[champ] = req.body[champ] || null;
         }
-        // autres_contacts : tableau de chaînes
         if (req.body.autres_contacts !== undefined) {
             let contacts = req.body.autres_contacts;
             if (!Array.isArray(contacts)) {
@@ -230,7 +247,37 @@ async function updateProfil(req, res, next) {
             data.preferences = normaliserPreferences({ ...base, ...req.body.preferences });
         }
 
-        await utilisateur.update(data);
+        // Identité : soi-même si permission profil.update_identite, ou gestionnaire
+        const peutIdentite = adminOuGestionnaire || (soi && peutModifierIdentite(req.currentUser));
+        if (peutIdentite) {
+            if (req.body.nom !== undefined) data.nom = String(req.body.nom || '').trim();
+            if (req.body.prenom !== undefined) data.prenom = String(req.body.prenom || '').trim();
+            if (req.body.matricule !== undefined) {
+                const mat = String(req.body.matricule || '').trim();
+                if (mat) data.matricule = mat;
+            }
+        }
+
+        // Rôle / activité : uniquement gestionnaire utilisateurs.update
+        if (adminOuGestionnaire) {
+            if (req.body.id_role !== undefined && req.body.id_role !== '') {
+                data.id_role = parseInt(req.body.id_role, 10);
+            }
+            if (req.body.id_activite !== undefined) {
+                data.id_activite = req.body.id_activite === '' || req.body.id_activite === null
+                    ? null
+                    : parseInt(req.body.id_activite, 10);
+            }
+        }
+
+        try {
+            await utilisateur.update(data);
+        } catch (e) {
+            if (e.name === 'SequelizeUniqueConstraintError') {
+                return res.status(409).json({ message: 'Ce matricule existe déjà.' });
+            }
+            throw e;
+        }
 
         const { Role } = require('../models');
         const fresh = await Utilisateur.findByPk(id, {
@@ -238,8 +285,15 @@ async function updateProfil(req, res, next) {
         });
         const json = fresh.toJSON();
         json.preferences = normaliserPreferences(json.preferences);
+        delete json.mot_de_passe;
+        delete json.totp_secret;
         res.json(json);
     } catch (err) { next(err); }
+}
+
+/** Mise à jour administrative d'un compte (alias explicite). */
+async function update(req, res, next) {
+    return updateProfil(req, res, next);
 }
 
 
@@ -307,5 +361,5 @@ async function getFavoris(req, res, next) {
     } catch (err) { next(err); }
 }
 
-module.exports = { getAll, getById, create, remove, reinitialiserMotDePasse, updateProfil, toggleFavori, getFavoris };
+module.exports = { getAll, getById, create, remove, reinitialiserMotDePasse, updateProfil, update, toggleFavori, getFavoris };
 

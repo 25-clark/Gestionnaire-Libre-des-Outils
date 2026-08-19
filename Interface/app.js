@@ -79,6 +79,105 @@ async function obtenirNomEntreprise() {
 // Cache court du badge notifications (évite 1 requête API / page HTML)
 const NOTIF_CACHE_MS = 45 * 1000;
 
+
+/** Navigation active + fil d'Ariane par défaut selon l'URL. */
+function deduireNavigation(reqPath) {
+    const p = reqPath || '/';
+    const nav = { section: null, item: null };
+    let crumbs = [{ label: 'Tableau de bord', href: '/' }];
+
+    if (p === '/' || p === '') {
+        nav.section = 'dashboard';
+        nav.item = 'dashboard';
+        crumbs = [{ label: 'Tableau de bord' }];
+    } else if (p.startsWith('/tickets')) {
+        nav.section = 'assistance';
+        nav.item = 'tickets';
+        crumbs.push({ label: 'Assistance' });
+        crumbs.push({ label: 'Tickets', href: '/tickets' });
+        if (p === '/tickets/nouveau') crumbs.push({ label: 'Nouveau' });
+        else if (/^\/tickets\/\d+/.test(p)) crumbs.push({ label: 'Détail' });
+    } else if (p.startsWith('/diagnostic')) {
+        nav.section = 'assistance';
+        nav.item = 'diagnostic';
+        crumbs.push({ label: 'Assistance' });
+        crumbs.push({ label: 'Diagnostic' });
+    } else if (p.startsWith('/roles')) {
+        nav.section = 'administration';
+        nav.item = 'roles';
+        crumbs.push({ label: 'Administration' });
+        crumbs.push({ label: 'Rôles', href: '/roles' });
+        if (p.includes('/nouveau')) crumbs.push({ label: 'Nouveau' });
+        else if (p.includes('/modifier')) crumbs.push({ label: 'Modifier' });
+    } else if (p.startsWith('/acces')) {
+        nav.section = 'administration';
+        nav.item = 'acces';
+        crumbs.push({ label: 'Administration' });
+        crumbs.push({ label: 'Accès particuliers' });
+    } else if (p.startsWith('/journal')) {
+        nav.section = 'administration';
+        nav.item = 'journal';
+        crumbs.push({ label: 'Administration' });
+        crumbs.push({ label: 'Journal d\'audit' });
+    } else if (p.startsWith('/statistiques')) {
+        nav.section = 'administration';
+        nav.item = 'stats';
+        crumbs.push({ label: 'Administration' });
+        crumbs.push({ label: 'Statistiques' });
+    } else if (p.startsWith('/ldap')) {
+        nav.section = 'administration';
+        nav.item = 'ldap';
+        crumbs.push({ label: 'Administration' });
+        crumbs.push({ label: 'LDAP' });
+    } else if (p.startsWith('/parametres')) {
+        nav.section = 'administration';
+        nav.item = 'settings';
+        crumbs.push({ label: 'Administration' });
+        crumbs.push({ label: 'Réglages généraux' });
+    } else if (p.startsWith('/aide')) {
+        nav.section = 'aide';
+        nav.item = p.split('/')[2] || 'documentation';
+        crumbs.push({ label: 'Aide', href: '/aide/documentation' });
+        const labels = {
+            support: 'Support', documentation: 'Documentation',
+            'mise-a-jour': 'Mise à jour', extensions: 'Extensions',
+            soutien: 'Soutien', confidentialite: 'Confidentialité'
+        };
+        const key = p.split('/')[2];
+        if (key && labels[key]) crumbs.push({ label: labels[key] });
+    } else if (p.startsWith('/notifications')) {
+        nav.section = 'notifications';
+        nav.item = 'notifications';
+        crumbs.push({ label: 'Notifications' });
+    } else if (p.startsWith('/profil') || p.startsWith('/changer-mot-de-passe')) {
+        nav.section = 'profil';
+        nav.item = 'profil';
+        crumbs.push({ label: 'Mon profil' });
+        if (p.startsWith('/changer-mot-de-passe')) crumbs.push({ label: 'Mot de passe' });
+    } else if (p.startsWith('/recherche')) {
+        nav.item = 'recherche';
+        crumbs.push({ label: 'Recherche' });
+    } else if (p.startsWith('/activites')) {
+        nav.item = 'activite';
+        crumbs.push({ label: 'Activité' });
+        if (p.endsWith('/nouveau')) crumbs.push({ label: 'Nouvelle' });
+        else if (p.includes('/reglages')) crumbs.push({ label: 'Réglages' });
+        else if (p.includes('/modifier')) crumbs.push({ label: 'Modifier' });
+    } else if (p.startsWith('/sous-activites')) {
+        nav.item = 'sousActivite';
+        crumbs.push({ label: 'Sous-activité' });
+    } else if (p.startsWith('/outils')) {
+        nav.item = 'outil';
+        crumbs.push({ label: 'Outil' });
+    } else if (p.startsWith('/utilisateurs')) {
+        nav.item = 'utilisateurs';
+        crumbs.push({ label: 'Utilisateurs' });
+    }
+
+    return { nav, breadcrumbs: crumbs };
+}
+
+
 app.use(async (req, res, next) => {
     // Les fichiers statiques sont déjà servis avant ; filet de sécurité
     const pth = req.path || '';
@@ -86,6 +185,10 @@ app.use(async (req, res, next) => {
         return next();
     }
 
+    const navInfo = deduireNavigation(req.path || '');
+    res.locals.nav = navInfo.nav;
+    // breadcrumbs: routes peuvent surcharger via res.locals.breadcrumbs plus tard
+    res.locals.breadcrumbs = navInfo.breadcrumbs;
     res.locals.currentUser = req.session.user || null;
     res.locals.page = '';
     res.locals.peut = (resource, action) => peutFaire(res.locals.currentUser, resource, action);
@@ -116,6 +219,27 @@ app.use(async (req, res, next) => {
                 const n = data.nombre || 0;
                 req.session._notifBadge = { n, ts: now };
                 res.locals.notificationsNonLues = n;
+            } catch { /* non bloquant */ }
+        }
+    }
+
+    
+    res.locals.favorisOutilsIds = [];
+    res.locals.favorisActivitesIds = [];
+    if (res.locals.currentUser && req.session.apiCookie) {
+        const now = Date.now();
+        const fc = req.session._favorisCache;
+        if (fc && (now - fc.ts) < 60000) {
+            res.locals.favorisOutilsIds = fc.outils || [];
+            res.locals.favorisActivitesIds = fc.activites || [];
+        } else {
+            try {
+                const { data: fav } = await apiClient(req).get(`/utilisateurs/${res.locals.currentUser.id}/favoris`);
+                const outils = (fav && fav.outils) || [];
+                const activites = (fav && fav.activites) || [];
+                req.session._favorisCache = { outils, activites, ts: now };
+                res.locals.favorisOutilsIds = outils;
+                res.locals.favorisActivitesIds = activites;
             } catch { /* non bloquant */ }
         }
     }

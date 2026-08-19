@@ -1,0 +1,23 @@
+<% if (typeof currentUser !== 'undefined' && currentUser && typeof breadcrumbs !== 'undefined' && breadcrumbs && breadcrumbs.length) { %>
+<%
+  // Ne pas afficher sur le seul tableau de bord (un seul crumb sans intérêt)
+  var show = breadcrumbs.length > 1 || (breadcrumbs.length === 1 && breadcrumbs[0].href);
+  if (breadcrumbs.length === 1 && !breadcrumbs[0].href && (breadcrumbs[0].label === 'Tableau de bord')) show = false;
+%>
+<% if (show) { %>
+<nav class="fil-ariane" aria-label="Fil d'Ariane">
+  <% breadcrumbs.forEach(function(c, i) {
+    var last = i === breadcrumbs.length - 1;
+  %>
+    <% if (i > 0) { %><span class="sep" aria-hidden="true">›</span><% } %>
+    <% if (!last && c.href) { %>
+      <a href="<%= c.href %>"><%= c.label %></a>
+    <% } else if (!last && !c.href) { %>
+      <span class="fil-muted"><%= c.label %></span>
+    <% } else { %>
+      <span class="fil-actuel" aria-current="page"><%= c.label %></span>
+    <% } %>
+  <% }) %>
+</nav>
+<% } %>
+<% } %>

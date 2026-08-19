@@ -20,8 +20,6 @@
  }
  if (!contacts.length) contacts = [''];
 %>
-
-<div class="fil-ariane"><a href="/"><%= t('nav.dashboard') %></a> <span class="sep">›</span> <%= t('profile.title') %></div>
 <div class="entete-page"><h1><%= t('profile.title') %></h1></div>
 
 <% if (erreur) { %><div class="message-erreur"><%= erreur %></div><% } %>
@@ -45,7 +43,8 @@
  <input type="hidden" name="section" value="infos">
 
  <label for="matricule"><%= t('common.matricule') %></label>
- <input type="text" id="matricule" value="<%= user.matricule || '' %>" disabled readonly class="champ-lecture">
+ <% var peutIdentite = peut('profil', 'update_identite') || peut('utilisateurs', 'update'); %>
+ <input type="text" id="matricule" name="matricule" value="<%= user.matricule || '' %>" <%= peutIdentite ? '' : 'disabled readonly' %> class="<%= peutIdentite ? '' : 'champ-lecture' %>">
 
  <label for="role_affiche">Rôle</label>
  <select id="role_affiche" disabled class="champ-lecture">
@@ -53,10 +52,10 @@
  </select>
 
  <label for="nom_affiche">Nom</label>
- <input type="text" id="nom_affiche" value="<%= user.nom || '' %>" disabled readonly class="champ-lecture">
+ <input type="text" id="nom" name="nom" value="<%= user.nom || '' %>" <%= peutIdentite ? '' : 'disabled readonly' %> class="<%= peutIdentite ? '' : 'champ-lecture' %>">
 
  <label for="prenom_affiche">Prénom</label>
- <input type="text" id="prenom_affiche" value="<%= user.prenom || '' %>" disabled readonly class="champ-lecture">
+ <input type="text" id="prenom" name="prenom" value="<%= user.prenom || '' %>" <%= peutIdentite ? '' : 'disabled readonly' %> class="<%= peutIdentite ? '' : 'champ-lecture' %>">
 
  <label for="email"><%= t('profile.email') %></label>
  <input type="email" id="email" name="email" value="<%= user.email || '' %>" placeholder="prenom.nom@exemple.com">

@@ -1,6 +1,4 @@
 <%- include('../partials/header') %>
-
-<div class="fil-ariane"><a href="/roles">Rôles</a> <span class="sep">›</span> <%= titre %></div>
 <div class="entete-page"><h1><%= titre %></h1></div>
 
 <% var libellesRessources = {
@@ -71,6 +69,22 @@ var libellesActions = { read: 'Lire', create: 'Créer', update: 'Modifier', dele
  </tbody>
  </table>
 
+ 
+ <div style="margin-top:18px; padding:14px; background:var(--gris-clair); border-radius:var(--rayon);">
+ <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; font-weight:500;">
+ <input type="checkbox" name="perm_profil_update_identite"
+  <%= role && role.permissions && role.permissions.profil && role.permissions.profil.update_identite ? 'checked' : '' %>
+  style="margin-top:3px;">
+ <span>
+ Autoriser la modification du <strong>nom</strong>, <strong>prénom</strong> et <strong>matricule</strong>
+ sur <em>son propre compte</em> (Mon profil)<br>
+ <span style="font-weight:400; color:var(--gris); font-size:12px;">
+ Utile pour les agents. Le rôle et l’activité d’un autre utilisateur restent modifiables uniquement avec la permission « Utilisateurs → Modifier ».
+ </span>
+ </span>
+ </label>
+ </div>
+
  <label style="margin-top:18px;">Onglets visibles dans une activité / sous-activité</label>
  <p style="color:var(--gris); font-size:13px; margin-top:-6px;">
  Contrôle uniquement quels onglets apparaissent dans la navbar d'une page activité/sous-activité —
@@ -82,6 +96,33 @@ var libellesActions = { read: 'Lire', create: 'Créer', update: 'Modifier', dele
  <label style="display:flex; align-items:center; gap:6px; font-weight:400;">
  <input type="checkbox" name="onglet_<%= o %>" <%= coche ? 'checked' : '' %>>
  <%= libellesOnglets[o] %>
+ </label>
+ <% }) %>
+ </div>
+
+ 
+ <label style="margin-top:18px;">Menu Aide — pages visibles</label>
+ <p style="color:var(--gris); font-size:13px; margin-top:-6px;">
+ Choisissez les entrées du menu <strong>Aide</strong> affichées pour ce rôle. Aucune case cochée = menu Aide masqué.
+ </p>
+ <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px;">
+ <% var aideItemsList = typeof aideItems !== 'undefined' ? aideItems : ['support','documentation','mise-a-jour','extensions','soutien','confidentialite']; %>
+ <% var libellesAide = {
+   support: 'Support',
+   documentation: 'Documentation',
+   'mise-a-jour': 'Mise à jour',
+   extensions: 'Extensions',
+   soutien: 'Soutien',
+   confidentialite: 'Confidentialité'
+ }; %>
+ <% aideItemsList.forEach(function(item) { %>
+ <% var cocheAide = role && role.permissions && role.permissions.aide && role.permissions.aide[item]; %>
+ <% // Rétrocompat : si aucune config aide encore, tout coché par défaut à l'affichage admin existant
+    if (!(role && role.permissions && role.permissions.aide)) cocheAide = true;
+ %>
+ <label style="display:flex; align-items:center; gap:6px; font-weight:400;">
+ <input type="checkbox" name="aide_<%= item %>" <%= cocheAide ? 'checked' : '' %>>
+ <%= libellesAide[item] || item %>
  </label>
  <% }) %>
  </div>

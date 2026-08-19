@@ -5,9 +5,6 @@
     <i class="bi bi-megaphone"></i> <%= activite.reglages_effectifs.message_info %>
 </div>
 <% } %>
-
-<div class="fil-ariane"><a href="/">Tableau de bord</a> <span class="sep">›</span> <%= activite.nom %></div>
-
 <div class="entete-page">
  <h1>
  <% if (activite.logo) { %><img src="<%= activite.logo %>" class="miniature" style="vertical-align:middle; margin-right:8px;"><% } %>
@@ -126,7 +123,10 @@
  <span style="font-style:italic;">Jamais connecté</span>
  <% } %>
  </td>
- <td style="text-align:right;">
+ <td style="text-align:right; white-space:nowrap;">
+ <% if (peut('utilisateurs', 'update')) { %>
+ <a href="/utilisateurs/<%= u.id %>/modifier" class="btn btn-gris btn-petit" title="Modifier les informations"><i class="bi bi-pencil"></i> Modifier</a>
+ <% } %>
  <% if (currentUser.Role && currentUser.Role.abbreviation === 'ADMIN') { %>
  <form action="/utilisateurs/<%= u.id %>/reinitialiser-mdp" method="POST" class="form-inline"
  onsubmit="return confirm('Réinitialiser le mot de passe de cet utilisateur à la valeur par défaut ?');">

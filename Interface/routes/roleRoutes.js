@@ -15,6 +15,7 @@ const ACTIONS = ['read', 'create', 'update', 'delete'];
 // CRUD ci-dessus : contrôle uniquement si l'onglet apparaît dans la navbar,
 // pas ce qu'on a le droit d'y faire (ça reste régi par outils/*, acces/*...).
 const ONGLETS = ['outils', 'archives', 'sous_activites', 'utilisateurs'];
+const AIDE_ITEMS = ['support', 'documentation', 'mise-a-jour', 'extensions', 'soutien', 'confidentialite'];
 
 router.get('/', async (req, res, next) => {
     try {
@@ -32,6 +33,7 @@ router.get('/nouveau', (req, res) => {
         ressources: RESSOURCES,
         actions: ACTIONS,
         onglets: ONGLETS,
+            aideItems: AIDE_ITEMS,
         erreur: null
     });
 });
@@ -53,6 +55,7 @@ router.post('/', async (req, res, next) => {
             ressources: RESSOURCES,
             actions: ACTIONS,
             onglets: ONGLETS,
+            aideItems: AIDE_ITEMS,
             erreur: err.response?.data?.message || 'Erreur lors de la création.'
         });
     }
@@ -71,6 +74,7 @@ router.get('/:id/modifier', async (req, res, next) => {
             ressources: RESSOURCES,
             actions: ACTIONS,
             onglets: ONGLETS,
+            aideItems: AIDE_ITEMS,
             erreur: null
         });
     } catch (err) { next(err); }
@@ -121,6 +125,16 @@ function construirePermissions(body) {
     permissions.onglets = {};
     for (const onglet of ONGLETS) {
         permissions.onglets[onglet] = body[`onglet_${onglet}`] === 'on';
+    }
+
+    // Option fine : modifier nom/prénom/matricule sur son propre profil
+    if (!permissions.profil) permissions.profil = {};
+    permissions.profil.update_identite = body.perm_profil_update_identite === 'on';
+
+    // Items du menu Aide visibles pour ce rôle
+    permissions.aide = {};
+    for (const item of AIDE_ITEMS) {
+        permissions.aide[item] = body[`aide_${item}`] === 'on';
     }
 
     return permissions;

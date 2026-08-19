@@ -15,23 +15,57 @@ router.get('/', requireLogin, async (req, res, next) => {
         ]);
 
         const favoris = favRes.data || { outils: [], activites: [] };
+        const idsOutils = (favoris.outils || []).map(Number);
+        const idsActivites = (favoris.activites || []).map(Number);
+        req.session._favorisCache = { outils: idsOutils, activites: idsActivites, ts: Date.now() };
+        res.locals.favorisOutilsIds = idsOutils;
+        res.locals.favorisActivitesIds = idsActivites;
+
         let tousOutils = outilsRes.data;
         if (!Array.isArray(tousOutils)) tousOutils = tousOutils.outils || [];
 
-        const outilsFavoris = (favoris.outils || [])
-            .map(id => tousOutils.find(o => o.id === id))
+        const outilsFavoris = idsOutils
+            .map(id => tousOutils.find(o => Number(o.id) === id))
             .filter(Boolean);
 
-        const actIds = new Set(favoris.activites || []);
-        const activitesFavoris = (arb.data || []).filter(a => actIds.has(a.id));
+        // Arborescence des épinglés : activités épinglées + outils épinglés groupés
+        const arboEpingles = [];
+        const actById = {};
+        (arb.data || []).forEach(a => { actById[a.id] = a; });
+
+        idsActivites.forEach(id => {
+            const a = actById[id];
+            if (!a) return;
+            arboEpingles.push({
+                type: 'activite',
+                id: a.id,
+                nom: a.nom,
+                abbreviation: a.abbreviation,
+                sousActivites: a.sousActivites || [],
+                outils: outilsFavoris.filter(o => {
+                    const acts = o.activites || [];
+                    return acts.some(x => Number(x.id || x) === id);
+                })
+            });
+        });
+
+        // Outils épinglés non déjà rattachés à une activité épinglée
+        const outilsOrphelins = outilsFavoris.filter(o => {
+            const acts = o.activites || [];
+            const lie = acts.some(x => idsActivites.includes(Number(x.id || x)));
+            return !lie;
+        });
 
         res.locals.page = 'dashboard';
         res.render('dashboard', {
             titre: 'Tableau de bord',
-            arborescence: arb.data,
+            arborescence: arb.data || [],
             favoris,
             outilsFavoris,
-            activitesFavoris
+            arboEpingles,
+            outilsOrphelins,
+            idsOutilsFavoris: idsOutils,
+            idsActivitesFavoris: idsActivites
         });
     } catch (err) {
         next(err);

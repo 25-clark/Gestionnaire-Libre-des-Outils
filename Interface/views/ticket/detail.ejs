@@ -1,7 +1,4 @@
 <%- include('../partials/header') %>
-
-<div class="fil-ariane"><a href="/tickets">Tickets</a> <span class="sep">›</span> #<%= ticket.id %></div>
-
 <% var sla = ticket.sla_statut || 'sans_sla'; %>
 <div class="entete-page">
  <h1><i class="bi bi-ticket-detailed"></i> #<%= ticket.id %> — <%= ticket.titre %></h1>

@@ -140,7 +140,10 @@ router.post('/profil', async (req, res, next) => {
                 langue: req.body.langue || 'fr'
             };
         } else {
-            // Infos personnelles
+            // Infos personnelles (+ identité si le rôle l'autorise côté Server)
+            if (req.body.nom !== undefined) body.nom = req.body.nom;
+            if (req.body.prenom !== undefined) body.prenom = req.body.prenom;
+            if (req.body.matricule !== undefined) body.matricule = req.body.matricule;
             body.email = req.body.email || null;
             body.telephone = req.body.telephone || null;
             body.fonction = req.body.fonction || null;
@@ -156,12 +159,16 @@ router.post('/profil', async (req, res, next) => {
         const { data: user } = await api.put(`/utilisateurs/${req.session.user.id}/profil`, body);
         // Mettre à jour la session (thème + langue appliqués au prochain rendu)
         Object.assign(req.session.user, {
+            nom: user.nom,
+            prenom: user.prenom,
+            matricule: user.matricule,
             email: user.email,
             telephone: user.telephone,
             autres_contacts: user.autres_contacts,
             fonction: user.fonction,
             adresse: user.adresse,
-            preferences: user.preferences || body.preferences
+            preferences: user.preferences || body.preferences,
+            Role: user.Role || req.session.user.Role
         });
         // Redirection pour recharger header (lang/theme) proprement
         if (section === 'preferences') {

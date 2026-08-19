@@ -1,4 +1,10 @@
 <%- include('partials/header') %>
+<%
+  var idsActFav = (typeof idsActivitesFavoris !== 'undefined' ? idsActivitesFavoris : (typeof favorisActivitesIds !== 'undefined' ? favorisActivitesIds : [])) || [];
+  var idsOutilFav = (typeof idsOutilsFavoris !== 'undefined' ? idsOutilsFavoris : (typeof favorisOutilsIds !== 'undefined' ? favorisOutilsIds : [])) || [];
+  function estActFav(id) { return idsActFav.map(Number).indexOf(Number(id)) >= 0; }
+  function estOutilFav(id) { return idsOutilFav.map(Number).indexOf(Number(id)) >= 0; }
+%>
 
 <div class="entete-page">
     <h1>Tableau de bord</h1>
@@ -7,22 +13,74 @@
     <% } %>
 </div>
 
-
-<% if ((typeof outilsFavoris !== 'undefined' && outilsFavoris.length) || (typeof activitesFavoris !== 'undefined' && activitesFavoris.length)) { %>
-<div class="carte" style="margin-bottom:18px;">
-    <h2 style="margin:0 0 12px;font-size:15px;"><i class="bi bi-pin-angle-fill"></i> Épinglés</h2>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;">
-        <% (activitesFavoris || []).forEach(function(a) { %>
-            <a href="/activites/<%= a.id %>" class="btn btn-gris btn-petit"><i class="bi bi-folder"></i> <%= a.nom %></a>
-        <% }) %>
-        <% (outilsFavoris || []).forEach(function(o) { %>
-            <% if (o.lien) { %>
-                <a href="<%= o.lien %>" target="_blank" rel="noopener" class="btn btn-gris btn-petit"><i class="bi bi-tools"></i> <%= o.nom %></a>
-            <% } else { %>
-                <span class="btn btn-gris btn-petit" style="opacity:0.85;"><i class="bi bi-tools"></i> <%= o.nom %></span>
+<% if ((typeof arboEpingles !== 'undefined' && arboEpingles.length) || (typeof outilsOrphelins !== 'undefined' && outilsOrphelins.length)) { %>
+<div class="carte carte-epingles" style="margin-bottom:18px;">
+    <h2 style="margin:0 0 12px;font-size:15px;">
+        <i class="bi bi-bookmark-star-fill" style="color:#d97706;"></i> Épinglés
+    </h2>
+    <ul class="arbre-epingles">
+        <% (arboEpingles || []).forEach(function(noeud) { %>
+        <li class="noeud-epingle-activite">
+            <div class="entete-epingle">
+                <button type="button" class="btn-collapse-activite btn-favori est-epingle"
+                        data-favori-type="activite" data-favori-id="<%= noeud.id %>"
+                        title="Retirer des épinglés">
+                    <i class="bi bi-pin-angle-fill"></i>
+                </button>
+                <a href="/activites/<%= noeud.id %>" class="lien-epingle">
+                    <span class="icone-epingle-activite"><i class="bi bi-bookmark-star-fill"></i></span>
+                    <strong><%= noeud.nom %></strong>
+                    <% if (noeud.abbreviation) { %><span class="abbreviation"><%= noeud.abbreviation %></span><% } %>
+                </a>
+            </div>
+            <% if (noeud.sousActivites && noeud.sousActivites.length) { %>
+            <ul class="sous-arbre">
+                <% noeud.sousActivites.forEach(function(sa) { %>
+                <li>
+                    <a class="noeud-sous-activite" href="/sous-activites/<%= sa.id %>">
+                        <span class="icone-dossier-petit"><i class="bi bi-folder2-open"></i></span>
+                        <span><%= sa.nom %></span>
+                    </a>
+                </li>
+                <% }) %>
+            </ul>
             <% } %>
+            <% if (noeud.outils && noeud.outils.length) { %>
+            <ul class="sous-arbre sous-arbre-outils">
+                <% noeud.outils.forEach(function(o) { %>
+                <li class="noeud-epingle-outil">
+                    <button type="button" class="btn-favori-mini est-epingle" data-favori-type="outil" data-favori-id="<%= o.id %>" title="Retirer des épinglés">
+                        <i class="bi bi-pin-angle-fill"></i>
+                    </button>
+                    <% if (o.lien) { %>
+                    <a href="<%= o.lien %>" target="_blank" rel="noopener">
+                        <i class="bi bi-bookmark-star"></i> <%= o.nom %>
+                    </a>
+                    <% } else { %>
+                    <span><i class="bi bi-bookmark-star"></i> <%= o.nom %></span>
+                    <% } %>
+                </li>
+                <% }) %>
+            </ul>
+            <% } %>
+        </li>
         <% }) %>
-    </div>
+
+        <% (outilsOrphelins || []).forEach(function(o) { %>
+        <li class="noeud-epingle-outil orphelin">
+            <button type="button" class="btn-favori-mini est-epingle" data-favori-type="outil" data-favori-id="<%= o.id %>" title="Retirer des épinglés">
+                <i class="bi bi-pin-angle-fill"></i>
+            </button>
+            <% if (o.lien) { %>
+            <a href="<%= o.lien %>" target="_blank" rel="noopener">
+                <i class="bi bi-bookmark-star"></i> <%= o.nom %>
+            </a>
+            <% } else { %>
+            <span><i class="bi bi-bookmark-star"></i> <%= o.nom %></span>
+            <% } %>
+        </li>
+        <% }) %>
+    </ul>
 </div>
 <% } %>
 
@@ -35,6 +93,7 @@
         var sous = activite.sousActivites || [];
         var aDesSous = sous.length > 0;
         var plusieursSous = sous.length > 1;
+        var epingle = estActFav(activite.id);
     %>
     <li class="carte-activite<%= aDesSous ? ' a-sous-activites' : '' %>" data-activite-id="<%= activite.id %>">
         <div class="entete-activite">
@@ -49,9 +108,18 @@
             <% } else { %>
                 <span class="btn-collapse-placeholder"></span>
             <% } %>
-            <button type="button" class="btn-collapse-activite btn-favori" data-favori-type="activite" data-favori-id="<%= activite.id %>" title="Épingler l'activité" style="border-style:dashed;"><i class="bi bi-pin-angle"></i></button>
+            <button type="button"
+                    class="btn-collapse-activite btn-favori<%= epingle ? ' est-epingle' : '' %>"
+                    data-favori-type="activite"
+                    data-favori-id="<%= activite.id %>"
+                    title="<%= epingle ? 'Retirer des épinglés' : 'Épingler l\'activité' %>">
+                <i class="bi <%= epingle ? 'bi-pin-angle-fill' : 'bi-pin-angle' %>"></i>
+            </button>
             <a href="/activites/<%= activite.id %>" class="lien-entete-activite">
-                <span class="icone-dossier"><i class="bi bi-folder2"></i></span>
+                <span class="icone-dossier">
+                    <% if (epingle) { %><i class="bi bi-bookmark-star-fill" style="color:#d97706;"></i>
+                    <% } else { %><i class="bi bi-folder2"></i><% } %>
+                </span>
                 <h2><%= activite.nom %></h2>
                 <span class="abbreviation"><%= activite.abbreviation %></span>
                 <% if (aDesSous) { %>
@@ -71,7 +139,6 @@
 <script>
 (function () {
     var STORAGE_KEY = 'glo_dashboard_collapse';
-
     function lireEtat() {
         try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
         catch (e) { return {}; }
@@ -79,7 +146,6 @@
     function sauverEtat(etat) {
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(etat)); } catch (e) {}
     }
-
     function appliquer(btn, ouvert) {
         var cibleId = btn.getAttribute('data-cible');
         var bloc = document.getElementById(cibleId);
@@ -93,16 +159,13 @@
             icon.classList.toggle('bi-chevron-right', !ouvert);
         }
     }
-
     var etat = lireEtat();
-    document.querySelectorAll('.btn-collapse-activite').forEach(function (btn) {
+    document.querySelectorAll('.btn-collapse-activite[data-cible]').forEach(function (btn) {
         var li = btn.closest('.carte-activite');
         var id = li && li.getAttribute('data-activite-id');
-        // Préférence mémorisée prioritaire ; sinon défaut = replié si plusieurs sous-activités
         if (id && Object.prototype.hasOwnProperty.call(etat, id)) {
             appliquer(btn, !!etat[id]);
         }
-
         btn.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
