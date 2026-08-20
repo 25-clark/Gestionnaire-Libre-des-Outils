@@ -95,8 +95,14 @@ async function getAll(req, res, next) {
         }
 
         // Filtres optionnels
-        if (req.query.statut) tickets = tickets.filter(t => t.statut === req.query.statut);
-        if (req.query.priorite) tickets = tickets.filter(t => t.priorite === req.query.priorite);
+        if (req.query.statut) {
+            const st = Array.isArray(req.query.statut) ? req.query.statut : String(req.query.statut).split(',').filter(Boolean);
+            if (st.length) tickets = tickets.filter(t => st.includes(t.statut));
+        }
+        if (req.query.priorite) {
+            const pr = Array.isArray(req.query.priorite) ? req.query.priorite : String(req.query.priorite).split(',').filter(Boolean);
+            if (pr.length) tickets = tickets.filter(t => pr.includes(t.priorite));
+        }
         if (req.query.mine === '1') tickets = tickets.filter(t => t.id_createur === req.currentUser.id);
         if (req.query.assignes === '1') tickets = tickets.filter(t => t.id_assigne === req.currentUser.id);
         if (req.query.id_createur) tickets = tickets.filter(t => t.id_createur === parseInt(req.query.id_createur, 10));

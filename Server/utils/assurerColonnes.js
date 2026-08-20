@@ -38,6 +38,11 @@ async function assurerColonnes() {
 
     // ---- parametres : activation credentials + legacy + installation ----
     await ajouterColonne('parametres', 'credentials_actifs', 'TINYINT(1) NOT NULL DEFAULT 0');
+
+    await ajouterColonne('utilisateurs', 'session_active_id', 'VARCHAR(255) NULL');
+    await ajouterColonne('parametres', 'chiffrement_algo', "VARCHAR(32) NOT NULL DEFAULT 'aes-256-gcm'");
+    await ajouterColonne('parametres', 'auth_3fa_actif', 'TINYINT(1) NOT NULL DEFAULT 0');
+
     await ajouterColonne('parametres', 'credentials', 'JSON NULL');
     await ajouterColonne('parametres', 'installation_terminee', 'TINYINT(1) NOT NULL DEFAULT 0');
     await ajouterColonne('parametres', 'cgu_acceptees_le', 'DATETIME NULL');

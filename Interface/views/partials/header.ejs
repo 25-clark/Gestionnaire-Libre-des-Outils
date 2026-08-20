@@ -55,12 +55,10 @@
      if (section && nav.section === section && !item) return true;
      return false;
    } %>
+<div class="nav-overlay" id="nav-overlay" hidden></div>
 <header class="topbar" id="topbar">
  <a href="/" class="logo"><img src="/favicon-32x32.png" alt=""><span><%= nomEntreprise ? nomEntreprise : 'GLO' %></span></a>
-    <button type="button" class="btn-nav-mobile" id="btn-nav-mobile" aria-label="Menu" aria-expanded="false">
-        <i class="bi bi-list" style="font-size:1.35rem;" aria-hidden="true"></i>
-    </button>
- <nav>
+ <nav id="nav-principale" class="nav-principale">
  <%/* —— Accueil —— */%>
  <a href="/" class="<%= navActif('dashboard','dashboard') || nav.item==='dashboard' ? 'nav-actif' : '' %>"><%= t('nav.dashboard') %></a>
 
@@ -173,7 +171,11 @@
  </div>
  </div>
  </div>
+ <button type="button" class="btn-nav-mobile" id="btn-nav-mobile" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="nav-principale">
+  <i class="bi bi-list" style="font-size:1.35rem;" aria-hidden="true"></i>
+ </button>
 </header>
+
 <% } %>
 <div class="conteneur">
 <%- include('fil-ariane') %>

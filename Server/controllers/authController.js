@@ -3,6 +3,7 @@ const { verifier, hacher, validerPolitiqueMotDePasse } = require('../utils/motDe
 const { consigner } = require('../utils/journal');
 const { verifierBlocageIp, enregistrerEchecIp, reinitialiserIp } = require('../utils/limiteurIp');
 const { genererSecret, verifierTotp, otpauthUrl } = require('../utils/totp');
+const { envoyerCodeConnexion } = require('../utils/email');
 
 // Réglages de sécurité toujours disponibles (créés à la volée s'ils
 // n'existent pas encore, comme dans parametreController.js).
@@ -27,6 +28,57 @@ function formatDuree(ms) {
 // Si le mot de passe est celui par défaut (doit_changer_mdp = true), le
 // client (Interface) doit rediriger vers le changement de mot de passe
 // avant de laisser continuer.
+
+/** Génère un code 3FA à 6 chiffres (valide 5 min). */
+function genererCodeAuth() {
+    return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+
+async function demarrerAuthEmail(req, res, user) {
+    const email = (user.email || '').trim();
+    if (!email || !email.includes('@')) {
+        return res.json({
+            message: 'Une adresse e-mail est requise pour le code de connexion. Ajoutez-la dans Mon profil.',
+            require_email: true,
+            requireAuthEmail: false
+        });
+    }
+    const code = genererCodeAuth();
+    req.session.pendingAuthEmailUserId = user.id;
+    req.session.pendingAuthEmailExpire = Date.now() + 5 * 60 * 1000;
+    req.session.pendingAuthEmailCode = code;
+    const envoi = await envoyerCodeConnexion(email, code, {
+        prenom: user.prenom,
+        matricule: user.matricule
+    });
+    const masque = email.replace(/(.{2})(.*)(@.*)/, (_, a, b, d) => a + '***' + d);
+    console.log(`[auth-email] Code pour ${user.matricule} → ${email} (mode ${envoi.mode})`, envoi.error || '');
+
+    let message = `Un code a été envoyé à ${masque}.`;
+    let hint = undefined;
+    if (envoi.mode === 'smtp' && envoi.ok) {
+        message = `Un code a été envoyé à ${masque}. Vérifiez votre boîte de réception (et les spams).`;
+    } else if (envoi.mode === 'not_configured') {
+        message = `SMTP non lu depuis Server/.env (SMTP_HOST manquant ?). Code de secours affiché.`;
+        hint = code;
+    } else if (envoi.mode === 'smtp_error') {
+        message = `Échec d'envoi SMTP vers ${masque} : ${envoi.error || 'erreur inconnue'}. Code de secours affiché. Vérifiez SMTP_USER / SMTP_PASS (mot de passe d'application Gmail) et npm install nodemailer.`;
+        hint = code;
+    } else {
+        message = `Code généré pour ${masque} (mode secours).`;
+        hint = code;
+    }
+
+    return res.json({
+        message,
+        requireAuthEmail: true,
+        email_masque: masque,
+        smtp_mode: envoi.mode,
+        hint
+    });
+}
+
 async function login(req, res, next) {
     try {
         const { matricule, mot_de_passe } = req.body;
@@ -113,6 +165,8 @@ async function login(req, res, next) {
         const totpOblig = !!parametre.totp_obligatoire;
         const userTotpActif = !!user.totp_actif && !!user.totp_secret;
 
+        // Ordre des facteurs (cumulatifs, jamais exclusifs) :
+        // 1) mot de passe  2) TOTP app si actif  3) code e-mail si actif dans préférences
         // 2FA activé pour ce compte, ou obligatoire globalement
         if (totpDispo && (userTotpActif || totpOblig)) {
             if (totpOblig && !userTotpActif) {
@@ -131,8 +185,58 @@ async function login(req, res, next) {
         }
 
         if (!req.session.userId) {
+            // 3ᵉ facteur si activé globalement
+            // Code e-mail (choix personnel dans Mon profil)
+            let prefs = user.preferences || {};
+            if (typeof prefs === 'string') { try { prefs = JSON.parse(prefs); } catch { prefs = {}; } }
+            if (prefs.auth_code_actif) {
+                return demarrerAuthEmail(req, res, user);
+            }
             req.session.userId = user.id;
             req.session.cookie.maxAge = parametre.session_duree_heures * 60 * 60 * 1000;
+
+        // Détection multi-session (même compte sur un autre appareil)
+        try {
+            const fp = req.sessionID || req.session.id || null;
+            const prev = user.session_active_id || null;
+            if (prev && fp && prev !== fp) {
+                const { consigner } = require('../utils/journal');
+                const { Notification, Utilisateur, Role } = require('../models');
+                await consigner({
+                    user,
+                    action: 'connexion',
+                    ressource: 'session',
+                    id_ressource: user.id,
+                    libelle: `Connexion concurrente détectée pour ${user.matricule} (nouvelle session alors qu'une autre était active)`
+                }).catch(() => {});
+                // Notifier l'utilisateur
+                await Notification.create({
+                    id_user: user.id,
+                    message: 'Une nouvelle connexion à votre compte a été détectée depuis un autre appareil ou navigateur. Si ce n\'est pas vous, changez votre mot de passe.',
+                    type: 'securite',
+                    lu: false
+                }).catch(() => {});
+                // Notifier les admins (journal + notification)
+                const admins = await Utilisateur.findAll({
+                    include: [{ model: Role, where: { abbreviation: 'ADMIN' }, required: true }]
+                }).catch(() => []);
+                for (const admin of (admins || [])) {
+                    if (admin.id === user.id) continue;
+                    await Notification.create({
+                        id_user: admin.id,
+                        message: `Connexion concurrente : ${user.prenom} ${user.nom} (${user.matricule}) s'est connecté alors qu'une autre session était active.`,
+                        type: 'securite',
+                        lu: false
+                    }).catch(() => {});
+                }
+            }
+            if (fp) {
+                await user.update({ session_active_id: fp }).catch(() => {});
+            }
+        } catch (e) {
+            console.warn('[session] détection multi-session:', e.message);
+        }
+
         }
 
         await consigner({
@@ -251,6 +355,11 @@ async function verifier2fa(req, res, next) {
         const parametre = await obtenirParametres();
         delete req.session.pending2faUserId;
         delete req.session.pending2faExpire;
+        let prefs2 = user.preferences || {};
+        if (typeof prefs2 === 'string') { try { prefs2 = JSON.parse(prefs2); } catch { prefs2 = {}; } }
+        if (prefs2.auth_code_actif) {
+            return demarrerAuthEmail(req, res, user);
+        }
         req.session.userId = user.id;
         req.session.cookie.maxAge = parametre.session_duree_heures * 60 * 60 * 1000;
 
@@ -322,5 +431,41 @@ async function desactiver2fa(req, res, next) {
     } catch (err) { next(err); }
 }
 
-module.exports = { login, logout, me, changerMotDePasse, verifier2fa, setup2fa, activer2fa, desactiver2fa };
+
+async function verifierCodeEmail(req, res, next) {
+    try {
+        const pendingId = req.session.pendingAuthEmailUserId;
+        const exp = req.session.pendingAuthEmailExpire || 0;
+        const expected = req.session.pendingAuthEmailCode;
+        if (!pendingId || Date.now() > exp) {
+            return res.status(401).json({ message: 'Code expiré. Reconnectez-vous.' });
+        }
+        const code = String(req.body.code || '').trim();
+        if (!code || code !== String(expected)) {
+            return res.status(401).json({ message: 'Code incorrect.' });
+        }
+        const { Utilisateur, Role } = require('../models');
+        const user = await Utilisateur.scope('avecMotDePasse').findByPk(pendingId, {
+            include: [{ model: Role }, { model: Role, as: 'Roles' }]
+        });
+        if (!user) return res.status(401).json({ message: 'Utilisateur introuvable.' });
+
+        delete req.session.pendingAuthEmailUserId;
+        delete req.session.pendingAuthEmailExpire;
+        delete req.session.pendingAuthEmailCode;
+        req.session.userId = user.id;
+
+        const { consigner } = require('../utils/journal');
+        await consigner({
+            user,
+            action: 'connexion',
+            ressource: 'auth',
+            libelle: `3ᵉ authentification validée pour ${user.matricule}`
+        }).catch(() => {});
+
+        res.json({ message: 'Authentification complète.', ok: true });
+    } catch (err) { next(err); }
+}
+
+module.exports = { login, logout, me, changerMotDePasse, verifier2fa, setup2fa, activer2fa, desactiver2fa, verifierCodeEmail };
 

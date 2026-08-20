@@ -118,6 +118,16 @@ module.exports = (sequelize) => {
         cgu_acceptees_le: {
             type: DataTypes.DATE,
             allowNull: true
+        },
+        chiffrement_algo: {
+            type: DataTypes.STRING(32),
+            allowNull: false,
+            defaultValue: 'aes-256-gcm'
+        },
+        auth_3fa_actif: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
         }
     }, {
         tableName: 'parametres',

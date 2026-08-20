@@ -12,4 +12,6 @@ router.post('/2fa/setup', requireAuth, authController.setup2fa);
 router.post('/2fa/activer', requireAuth, authController.activer2fa);
 router.post('/2fa/desactiver', requireAuth, authController.desactiver2fa);
 
+router.post('/code-email', authController.verifierCodeEmail);
+router.post('/3fa', authController.verifierCodeEmail); // alias rétrocompat
 module.exports = router;

@@ -1,3 +1,4 @@
+const { definirAlgo } = require('../utils/credentialsCrypto');
 const { Parametre } = require('../models');
 const { consigner } = require('../utils/journal');
 const { validerPolitiqueMotDePasse } = require('../utils/motDePasse');
@@ -23,13 +24,16 @@ async function obtenirPublic(req, res, next) {
             const { Utilisateur } = require('../models');
             const n = await Utilisateur.count();
             if (n > 0) {
-                await parametre.update({ installation_terminee: true, cgu_acceptees_le: parametre.cgu_acceptees_le || new Date() });
+                if (chiffrement_algo) definirAlgo(chiffrement_algo);
+        await parametre.update({ installation_terminee: true, cgu_acceptees_le: parametre.cgu_acceptees_le || new Date() });
                 installation_terminee = true;
             }
         }
         res.json({
             nom_entreprise: parametre.nom_entreprise,
             credentials_actifs: !!parametre.credentials_actifs,
+            chiffrement_algo: parametre.chiffrement_algo || 'aes-256-gcm',
+            auth_3fa_actif: !!parametre.auth_3fa_actif,
             totp_disponible: parametre.totp_disponible !== false,
             totp_obligatoire: !!parametre.totp_obligatoire,
             installation_terminee,
@@ -71,6 +75,8 @@ async function mettreAJour(req, res, next) {
             surveillance_active,
             surveillance_intervalle_minutes,
             credentials_actifs,
+            chiffrement_algo,
+            auth_3fa_actif,
             totp_disponible,
             totp_obligatoire
         } = req.body;
@@ -93,6 +99,7 @@ async function mettreAJour(req, res, next) {
             }
         }
 
+        if (chiffrement_algo) definirAlgo(chiffrement_algo);
         await parametre.update({
             nom_entreprise: nom_entreprise !== undefined ? (nom_entreprise || null) : parametre.nom_entreprise,
             mot_de_passe_defaut: mot_de_passe_defaut || parametre.mot_de_passe_defaut,
@@ -112,6 +119,8 @@ async function mettreAJour(req, res, next) {
                 ? borner(surveillance_intervalle_minutes, 1, 1440, parametre.surveillance_intervalle_minutes)
                 : parametre.surveillance_intervalle_minutes,
             credentials_actifs: credentials_actifs !== undefined ? !!credentials_actifs : parametre.credentials_actifs,
+            chiffrement_algo: chiffrement_algo || parametre.chiffrement_algo || 'aes-256-gcm',
+            auth_3fa_actif: auth_3fa_actif !== undefined ? !!auth_3fa_actif : parametre.auth_3fa_actif,
             totp_disponible: totp_disponible !== undefined ? !!totp_disponible : parametre.totp_disponible,
             totp_obligatoire: totp_obligatoire !== undefined ? !!totp_obligatoire : parametre.totp_obligatoire
         });

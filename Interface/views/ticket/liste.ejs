@@ -31,46 +31,22 @@
 
 <div class="carte" style="margin-bottom:16px;">
  <form action="/tickets" method="GET" id="form-filtres-tickets" class="form-filtres-tickets">
- <div class="filtres-selects">
- <div>
- <label for="statut">Statut</label>
- <select id="statut" name="statut">
- <option value="">— Tous —</option>
- <% Object.keys(LIBELLES_STATUT).forEach(function(s) { %>
- <option value="<%= s %>" <%= statut === s ? 'selected' : '' %>><%= LIBELLES_STATUT[s] %></option>
- <% }) %>
- </select>
+ <p style="font-size:13px;color:var(--gris);margin:0 0 10px;">
+   Un <strong>filtre</strong> regroupe tous les critères (statut, priorité, créé par, assigné).
+   Cliquez sur <strong>Ajouter un filtre</strong> pour afficher un nouveau bloc complet en dessous.
+   Vous pouvez enregistrer ces filtres dans le navigateur.
+ </p>
+ <div id="blocs-filtres" class="blocs-filtres"></div>
+ <div style="margin:10px 0;">
+   <button type="button" class="btn btn-gris btn-petit" id="btn-ajouter-filtre">
+     <i class="bi bi-plus-lg"></i> Ajouter un filtre
+   </button>
  </div>
- <div>
- <label for="priorite">Priorité</label>
- <select id="priorite" name="priorite">
- <option value="">— Toutes —</option>
- <% Object.keys(LIBELLES_PRIORITE).forEach(function(p) { %>
- <option value="<%= p %>" <%= priorite === p ? 'selected' : '' %>><%= LIBELLES_PRIORITE[p] %></option>
- <% }) %>
- </select>
- </div>
- <div>
- <label for="id_createur">Créé par</label>
- <select id="id_createur" name="id_createur">
- <option value="">— Tout le monde —</option>
- <% if (currentUser) { %><option value="<%= currentUser.id %>" <%= String(id_createur) === String(currentUser.id) ? 'selected' : '' %>>Moi</option><% } %>
- <% utilisateurs.forEach(function(u) { %>
- <option value="<%= u.id %>" <%= String(id_createur) === String(u.id) ? 'selected' : '' %>><%= u.prenom %> <%= u.nom %></option>
- <% }) %>
- </select>
- </div>
- <div>
- <label for="id_assigne">Assigné à</label>
- <select id="id_assigne" name="id_assigne">
- <option value="">— Tout le monde —</option>
- <% if (currentUser) { %><option value="<%= currentUser.id %>" <%= String(id_assigne) === String(currentUser.id) ? 'selected' : '' %>>Moi</option><% } %>
- <% utilisateurs.forEach(function(u) { %>
- <option value="<%= u.id %>" <%= String(id_assigne) === String(u.id) ? 'selected' : '' %>><%= u.prenom %> <%= u.nom %></option>
- <% }) %>
- </select>
- </div>
- </div>
+ <!-- champs techniques remplis à la soumission -->
+ <input type="hidden" name="statut" id="hid-statut" value="<%= statut || '' %>">
+ <input type="hidden" name="priorite" id="hid-priorite" value="<%= priorite || '' %>">
+ <input type="hidden" name="id_createur" id="hid-id_createur" value="<%= id_createur || '' %>">
+ <input type="hidden" name="id_assigne" id="hid-id_assigne" value="<%= id_assigne || '' %>">
 
  <div class="filtres-actions">
  <div>
@@ -106,8 +82,14 @@
  <% } %>
 
  <div id="filtres-sauvegardes" class="filtres-sauvegardes" style="margin-top:12px; display:none;">
- <span style="font-size:13px; color:var(--gris); margin-right:6px;">Mes filtres :</span>
+ <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px;">
+ <span style="font-size:13px; color:var(--gris);">Mes filtres enregistrés :</span>
  <div id="liste-filtres-sauvegardes" style="display:inline-flex; flex-wrap:wrap; gap:6px;"></div>
+ <button type="button" class="btn btn-petit btn-primaire" id="btn-appliquer-filtres-coches" title="Appliquer tous les filtres cochés en même temps">
+ <i class="bi bi-funnel-fill"></i> Appliquer la sélection
+ </button>
+ </div>
+ <p style="font-size:12px;color:var(--gris);margin:6px 0 0;">Cochez plusieurs filtres enregistrés puis « Appliquer la sélection » pour les combiner.</p>
  </div>
 </div>
 
@@ -226,148 +208,356 @@
 }
 </style>
 
+<script type="application/json" id="glo-tickets-data">
+<%
+  var _gloTicketsData = {
+    libStatut: LIBELLES_STATUT,
+    libPriorite: LIBELLES_PRIORITE,
+    users: (utilisateurs || []).map(function(u) { return { id: u.id, label: (u.prenom || '') + ' ' + (u.nom || '') }; }),
+    currentId: currentUser ? String(currentUser.id) : '',
+    initial: {
+      statut: statut || '',
+      priorite: priorite || '',
+      id_createur: id_createur || '',
+      id_assigne: id_assigne || ''
+    }
+  };
+%>
+<%- JSON.stringify(_gloTicketsData) %>
+</script>
 <script>
 (function () {
- var STORAGE_KEY = 'glo_filtres_tickets';
+  var STORAGE_KEY = 'glo_filtres_tickets';
+  var RECENT_KEY = 'glo_tickets_users_recent';
+  var _raw = document.getElementById('glo-tickets-data');
+  var _data = {};
+  try { _data = JSON.parse(_raw ? _raw.textContent : '{}'); } catch (e) { _data = {}; }
+  var LIB_STATUT = _data.libStatut || {};
+  var LIB_PRIORITE = _data.libPriorite || {};
+  var USERS = _data.users || [];
+  var CURRENT_ID = _data.currentId || '';
+  var initial = _data.initial || { statut: '', priorite: '', id_createur: '', id_assigne: '' };
 
- function getSaved() {
- try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
- catch (_) { return []; }
- }
- function setSaved(list) {
- localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
- }
+  var blocs = document.getElementById('blocs-filtres');
+  var blocIndex = 0;
 
- function currentFilterParams() {
- var form = document.getElementById('form-filtres-tickets');
- var fd = new FormData(form);
- var params = {};
- ['statut', 'priorite', 'id_createur', 'id_assigne'].forEach(function (k) {
- var v = fd.get(k);
- if (v) params[k] = v;
- });
- return params;
- }
+  function getSaved() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch (_) { return []; }
+  }
+  function setSaved(list) { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }
+  function getRecentUsers() {
+    try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); } catch (_) { return []; }
+  }
+  function pushRecentUser(id, label) {
+    if (!id) return;
+    var list = getRecentUsers().filter(function (u) { return String(u.id) !== String(id); });
+    list.unshift({ id: String(id), label: label || ('#' + id) });
+    localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, 8)));
+  }
 
- function labelForSelect(id, value) {
- var sel = document.getElementById(id);
- if (!sel) return value;
- for (var i = 0; i < sel.options.length; i++) {
- if (sel.options[i].value === value) return sel.options[i].text;
- }
- return value;
- }
+  function optsStatut(sel) {
+    var h = '<option value="">— Tous —</option>';
+    Object.keys(LIB_STATUT).forEach(function (k) {
+      h += '<option value="' + k + '"' + (sel === k ? ' selected' : '') + '>' + LIB_STATUT[k] + '</option>';
+    });
+    return h;
+  }
+  function optsPriorite(sel) {
+    var h = '<option value="">— Toutes —</option>';
+    Object.keys(LIB_PRIORITE).forEach(function (k) {
+      h += '<option value="' + k + '"' + (sel === k ? ' selected' : '') + '>' + LIB_PRIORITE[k] + '</option>';
+    });
+    return h;
+  }
 
- function renderSaved() {
- var list = getSaved();
- var box = document.getElementById('filtres-sauvegardes');
- var cont = document.getElementById('liste-filtres-sauvegardes');
- if (!box || !cont) return;
- cont.innerHTML = '';
- if (!list.length) {
- box.style.display = 'none';
- return;
- }
- box.style.display = 'block';
- list.forEach(function (item, idx) {
- var btn = document.createElement('button');
- btn.type = 'button';
- btn.className = 'btn-filtre-sauve';
- btn.title = 'Appliquer ce filtre';
- var parts = [];
- if (item.params.statut) parts.push(labelForSelect('statut', item.params.statut));
- if (item.params.priorite) parts.push(labelForSelect('priorite', item.params.priorite));
- if (item.params.id_createur) parts.push('Créé: ' + labelForSelect('id_createur', item.params.id_createur));
- if (item.params.id_assigne) parts.push('Assigné: ' + labelForSelect('id_assigne', item.params.id_assigne));
- btn.innerHTML = '<i class="bi bi-bookmark"></i> ' + (item.nom || parts.join(' · ') || 'Filtre') +
- ' <span class="suppr" title="Supprimer">×</span>';
- btn.addEventListener('click', function (e) {
- if (e.target.classList.contains('suppr')) {
- e.stopPropagation();
- var next = getSaved();
- next.splice(idx, 1);
- setSaved(next);
- renderSaved();
- return;
- }
- // Appliquer : remplir les selects et soumettre
- ['statut', 'priorite', 'id_createur', 'id_assigne'].forEach(function (k) {
- var sel = document.getElementById(k);
- if (sel) sel.value = item.params[k] || '';
- });
- document.getElementById('form-filtres-tickets').submit();
- });
- cont.appendChild(btn);
- });
- }
+  function buildUserCombobox(selectedId) {
+    var wrap = document.createElement('div');
+    wrap.className = 'user-combo';
+    wrap.style.cssText = 'position:relative;min-width:200px;';
 
- document.getElementById('btn-sauvegarder-filtre').addEventListener('click', function () {
- var params = currentFilterParams();
- if (!Object.keys(params).length) {
- alert('Sélectionnez au moins un critère avant de sauvegarder.');
- return;
- }
- var nom = prompt('Nom de ce filtre (optionnel) :', '');
- if (nom === null) return;
- var list = getSaved();
- list.push({ nom: (nom || '').trim(), params: params, date: Date.now() });
- setSaved(list);
- renderSaved();
- });
+    var display = document.createElement('button');
+    display.type = 'button';
+    display.className = 'user-combo-btn';
+    display.style.cssText = 'width:100%;text-align:left;padding:8px 10px;border:1px solid var(--gris-bordure,#cbd5e1);border-radius:8px;background:#fff;cursor:pointer;font-size:13px;';
 
- // Retirer un filtre individuel (pastille)
- document.querySelectorAll('.retirer-filtre').forEach(function (a) {
- a.addEventListener('click', function (e) {
- e.preventDefault();
- var cle = a.getAttribute('data-cle');
- var sel = document.getElementById(cle);
- if (sel) sel.value = '';
- document.getElementById('form-filtres-tickets').submit();
- });
- });
+    function labelFor(id) {
+      if (!id) return '— Tout le monde —';
+      if (String(id) === String(CURRENT_ID)) return 'Moi';
+      var r = getRecentUsers().find(function (u) { return String(u.id) === String(id); });
+      if (r) return r.label;
+      var u = USERS.find(function (x) { return String(x.id) === String(id); });
+      return u ? u.label : ('#' + id);
+    }
+    display.textContent = labelFor(selectedId);
 
+    var panel = document.createElement('div');
+    panel.className = 'user-combo-panel';
+    panel.hidden = true;
+    panel.style.cssText = 'position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:40;background:#fff;border:1px solid var(--gris-bordure,#cbd5e1);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:8px;max-height:260px;overflow:auto;';
 
- // Garder le panneau filtres ouvert + mémoriser la dernière combinaison appliquée
- var KEY_OPEN = 'glo_tickets_filtres_open';
- var KEY_LAST = 'glo_tickets_filtres_last';
- var panel = document.getElementById('form-filtres-tickets');
- try {
-   if (localStorage.getItem(KEY_OPEN) === '1' && panel) {
-     panel.classList.add('est-ouvert');
-     panel.style.display = '';
-   }
- } catch (e) {}
- // Au submit, mémoriser
- if (panel) {
-   panel.addEventListener('submit', function () {
-     try {
-       localStorage.setItem(KEY_OPEN, '1');
-       var fd = new FormData(panel);
-       var o = {};
-       fd.forEach(function (v, k) { if (v) o[k] = v; });
-       localStorage.setItem(KEY_LAST, JSON.stringify(o));
-     } catch (e) {}
-   });
- }
- // Si page sans query active, réappliquer dernière combinaison
- try {
-   var qs = window.location.search || '';
-   var hasFilter = /[?&](statut|priorite|id_createur|id_assigne)=/.test(qs);
-   if (!hasFilter) {
-     var last = JSON.parse(localStorage.getItem(KEY_LAST) || 'null');
-     if (last && Object.keys(last).length) {
-       var p = new URLSearchParams();
-       Object.keys(last).forEach(function (k) { if (last[k]) p.set(k, last[k]); });
-       if ([].some.call(p.keys(), function(){return true;})) {
-         window.location.replace('/tickets?' + p.toString());
-       }
-     }
-   }
- } catch (e) {}
+    var search = document.createElement('input');
+    search.type = 'search';
+    search.placeholder = 'Rechercher…';
+    search.style.cssText = 'width:100%;box-sizing:border-box;margin-bottom:6px;padding:7px 9px;border:1px solid var(--gris-bordure,#cbd5e1);border-radius:8px;font-size:13px;';
 
- renderSaved();
+    var list = document.createElement('div');
+    list.className = 'user-combo-list';
+
+    var hidden = document.createElement('input');
+    hidden.type = 'hidden';
+    hidden.className = 'val-user';
+    hidden.value = selectedId || '';
+
+    function pick(id, label) {
+      hidden.value = id || '';
+      display.textContent = label || '— Tout le monde —';
+      if (id) pushRecentUser(id, label);
+      panel.hidden = true;
+    }
+
+    function renderList(q) {
+      q = (q || '').trim().toLowerCase();
+      list.innerHTML = '';
+      function addItem(id, label, meta) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.style.cssText = 'display:block;width:100%;text-align:left;padding:7px 9px;border:none;background:transparent;border-radius:6px;cursor:pointer;font-size:13px;';
+        b.textContent = label + (meta ? ' · ' + meta : '');
+        if (String(hidden.value) === String(id || '')) b.style.background = 'var(--bleu-clair,#eff6ff)';
+        b.addEventListener('mouseenter', function () { b.style.background = 'var(--gris-clair,#f1f5f9)'; });
+        b.addEventListener('mouseleave', function () {
+          b.style.background = String(hidden.value) === String(id || '') ? 'var(--bleu-clair,#eff6ff)' : 'transparent';
+        });
+        b.addEventListener('click', function (e) {
+          e.stopPropagation();
+          pick(id, label);
+        });
+        list.appendChild(b);
+      }
+      addItem('', '— Tout le monde —');
+      if (CURRENT_ID) addItem(CURRENT_ID, 'Moi');
+      getRecentUsers().forEach(function (u) {
+        if (String(u.id) === String(CURRENT_ID)) return;
+        if (q && String(u.label).toLowerCase().indexOf(q) < 0) return;
+        addItem(u.id, u.label, 'récent');
+      });
+      if (q.length >= 1) {
+        USERS.filter(function (u) {
+          if (String(u.id) === String(CURRENT_ID)) return false;
+          return u.label.toLowerCase().indexOf(q) >= 0 || String(u.id).indexOf(q) >= 0;
+        }).slice(0, 20).forEach(function (u) {
+          if (getRecentUsers().some(function (r) { return String(r.id) === String(u.id); })) return;
+          addItem(u.id, u.label);
+        });
+      }
+    }
+
+    display.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var open = panel.hidden;
+      document.querySelectorAll('.user-combo-panel').forEach(function (p) { p.hidden = true; });
+      panel.hidden = !open;
+      if (!panel.hidden) {
+        renderList(search.value);
+        setTimeout(function () { search.focus(); }, 10);
+      }
+    });
+    search.addEventListener('input', function () { renderList(search.value); });
+    search.addEventListener('click', function (e) { e.stopPropagation(); });
+
+    panel.appendChild(search);
+    panel.appendChild(list);
+    wrap.appendChild(display);
+    wrap.appendChild(hidden);
+    wrap.appendChild(panel);
+    return wrap;
+  }
+
+  function addFiltreBloc(values) {
+    values = values || {};
+    if (!blocs) return;
+    blocIndex += 1;
+    var n = blocIndex;
+    var box = document.createElement('div');
+    box.className = 'bloc-filtre';
+    box.style.cssText = 'border:1px solid var(--gris-bordure,#e2e8f0);border-radius:12px;padding:14px;margin-bottom:12px;background:#fff;';
+    box.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
+      '<strong style="font-size:14px;color:var(--bleu-fonce,#1e3a5f);"><i class="bi bi-funnel"></i> Filtre ' + n + '</strong>' +
+      '<button type="button" class="btn btn-gris btn-petit btn-rm-bloc" title="Retirer ce filtre">×</button>' +
+      '</div>' +
+      '<div class="filtres-selects" style="display:flex;flex-wrap:wrap;gap:12px;">' +
+      '<div><label>Statut</label><select class="f-statut">' + optsStatut(values.statut || '') + '</select></div>' +
+      '<div><label>Priorité</label><select class="f-priorite">' + optsPriorite(values.priorite || '') + '</select></div>' +
+      '<div class="user-wrap-c"><label>Créé par</label><div class="f-createur-slot"></div></div>' +
+      '<div class="user-wrap-a"><label>Assigné à</label><div class="f-assigne-slot"></div></div>' +
+      '</div>';
+    blocs.appendChild(box);
+    box.querySelector('.f-createur-slot').appendChild(buildUserCombobox(values.id_createur || ''));
+    box.querySelector('.f-assigne-slot').appendChild(buildUserCombobox(values.id_assigne || ''));
+    box.querySelector('.btn-rm-bloc').addEventListener('click', function () {
+      if (blocs.querySelectorAll('.bloc-filtre').length <= 1) {
+        box.querySelector('.f-statut').value = '';
+        box.querySelector('.f-priorite').value = '';
+        var slotC = box.querySelector('.f-createur-slot');
+        var slotA = box.querySelector('.f-assigne-slot');
+        if (slotC) { slotC.innerHTML = ''; slotC.appendChild(buildUserCombobox('')); }
+        if (slotA) { slotA.innerHTML = ''; slotA.appendChild(buildUserCombobox('')); }
+        return;
+      }
+      box.remove();
+    });
+  }
+
+  if (blocs) {
+    if (initial.statut || initial.priorite || initial.id_createur || initial.id_assigne) {
+      addFiltreBloc(initial);
+    } else {
+      addFiltreBloc({});
+    }
+  }
+
+  var btnAdd = document.getElementById('btn-ajouter-filtre');
+  if (btnAdd) {
+    btnAdd.addEventListener('click', function () { addFiltreBloc({}); });
+  }
+
+  function collectFromBlocs() {
+    var map = { statut: [], priorite: [], id_createur: [], id_assigne: [] };
+    if (!blocs) return { statut: '', priorite: '', id_createur: '', id_assigne: '' };
+    blocs.querySelectorAll('.bloc-filtre').forEach(function (box) {
+      var s = box.querySelector('.f-statut').value;
+      var p = box.querySelector('.f-priorite').value;
+      var cEl = box.querySelector('.user-wrap-c .val-user');
+      var aEl = box.querySelector('.user-wrap-a .val-user');
+      var c = cEl ? cEl.value : '';
+      var a = aEl ? aEl.value : '';
+      if (s) map.statut.push(s);
+      if (p) map.priorite.push(p);
+      if (c) map.id_createur.push(c);
+      if (a) map.id_assigne.push(a);
+    });
+    return {
+      statut: map.statut.join(','),
+      priorite: map.priorite.join(','),
+      id_createur: map.id_createur.join(','),
+      id_assigne: map.id_assigne.join(',')
+    };
+  }
+
+  var form = document.getElementById('form-filtres-tickets');
+  if (form) {
+    form.addEventListener('submit', function () {
+      var m = collectFromBlocs();
+      var hs = document.getElementById('hid-statut');
+      var hp = document.getElementById('hid-priorite');
+      var hc = document.getElementById('hid-id_createur');
+      var ha = document.getElementById('hid-id_assigne');
+      if (hs) hs.value = m.statut;
+      if (hp) hp.value = m.priorite;
+      if (hc) hc.value = m.id_createur;
+      if (ha) ha.value = m.id_assigne;
+    });
+  }
+
+  var btnSave = document.getElementById('btn-sauvegarder-filtre');
+  if (btnSave) {
+    btnSave.addEventListener('click', function () {
+      var m = collectFromBlocs();
+      var clean = {};
+      Object.keys(m).forEach(function (k) { if (m[k]) clean[k] = m[k]; });
+      if (!Object.keys(clean).length) { alert('Renseignez au moins un critère dans un filtre.'); return; }
+      var nom = prompt('Nom de ce filtre :', 'Filtre ' + (getSaved().length + 1));
+      if (!nom) return;
+      var list = getSaved();
+      list.push({ nom: nom, params: clean });
+      setSaved(list);
+      renderSaved();
+    });
+  }
+
+  function renderSaved() {
+    var list = getSaved();
+    var box = document.getElementById('filtres-sauvegardes');
+    var contS = document.getElementById('liste-filtres-sauvegardes');
+    if (!box || !contS) return;
+    contS.innerHTML = '';
+    if (!list.length) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    list.forEach(function (item, idx) {
+      var label = document.createElement('label');
+      label.className = 'btn-filtre-sauve';
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = 'filtre-sauve-cb';
+      cb.setAttribute('data-idx', String(idx));
+      cb.style.marginRight = '4px';
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(item.nom || ('Filtre ' + (idx + 1))));
+      var suppr = document.createElement('span');
+      suppr.className = 'suppr';
+      suppr.textContent = ' ×';
+      suppr.onclick = function (e) {
+        e.preventDefault(); e.stopPropagation();
+        var L = getSaved(); L.splice(idx, 1); setSaved(L); renderSaved();
+      };
+      label.appendChild(suppr);
+      contS.appendChild(label);
+    });
+  }
+
+  function appliquerFiltresCoches() {
+    var list = getSaved();
+    var cbs = document.querySelectorAll('.filtre-sauve-cb:checked');
+    if (!cbs.length) { alert('Cochez au moins un filtre enregistré.'); return; }
+    if (!blocs) return;
+    blocs.innerHTML = '';
+    blocIndex = 0;
+    cbs.forEach(function (cb) {
+      var item = list[parseInt(cb.getAttribute('data-idx'), 10)];
+      if (item && item.params) addFiltreBloc(item.params);
+    });
+    if (!blocs.querySelector('.bloc-filtre')) addFiltreBloc({});
+    if (form) {
+      if (form.requestSubmit) form.requestSubmit();
+      else form.submit();
+    }
+  }
+
+  var btnMulti = document.getElementById('btn-appliquer-filtres-coches');
+  if (btnMulti) btnMulti.addEventListener('click', appliquerFiltresCoches);
+  renderSaved();
+
+  document.querySelectorAll('.retirer-filtre').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      var cle = a.getAttribute('data-cle');
+      var el = document.getElementById('hid-' + cle);
+      if (el) el.value = '';
+      var m = {
+        statut: (document.getElementById('hid-statut') || {}).value || '',
+        priorite: (document.getElementById('hid-priorite') || {}).value || '',
+        id_createur: (document.getElementById('hid-id_createur') || {}).value || '',
+        id_assigne: (document.getElementById('hid-id_assigne') || {}).value || ''
+      };
+      m[cle] = '';
+      if (blocs) {
+        blocs.innerHTML = '';
+        blocIndex = 0;
+        addFiltreBloc(m);
+      }
+      if (form) form.submit();
+    });
+  });
+
+  document.addEventListener('click', function () {
+    document.querySelectorAll('.user-combo-panel').forEach(function (p) { p.hidden = true; });
+  });
 })();
 </script>
+
+
+
 
 
  <% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>

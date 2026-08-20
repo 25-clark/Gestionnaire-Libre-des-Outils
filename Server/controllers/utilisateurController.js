@@ -7,14 +7,15 @@ const { notifier } = require('../utils/notification');
 // Renvoie le mot de passe par défaut configuré dans les réglages généraux
 // (créé automatiquement s'il n'existe pas encore).
 function normaliserPreferences(prefs) {
-    if (!prefs) return { theme: 'clair', langue: 'fr' };
+    if (!prefs) return { theme: 'clair', langue: 'fr', auth_code_actif: false };
     if (typeof prefs === 'string') {
-        try { prefs = JSON.parse(prefs); } catch { return { theme: 'clair', langue: 'fr' }; }
+        try { prefs = JSON.parse(prefs); } catch { return { theme: 'clair', langue: 'fr', auth_code_actif: false }; }
     }
-    if (typeof prefs !== 'object') return { theme: 'clair', langue: 'fr' };
+    if (typeof prefs !== 'object') return { theme: 'clair', langue: 'fr', auth_code_actif: false };
     const theme = ['clair', 'sombre', 'auto'].includes(prefs.theme) ? prefs.theme : 'clair';
     const langue = ['fr', 'en'].includes(prefs.langue) ? prefs.langue : 'fr';
-    return { theme, langue };
+    const auth_code_actif = prefs.auth_code_actif === true || prefs.auth_code_actif === 'true' || prefs.auth_code_actif === '1' || prefs.auth_code_actif === 1;
+    return { theme, langue, auth_code_actif };
 }
 
 async function motDePasseDefautActuel() {

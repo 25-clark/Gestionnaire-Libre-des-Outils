@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code e-mail · <%= typeof nomApplication !== 'undefined' ? nomApplication : 'GLO' %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/design-modern.css">
+</head>
+<body class="page-login">
+<div class="carte-login">
+    <h1><i class="bi bi-envelope-check"></i> Code de connexion</h1>
+    <p class="sous-titre">
+        Un code à 6 chiffres a été envoyé
+        <% if (typeof email_masque !== 'undefined' && email_masque) { %>
+          à <strong><%= email_masque %></strong>
+        <% } else { %>
+          à votre adresse e-mail
+        <% } %>.
+        Il est valable <strong>5 minutes</strong>.
+    </p>
+    <p style="font-size:12px;color:var(--gris);">
+        Ce code e-mail s’ajoute au mot de passe
+        (et au code de l’application d’authentification si la 2FA est active) — il ne les remplace pas.
+    </p>
+
+    <% if (typeof hint !== 'undefined' && hint) { %>
+    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:12px 14px;margin:12px 0;font-size:13px;color:#9a3412;">
+        <i class="bi bi-exclamation-triangle"></i>
+        L’envoi e-mail n’a pas abouti — <strong>code de secours</strong> :
+        <strong style="letter-spacing:0.2em;"><%= hint %></strong>
+        <div style="margin-top:8px;font-size:12px;line-height:1.45;">
+            Vérifiez dans le dossier <code>Server/</code> :
+            <ol style="margin:6px 0 0 18px;padding:0;">
+              <li>Fichier <code>.env</code> (pas Interface/.env) avec <code>SMTP_HOST=smtp.gmail.com</code></li>
+              <li><code>SMTP_USER</code> = votre Gmail et <code>SMTP_PASS</code> = <em>mot de passe d’application</em> (16 caractères), pas le mot de passe du compte</li>
+              <li>Commande : <code>npm install nodemailer</code> puis redémarrer le Server</li>
+              <li>Au démarrage du Server, la console doit afficher <code>[smtp] Config détectée: smtp.gmail.com</code></li>
+            </ol>
+        </div>
+    </div>
+    <% } %>
+
+    <% if (erreur) { %><div class="message-erreur"><%= erreur %></div><% } %>
+
+    <form action="/login/auth-email" method="POST">
+        <label for="code">Code reçu par e-mail</label>
+        <input type="text" id="code" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autofocus autocomplete="one-time-code" placeholder="000000">
+        <button type="submit" class="btn btn-primaire">Valider</button>
+        <p style="margin-top:14px;"><a href="/login" style="color:var(--gris);">← Retour à la connexion</a></p>
+    </form>
+</div>
+</body>
+</html>

@@ -212,6 +212,19 @@ a:hover { text-decoration: underline; }
 .menu-deroulant:focus-within .contenu-menu-deroulant {
     display: block;
 }
+
+/* Ouverture au clic (classe .ouvert) — prioritaire sur le hover tactile */
+.menu-deroulant.ouvert > .contenu-menu-deroulant {
+    display: block;
+}
+/* Menu utilisateur : clic uniquement (évite le hover accidentel tablette) */
+.menu-utilisateur:hover > .contenu-menu-utilisateur {
+    display: none;
+}
+.menu-utilisateur.ouvert > .contenu-menu-utilisateur {
+    display: block !important;
+}
+
 .contenu-menu-deroulant a {
     display: block;
     padding: 9px 16px;
@@ -1122,4 +1135,16 @@ body.theme-sombre .btn-collapse-activite {
 }
 body.theme-sombre .btn-collapse-activite:hover {
     background: #1c2330;
+}
+
+
+/* Mobile / drawer : pas d'ouverture au survol dans le panneau latéral */
+@media (max-width: 1024px) {
+  #nav-principale .menu-deroulant:hover > .contenu-menu-deroulant,
+  #nav-principale .menu-deroulant:focus-within > .contenu-menu-deroulant {
+    display: none;
+  }
+  #nav-principale .menu-deroulant.ouvert > .contenu-menu-deroulant {
+    display: block !important;
+  }
 }

@@ -23,6 +23,18 @@ router.post('/login', async (req, res) => {
             req.session.pending_2fa = true;
             return res.redirect('/login/2fa');
         }
+        if (response.data.require_email) {
+            return res.render('login', {
+                titre: 'Connexion',
+                erreur: response.data.message || 'Ajoutez une adresse e-mail dans votre profil pour utiliser le code de connexion.'
+            });
+        }
+        if (response.data.requireAuthEmail) {
+            req.session.pendingAuthEmail = true;
+            if (response.data.hint) req.session.pendingAuthEmailHint = response.data.hint;
+            if (response.data.email_masque) req.session.pendingAuthEmailMasque = response.data.email_masque;
+            return res.redirect('/login/auth-email');
+        }
 
         req.session.user = response.data.user;
         if (response.data.doit_configurer_2fa) {
@@ -32,6 +44,46 @@ router.post('/login', async (req, res) => {
     } catch (err) {
         const message = err.response?.data?.message || 'Impossible de se connecter au serveur.';
         res.render('login', { titre: 'Connexion', erreur: message });
+    }
+});
+
+
+router.get('/login/auth-email', (req, res) => {
+    if (!req.session.pendingAuthEmail || !req.session.apiCookie) {
+        return res.redirect('/login');
+    }
+    res.render('login-auth-email', {
+        titre: 'Code de connexion',
+        erreur: null,
+        hint: req.session.pendingAuthEmailHint || null,
+        email_masque: req.session.pendingAuthEmailMasque || null
+    });
+});
+
+router.post('/login/auth-email', async (req, res) => {
+    try {
+        const api = apiClient(req);
+        const response = await api.post('/auth/code-email', { code: req.body.code });
+        const setCookie = response.headers['set-cookie'];
+        if (setCookie && setCookie.length) {
+            req.session.apiCookie = setCookie[0].split(';')[0];
+        }
+        delete req.session.pendingAuthEmail;
+        delete req.session.pendingAuthEmailHint;
+
+        // Récupérer le profil maintenant que la session Server est authentifiée
+        const me = await api.get('/auth/me');
+        const user = me.data.user || me.data;
+        req.session.user = user;
+        if (user.doit_changer_mdp) return res.redirect('/changer-mot-de-passe');
+        if (user.doit_configurer_2fa) return res.redirect('/profil?setup2fa=1');
+        return res.redirect('/');
+    } catch (err) {
+        res.render('login-auth-email', {
+            titre: 'Code de connexion',
+            erreur: err.response?.data?.message || 'Code incorrect ou expiré.',
+            hint: req.session.pendingAuthEmailHint || null
+        });
     }
 });
 
@@ -51,6 +103,18 @@ router.post('/login/2fa', async (req, res) => {
             req.session.apiCookie = setCookie[0].split(';')[0];
         }
         delete req.session.pending_2fa;
+        if (response.data.require_email) {
+            return res.render('login', {
+                titre: 'Connexion',
+                erreur: response.data.message || 'Ajoutez une adresse e-mail dans votre profil pour utiliser le code de connexion.'
+            });
+        }
+        if (response.data.requireAuthEmail) {
+            req.session.pendingAuthEmail = true;
+            if (response.data.hint) req.session.pendingAuthEmailHint = response.data.hint;
+            if (response.data.email_masque) req.session.pendingAuthEmailMasque = response.data.email_masque;
+            return res.redirect('/login/auth-email');
+        }
         req.session.user = response.data.user;
         res.redirect(req.session.user.doit_changer_mdp ? '/changer-mot-de-passe' : '/');
     } catch (err) {
@@ -139,6 +203,22 @@ router.post('/profil', async (req, res, next) => {
                 theme: req.body.theme || 'clair',
                 langue: req.body.langue || 'fr'
             };
+        } else if (section === 'auth_facteurs') {
+            const prefs = Object.assign({}, (req.session.user && req.session.user.preferences) || {});
+            const wantCode = req.body.auth_code_actif === '1' || req.body.auth_code_actif === 'on';
+            if (wantCode) {
+                const email = (req.session.user.email || '').trim();
+                if (!email || !email.includes('@')) {
+                    return res.render('profil', {
+                        titre: 'Mon profil',
+                        user: req.session.user,
+                        erreur: 'Pour activer le code de connexion par e-mail, renseignez d\'abord une adresse e-mail valide dans vos informations personnelles.',
+                        succes: null
+                    });
+                }
+            }
+            prefs.auth_code_actif = wantCode;
+            body.preferences = prefs;
         } else {
             // Infos personnelles (+ identité si le rôle l'autorise côté Server)
             if (req.body.nom !== undefined) body.nom = req.body.nom;
@@ -173,6 +253,9 @@ router.post('/profil', async (req, res, next) => {
         // Redirection pour recharger header (lang/theme) proprement
         if (section === 'preferences') {
             return res.redirect('/profil?succes=prefs');
+        }
+        if (section === 'auth_facteurs') {
+            return res.redirect('/profil?succes=auth');
         }
         return res.redirect('/profil?succes=infos');
     } catch (err) {

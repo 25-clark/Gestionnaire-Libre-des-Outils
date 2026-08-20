@@ -476,7 +476,14 @@ async function update(req, res, next) {
         const outil = await Outil.findByPk(req.params.id);
         if (!outil) return res.status(404).json({ message: 'Outil introuvable.' });
 
-        const { nom, lien, adresse, activites, sousActivites } = req.body;
+        let { nom, lien, adresse, activites, sousActivites, id_activite, id_sous_activite } = req.body;
+        // Formulaire Interface envoie id_activite / id_sous_activite (singulier)
+        if (activites === undefined && id_activite) {
+            activites = Array.isArray(id_activite) ? id_activite : [id_activite];
+        }
+        if (sousActivites === undefined && id_sous_activite) {
+            sousActivites = Array.isArray(id_sous_activite) ? id_sous_activite : [id_sous_activite];
+        }
         const data = {};
         if (nom !== undefined) {
             if (!String(nom).trim()) return res.status(400).json({ message: 'Le nom est requis.' });

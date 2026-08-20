@@ -1,8 +1,19 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+// Diagnostic SMTP au démarrage
+(function () {
+    const host = (process.env.SMTP_HOST || '').trim();
+    if (!host) {
+        console.warn('[smtp] Non configuré — définissez SMTP_HOST dans Server/.env');
+    } else {
+        console.log('[smtp] Config détectée:', host, 'port', process.env.SMTP_PORT || 587, 'user', process.env.SMTP_USER || '(vide)');
+        try { require('nodemailer'); console.log('[smtp] nodemailer: OK'); }
+        catch { console.warn('[smtp] nodemailer MANQUANT → dans Server/: npm install nodemailer'); }
+    }
+})();
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
-const path = require('path');
 
 const { sequelize } = require('./models');
 const { demarrerSurveillance } = require('./utils/surveillance');

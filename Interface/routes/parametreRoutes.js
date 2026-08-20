@@ -43,6 +43,9 @@ router.post('/', async (req, res) => {
         body.credentials_actifs = Array.isArray(body.credentials_actifs)
             ? body.credentials_actifs.includes('on')
             : body.credentials_actifs === 'on';
+        body.auth_3fa_actif = Array.isArray(body.auth_3fa_actif)
+            ? body.auth_3fa_actif.includes('on')
+            : body.auth_3fa_actif === 'on';
 
         const api = apiClient(req);
         const { data: parametre } = await api.put('/parametres', body);

@@ -91,6 +91,25 @@ router.post('/', uploadLogo.single('logo'), async (req, res) => {
 // sous-activités et les utilisateurs ne sont montrés que si le rôle de
 // l'utilisateur a la permission de lecture correspondante. "Archives"
 // regroupe les outils désactivés (retirés de l'onglet Outils courant).
+
+// Épingler / désépingler une activité (AVANT /:id pour éviter le 404)
+router.post('/:id/favori', async (req, res) => {
+    try {
+        const api = apiClient(req);
+        const uid = req.session.user.id;
+        const { data } = await api.post(`/utilisateurs/${uid}/favoris`, {
+            type: 'activite',
+            id_cible: parseInt(req.params.id, 10)
+        });
+        delete req.session._favorisCache;
+        return res.json(data);
+    } catch (err) {
+        const msg = err.response?.data?.message || err.message || 'Erreur favori';
+        console.error('[favori activite]', msg);
+        return res.status(err.response?.status || 500).json({ message: msg });
+    }
+});
+
 router.get('/:id', async (req, res, next) => {
     try {
         const api = apiClient(req);

@@ -112,6 +112,10 @@ module.exports = (sequelize) => {
             type: DataTypes.JSON,
             allowNull: true,
             defaultValue: { theme: 'clair', langue: 'fr' }
+        },
+        session_active_id: {
+            type: DataTypes.STRING,
+            allowNull: true
         }
     }, {
         tableName: 'utilisateurs',

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code de connexion · <%= typeof nomApplication !== 'undefined' ? nomApplication : 'GLO' %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/design-modern.css">
+</head>
+<body class="page-login">
+<div class="carte-login">
+    <h1><i class="bi bi-shield-check"></i> Code de connexion</h1>
+    <p class="sous-titre">
+        Vous avez activé le <strong>code à usage unique</strong> dans Mon profil.
+        Un code à 6 chiffres a été généré pour <em>cette</em> connexion uniquement (valide 5 minutes).
+    </p>
+
+    <% if (typeof hint !== 'undefined' && hint) { %>
+    <div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:12px;padding:14px 16px;margin:14px 0;text-align:center;">
+        <div style="font-size:12px;color:#047857;margin-bottom:6px;">Votre code (à saisir ci-dessous)</div>
+        <div style="font-size:28px;letter-spacing:0.35em;font-weight:700;color:#065f46;"><%= hint %></div>
+        <div style="font-size:12px;color:#059669;margin-top:8px;">En production, ce code sera envoyé par e-mail ou SMS.</div>
+    </div>
+    <% } else { %>
+    <p style="font-size:13px;color:var(--gris);">Consultez le canal configuré (e-mail / SMS) pour obtenir le code.</p>
+    <% } %>
+
+    <% if (erreur) { %><div class="message-erreur"><%= erreur %></div><% } %>
+
+    <form action="/login/3fa" method="POST">
+        <label for="code">Saisir le code</label>
+        <input type="text" id="code" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autofocus autocomplete="one-time-code" placeholder="000000">
+        <button type="submit" class="btn btn-primaire">Valider</button>
+        <p style="margin-top:14px;"><a href="/login" style="color:var(--gris);">← Retour à la connexion</a></p>
+    </form>
+</div>
+</body>
+</html>

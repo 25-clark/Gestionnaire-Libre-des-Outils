@@ -314,9 +314,19 @@ router.post('/:id/modifier', uploadOutilImage.single('image'), async (req, res, 
         const api = apiClient(req);
         const body = { ...req.body };
         if (req.file) body.image = `/uploads/outils/${req.file.filename}`;
-        // Form may send activites as multi
+        // Formulaire : id_activite / id_sous_activite → listes attendues par l'API
+        if (body.id_activite && !body.activites) {
+            body.activites = Array.isArray(body.id_activite) ? body.id_activite : [body.id_activite];
+        }
+        if (body.id_sous_activite && !body.sousActivites) {
+            body.sousActivites = Array.isArray(body.id_sous_activite) ? body.id_sous_activite : [body.id_sous_activite];
+        }
         if (body.activites && !Array.isArray(body.activites)) body.activites = [body.activites];
         if (body.sousActivites && !Array.isArray(body.sousActivites)) body.sousActivites = [body.sousActivites];
+        // Ne pas envoyer une sous-activité vide comme ""
+        if (Array.isArray(body.sousActivites)) {
+            body.sousActivites = body.sousActivites.filter(Boolean);
+        }
         await api.put(`/outils/${req.params.id}`, body);
         res.redirect(req.body.retour || req.get('Referer') || '/');
     } catch (err) {

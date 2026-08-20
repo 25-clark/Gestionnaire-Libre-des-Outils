@@ -10,7 +10,8 @@
 <body class="page-login">
 <div class="carte-login">
     <h1><i class="bi bi-shield-lock"></i> Vérification 2FA</h1>
-    <p class="sous-titre">Saisissez le code à 6 chiffres de votre application d'authentification.</p>
+    <p class="sous-titre">Saisissez le code à 6 chiffres de votre application d'authentification (Google Authenticator, Authy…).</p>
+    <p style="font-size:12px;color:var(--gris);">Si le code e-mail est aussi activé sur votre compte, il vous sera demandé <strong>après</strong> cette étape.</p>
     <% if (erreur) { %><div class="message-erreur"><%= erreur %></div><% } %>
     <form action="/login/2fa" method="POST">
         <label for="code">Code</label>
