@@ -12,6 +12,7 @@ router.get('/:id', checkPermission('activites', 'read'), checkAccesLectureActivi
 router.post('/', checkPermission('activites', 'create'), uploadLogo.single('logo'), activiteController.create);
 router.put('/:id', checkPermission('activites', 'update'), checkAccesActivite('write'), uploadLogo.single('logo'), activiteController.update);
 router.post('/:id/verifier-acces', requireAuth, activiteController.verifierAcces);
+router.post('/:id/importer', checkPermission('activites', 'update'), checkAccesActivite('write'), activiteController.importerDonnees);
 router.put('/:id/reglages', checkPermission('activites', 'update'), checkAccesActivite('write'), activiteController.updateReglages);
 router.delete('/:id', checkPermission('activites', 'delete'), checkAccesActivite('delete'), activiteController.remove);
 

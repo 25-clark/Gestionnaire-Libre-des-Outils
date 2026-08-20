@@ -34,6 +34,12 @@ async function obtenirPublic(req, res, next) {
             credentials_actifs: !!parametre.credentials_actifs,
             chiffrement_algo: parametre.chiffrement_algo || 'aes-256-gcm',
             auth_3fa_actif: !!parametre.auth_3fa_actif,
+            sauvegarde_planifiee: !!parametre.sauvegarde_planifiee,
+            sauvegarde_intervalle_heures: parametre.sauvegarde_intervalle_heures || 24,
+            sauvegarde_dossier: parametre.sauvegarde_dossier || null,
+            journal_retention_jours: parametre.journal_retention_jours || 90,
+            journal_nettoyage_actif: !!parametre.journal_nettoyage_actif,
+            stats_publiques: !!parametre.stats_publiques,
             totp_disponible: parametre.totp_disponible !== false,
             totp_obligatoire: !!parametre.totp_obligatoire,
             installation_terminee,
@@ -77,6 +83,12 @@ async function mettreAJour(req, res, next) {
             credentials_actifs,
             chiffrement_algo,
             auth_3fa_actif,
+            sauvegarde_planifiee,
+            sauvegarde_intervalle_heures,
+            sauvegarde_dossier,
+            journal_retention_jours,
+            journal_nettoyage_actif,
+            stats_publiques,
             totp_disponible,
             totp_obligatoire
         } = req.body;
@@ -121,6 +133,14 @@ async function mettreAJour(req, res, next) {
             credentials_actifs: credentials_actifs !== undefined ? !!credentials_actifs : parametre.credentials_actifs,
             chiffrement_algo: chiffrement_algo || parametre.chiffrement_algo || 'aes-256-gcm',
             auth_3fa_actif: auth_3fa_actif !== undefined ? !!auth_3fa_actif : parametre.auth_3fa_actif,
+            sauvegarde_planifiee: sauvegarde_planifiee !== undefined ? !!sauvegarde_planifiee : parametre.sauvegarde_planifiee,
+            sauvegarde_intervalle_heures: sauvegarde_intervalle_heures !== undefined ? borner(sauvegarde_intervalle_heures, 1, 168, 24) : (parametre.sauvegarde_intervalle_heures || 24),
+            sauvegarde_dossier: sauvegarde_dossier !== undefined
+                ? (String(sauvegarde_dossier || '').trim() || null)
+                : parametre.sauvegarde_dossier,
+            journal_retention_jours: journal_retention_jours !== undefined ? borner(journal_retention_jours, 7, 3650, 90) : (parametre.journal_retention_jours || 90),
+            journal_nettoyage_actif: journal_nettoyage_actif !== undefined ? !!journal_nettoyage_actif : parametre.journal_nettoyage_actif,
+            stats_publiques: stats_publiques !== undefined ? !!stats_publiques : parametre.stats_publiques,
             totp_disponible: totp_disponible !== undefined ? !!totp_disponible : parametre.totp_disponible,
             totp_obligatoire: totp_obligatoire !== undefined ? !!totp_obligatoire : parametre.totp_obligatoire
         });

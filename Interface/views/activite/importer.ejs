@@ -1,0 +1,49 @@
+<%- include('../partials/header') %>
+<div class="entete-page">
+  <h1><i class="bi bi-upload"></i> Import CSV — <%= activite.nom %></h1>
+  <a href="/activites/<%= activite.id %>" class="btn btn-gris">Retour</a>
+</div>
+
+<div class="carte" style="max-width:720px;">
+  <% if (erreur) { %><div class="message-erreur"><%= erreur %></div><% } %>
+  <% if (succes) { %><div class="message-succes" style="background:#ecfdf5;color:#047857;padding:10px;border-radius:8px;"><%= succes %></div><% } %>
+  <% if (resultats) { %>
+  <p style="font-size:13px;">Traités : <strong><%= resultats.ok %></strong> — Ignorés : <strong><%= resultats.ignores %></strong>
+  <% if (resultats.erreurs && resultats.erreurs.length) { %><br>Erreurs : <%= resultats.erreurs.slice(0,5).join(' · ') %><% } %>
+  </p>
+  <% } %>
+
+  <h2 style="font-size:15px;">Structure attendue</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+    <div style="background:var(--gris-clair);padding:12px;border-radius:10px;font-size:13px;">
+      <strong>Utilisateurs</strong>
+      <pre style="margin:8px 0 0;font-size:12px;">matricule,nom,prenom,email,telephone
+0001.dupont,Dupont,Jean,jean@ex.com,06...</pre>
+    </div>
+    <div style="background:var(--gris-clair);padding:12px;border-radius:10px;font-size:13px;">
+      <strong>Outils</strong>
+      <pre style="margin:8px 0 0;font-size:12px;">nom,lien,adresse
+Tournevis,https://...,192.168.1.10</pre>
+    </div>
+  </div>
+
+  <form action="/activites/<%= activite.id %>/importer" method="POST">
+    <label>Type de données</label>
+    <select name="type" required>
+      <option value="utilisateurs">Utilisateurs</option>
+      <option value="outils">Outils</option>
+    </select>
+    <label>Action</label>
+    <select name="mode" required>
+      <option value="creer">Créer (ignorer si existe déjà)</option>
+      <option value="modifier">Modifier (par matricule / nom)</option>
+      <option value="supprimer">Supprimer (par matricule / nom)</option>
+    </select>
+    <label for="csv">Contenu CSV (colleez le fichier ou ses lignes)</label>
+    <textarea id="csv" name="csv" rows="12" required placeholder="matricule,nom,prenom,email&#10;0002.martin,Martin,Alice,a@ex.com"></textarea>
+    <div class="actions-form" style="margin-top:14px;">
+      <button type="submit" class="btn btn-primaire"><i class="bi bi-upload"></i> Lancer l’import</button>
+    </div>
+  </form>
+</div>
+<%- include('../partials/footer') %>

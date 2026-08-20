@@ -319,6 +319,53 @@ router.get('/:id/utilisateurs/export-pdf', exigerExport, async (req, res, next) 
 });
 
 
+
+router.get('/:id/importer', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const { data: activite } = await api.get(`/activites/${req.params.id}`);
+        res.locals.breadcrumbs = [
+            { label: 'Tableau de bord', href: '/' },
+            { label: activite.nom, href: '/activites/' + activite.id },
+            { label: 'Import' }
+        ];
+        res.render('activite/importer', { titre: 'Import — ' + activite.nom, activite, erreur: null, succes: null, resultats: null });
+    } catch (err) { next(err); }
+});
+
+router.post('/:id/importer', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        let csv = req.body.csv || '';
+        // Fichier uploadé via texte collé pour simplicité
+        const { data } = await api.post(`/activites/${req.params.id}/importer`, {
+            type: req.body.type,
+            mode: req.body.mode,
+            csv
+        });
+        const { data: activite } = await api.get(`/activites/${req.params.id}`);
+        res.render('activite/importer', {
+            titre: 'Import — ' + activite.nom,
+            activite,
+            erreur: null,
+            succes: data.message,
+            resultats: data.resultats
+        });
+    } catch (err) {
+        try {
+            const api = apiClient(req);
+            const { data: activite } = await api.get(`/activites/${req.params.id}`);
+            res.render('activite/importer', {
+                titre: 'Import',
+                activite,
+                erreur: err.response?.data?.message || 'Erreur import',
+                succes: null,
+                resultats: null
+            });
+        } catch (e) { next(err); }
+    }
+});
+
 router.get('/:id/reglages', async (req, res, next) => {
     try {
         const api = apiClient(req);

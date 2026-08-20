@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Récupération 2FA · <%= typeof nomApplication !== 'undefined' ? nomApplication : 'GLO' %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/design-modern.css">
+</head>
+<body class="page-login">
+<div class="carte-login">
+    <h1><i class="bi bi-life-preserver"></i> Récupération 2FA</h1>
+    <p class="sous-titre">Téléphone perdu ou application inaccessible ? Utilisez un code de récupération ou un code envoyé par e-mail.</p>
+    <% if (erreur) { %><div class="message-erreur"><%= erreur %></div><% } %>
+    <% if (succes) { %><div class="message-succes" style="background:#ecfdf5;color:#047857;padding:10px 12px;border-radius:8px;margin-bottom:12px;"><%= succes %></div><% } %>
+
+    <% if (etape === 'demande') { %>
+    <form action="/login/2fa/recuperation" method="POST">
+        <label for="matricule">Matricule</label>
+        <input type="text" id="matricule" name="matricule" required autofocus placeholder="0000.prenom">
+        <button type="submit" class="btn btn-primaire">Envoyer un code par e-mail</button>
+    </form>
+    <% } else { %>
+    <form action="/login/2fa/recuperation/valider" method="POST">
+        <label for="code">Code reçu par e-mail</label>
+        <input type="text" id="code" name="code" inputmode="numeric" maxlength="6" placeholder="000000">
+        <p style="text-align:center;color:var(--gris);font-size:13px;margin:10px 0;">— ou —</p>
+        <label for="code_recuperation">Code de récupération (XXXX-XXXX)</label>
+        <input type="text" id="code_recuperation" name="code_recuperation" placeholder="ABCD-1234" style="text-transform:uppercase;">
+        <button type="submit" class="btn btn-primaire">Valider</button>
+    </form>
+    <% } %>
+    <p style="margin-top:14px;"><a href="/login" style="color:var(--gris);">← Retour à la connexion</a></p>
+</div>
+</body>
+</html>

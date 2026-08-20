@@ -43,6 +43,15 @@ router.post('/', async (req, res) => {
         body.credentials_actifs = Array.isArray(body.credentials_actifs)
             ? body.credentials_actifs.includes('on')
             : body.credentials_actifs === 'on';
+        body.sauvegarde_planifiee = Array.isArray(body.sauvegarde_planifiee)
+            ? body.sauvegarde_planifiee.includes('on')
+            : body.sauvegarde_planifiee === 'on';
+        body.journal_nettoyage_actif = Array.isArray(body.journal_nettoyage_actif)
+            ? body.journal_nettoyage_actif.includes('on')
+            : body.journal_nettoyage_actif === 'on';
+        body.stats_publiques = Array.isArray(body.stats_publiques)
+            ? body.stats_publiques.includes('on')
+            : body.stats_publiques === 'on';
         body.auth_3fa_actif = Array.isArray(body.auth_3fa_actif)
             ? body.auth_3fa_actif.includes('on')
             : body.auth_3fa_actif === 'on';

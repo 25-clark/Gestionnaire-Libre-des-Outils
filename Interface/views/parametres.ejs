@@ -2,7 +2,6 @@
 <% if (typeof query !== 'undefined' && query.succes) { %><div class="message-succes"><%= query.succes %></div><% } %>
 <% if (typeof query !== 'undefined' && query.erreur) { %><div class="message-erreur"><%= query.erreur %></div><% } %>
 
-
 <div class="entete-page"><h1>Réglages généraux</h1></div>
 
 <% if (erreur) { %>
@@ -12,30 +11,27 @@
  <div class="message-succes">Réglages enregistrés.</div>
 <% } %>
 
-<div class="carte" style="max-width:560px;">
- <form action="/parametres" method="POST">
+<div class="reglages-grille">
+<div class="carte" style="max-width:none;">
+ <form action="/parametres" method="POST" id="form-reglages">
  <label for="nom_entreprise">Nom de l'entreprise</label>
  <input type="text" id="nom_entreprise" name="nom_entreprise" value="<%= parametre.nom_entreprise || '' %>"
  placeholder="Laisser vide pour afficher « Gestionnaire Outils »">
  <p style="color:var(--gris); font-size:13px; margin-top:-6px;">
- S'affiche à la place de « Gestionnaire Outils » dans l'en-tête et la page de connexion.
+ S'affiche dans l'en-tête et la page de connexion.
  </p>
 
  <label for="mot_de_passe_defaut">Mot de passe par défaut</label>
  <input type="password" id="mot_de_passe_defaut" name="mot_de_passe_defaut" value="<%= parametre.mot_de_passe_defaut %>" minlength="6" required>
  <p style="color:var(--gris); font-size:13px; margin-top:-6px;">
- Attribué à chaque nouvel utilisateur, et lors d'une réinitialisation de mot de passe.
- L'utilisateur devra le changer à sa première connexion. Le modifier ici ne change pas
- les mots de passe déjà personnalisés. Doit respecter la politique ci-dessous.
+ Attribué aux nouveaux utilisateurs et lors d'une réinitialisation. L'utilisateur devra le changer à la première connexion.
  </p>
 
  <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
- <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 4px;"><i class="bi bi-lock"></i>  Politique de mot de passe</h2>
-
+ <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 4px;"><i class="bi bi-lock"></i> Politique de mot de passe</h2>
  <label for="mdp_longueur_min">Longueur minimale</label>
  <input type="number" id="mdp_longueur_min" name="mdp_longueur_min" min="4" max="32"
  value="<%= parametre.mdp_longueur_min %>" style="max-width:120px;">
-
  <div class="champ-case">
  <input type="checkbox" id="mdp_complexite" name="mdp_complexite" <%= parametre.mdp_complexite ? 'checked' : '' %>>
  <label for="mdp_complexite">Exiger majuscule + minuscule + chiffre</label>
@@ -43,105 +39,128 @@
 
  <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
  <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 4px;"><i class="bi bi-shield-check"></i> Anti-brute-force</h2>
- <p style="color:var(--gris); font-size:13px; margin-top:-2px;">
- Un compte (par matricule) et une machine (par adresse IP) sont bloqués temporairement
- après trop d'échecs de connexion consécutifs.
- </p>
-
- <label for="max_tentatives_connexion">Nombre d'échecs avant blocage</label>
+ <label for="max_tentatives_connexion">Tentatives max avant blocage</label>
  <input type="number" id="max_tentatives_connexion" name="max_tentatives_connexion" min="3" max="20"
  value="<%= parametre.max_tentatives_connexion %>" style="max-width:120px;">
-
  <label for="duree_blocage_minutes">Durée du blocage (minutes)</label>
  <input type="number" id="duree_blocage_minutes" name="duree_blocage_minutes" min="1" max="1440"
  value="<%= parametre.duree_blocage_minutes %>" style="max-width:120px;">
 
  <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
- <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 4px;"><i class="bi bi-stopwatch"></i> Session</h2>
-
- <label for="session_duree_heures">Durée avant déconnexion automatique (heures)</label>
+ <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 4px;"><i class="bi bi-clock-history"></i> Session</h2>
+ <label for="session_duree_heures">Durée de session (heures)</label>
  <input type="number" id="session_duree_heures" name="session_duree_heures" min="1" max="168"
  value="<%= parametre.session_duree_heures %>" style="max-width:120px;">
- <p style="color:var(--gris); font-size:13px; margin-top:-6px;">
- S'applique à partir de la prochaine connexion (les sessions déjà ouvertes gardent leur durée actuelle).
- </p>
 
  <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
- <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 4px;"><i class="bi bi-heart-pulse"></i> Surveillance réseau automatique</h2>
- <p style="color:var(--gris); font-size:13px; margin-top:-2px;">
- Ping périodique en arrière-plan des outils ayant une adresse renseignée : statut
- <i class="bi bi-circle-fill text-statut-ok"></i> En ligne / <i class="bi bi-circle-fill text-statut-ko"></i> Hors ligne affiché automatiquement, sans clic manuel.
- </p>
-
+ <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 4px;"><i class="bi bi-hdd-network"></i> Surveillance réseau</h2>
  <div class="champ-case">
  <input type="checkbox" id="surveillance_active" name="surveillance_active" <%= parametre.surveillance_active ? 'checked' : '' %>>
  <label for="surveillance_active">Activer la surveillance automatique</label>
  </div>
-
- <label for="surveillance_intervalle_minutes">Intervalle entre deux vérifications (minutes)</label>
- <input type="number" id="surveillance_intervalle_minutes" name="surveillance_intervalle_minutes" min="1" max="1440"
+ <label for="surveillance_intervalle_minutes">Intervalle (minutes)</label>
+ <input type="number" id="surveillance_intervalle_minutes" name="surveillance_intervalle_minutes" min="1" max="120"
  value="<%= parametre.surveillance_intervalle_minutes %>" style="max-width:120px;">
- <p style="color:var(--gris); font-size:13px; margin-top:-6px;">
- S'applique au prochain cycle (pas besoin de redémarrer le serveur).
- </p>
 
- 
- 
-        <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
-        <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 4px;"><i class="bi bi-shield-lock"></i> Authentification à deux facteurs (2FA)</h2>
-        <p style="color:var(--gris); font-size:13px;">TOTP (Google Authenticator, Microsoft Authenticator, etc.). Chaque utilisateur active la 2FA dans Mon profil.</p>
-        <div class="champ-case">
-            <input type="checkbox" id="totp_disponible" name="totp_disponible" <%= parametre.totp_disponible !== false ? 'checked' : '' %>>
-            <label for="totp_disponible">Autoriser la 2FA pour les utilisateurs</label>
-        </div>
-        <div class="champ-case">
-            <input type="checkbox" id="totp_obligatoire" name="totp_obligatoire" <%= parametre.totp_obligatoire ? 'checked' : '' %>>
-            <label for="totp_obligatoire">Rendre la 2FA obligatoire pour tous les comptes</label>
-        </div>
-<hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
- <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 4px;"><i class="bi bi-key"></i> Credentials des outils</h2>
- <p style="color:var(--gris); font-size:13px; margin-top:0;">
- Active les credentials personnels (login, mot de passe, clé API…) : chaque utilisateur gère les siens pour chaque outil. Rien n’est partagé entre comptes.
- Désactivé par défaut. Les rôles contrôlent ensuite qui peut lire ou modifier ces credentials (permission « Credentials »).
- </p>
+ <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
+ <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 4px;"><i class="bi bi-shield-lock"></i> 2FA & credentials</h2>
+ <div class="champ-case">
+ <input type="checkbox" id="totp_disponible" name="totp_disponible" <%= parametre.totp_disponible !== false ? 'checked' : '' %>>
+ <label for="totp_disponible">Autoriser la 2FA (application)</label>
+ </div>
+ <div class="champ-case">
+ <input type="checkbox" id="totp_obligatoire" name="totp_obligatoire" <%= parametre.totp_obligatoire ? 'checked' : '' %>>
+ <label for="totp_obligatoire">Rendre la 2FA obligatoire</label>
+ </div>
  <div class="champ-case">
  <input type="checkbox" id="credentials_actifs" name="credentials_actifs" <%= parametre.credentials_actifs ? 'checked' : '' %>>
  <label for="credentials_actifs">Activer les credentials sur les outils</label>
  </div>
-
- <h2 style="font-size:15px;color:var(--bleu-fonce);margin-top:22px;"><i class="bi bi-shield-lock"></i> Chiffrement & authentification renforcée</h2>
- <label for="chiffrement_algo">Algorithme de chiffrement des credentials</label>
+ <label for="chiffrement_algo">Algorithme de chiffrement</label>
  <select id="chiffrement_algo" name="chiffrement_algo">
   <option value="aes-256-gcm" <%= (parametre.chiffrement_algo || 'aes-256-gcm') === 'aes-256-gcm' ? 'selected' : '' %>>AES-256-GCM (recommandé)</option>
   <option value="aes-256-cbc" <%= parametre.chiffrement_algo === 'aes-256-cbc' ? 'selected' : '' %>>AES-256-CBC</option>
   <option value="chacha20-poly1305" <%= parametre.chiffrement_algo === 'chacha20-poly1305' ? 'selected' : '' %>>ChaCha20-Poly1305</option>
  </select>
- <p style="font-size:12px;color:var(--gris);">S’applique aux nouveaux enregistrements de credentials. Les valeurs déjà chiffrées restent lisibles (rétrocompatibilité).</p>
 
+ <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
+ <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 4px;"><i class="bi bi-globe2"></i> Accès public</h2>
+ <div class="champ-case">
+ <input type="checkbox" id="stats_publiques" name="stats_publiques" <%= parametre.stats_publiques ? 'checked' : '' %>>
+ <label for="stats_publiques">Tableau de bord public (sans connexion)</label>
+ </div>
+ <p style="font-size:12px;color:var(--gris);margin-top:-4px;">
+ URL : <a href="/public/statistiques" target="_blank"><code>/public/statistiques</code></a>
+ </p>
 
-
-<div class="actions-form">
+ <div class="actions-form">
  <button type="submit" class="btn btn-primaire">Enregistrer</button>
  </div>
  </form>
-<div class="carte" style="margin-top:16px;">
-        <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
-        <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 4px;"><i class="bi bi-device-hdd"></i> Sauvegarde & restauration</h2>
-        <p style="color:var(--gris); font-size:13px;">
-            Exportez toutes les données GLO (utilisateurs, outils, tickets, réglages…) dans un fichier JSON,
-            ou restaurez une sauvegarde précédente. Réservé aux administrateurs.
-        </p>
-        <div class="actions-form" style="border:none; padding-top:0;">
-            <a href="/parametres/sauvegarde/export" class="btn btn-gris"><i class="bi bi-download"></i> Télécharger une sauvegarde</a>
-        </div>
-        <form action="/parametres/sauvegarde/restaurer" method="POST" enctype="multipart/form-data" style="margin-top:12px;"
-              onsubmit="return confirm('La restauration remplace les données actuelles. Continuer ?');">
-            <label for="fichier_sauvegarde">Restaurer depuis un fichier .json</label>
-            <input type="file" id="fichier_sauvegarde" name="fichier" accept=".json,application/json" required>
-            <button type="submit" class="btn btn-primaire" style="margin-top:8px;"><i class="bi bi-upload"></i> Restaurer</button>
-        </form>
 </div>
 
+<div class="reglages-col-droite">
+  <div class="carte">
+    <h2 style="font-size:15px;color:var(--bleu-fonce);margin:0 0 8px;"><i class="bi bi-device-hdd"></i> Sauvegarde & restauration</h2>
+    <p style="color:var(--gris);font-size:13px;margin:0 0 12px;">
+      Exportez toutes les données GLO en JSON, ou restaurez une sauvegarde précédente.
+    </p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+      <a href="/parametres/sauvegarde/export" class="btn btn-gris"><i class="bi bi-download"></i> Télécharger</a>
+    </div>
+    <form action="/parametres/sauvegarde/restaurer" method="POST" enctype="multipart/form-data"
+      onsubmit="return confirm('Restaurer cette sauvegarde ? Les données actuelles peuvent être écrasées.');">
+      <label for="fichier_sauvegarde">Fichier .json</label>
+      <input type="file" id="fichier_sauvegarde" name="fichier" accept=".json,application/json" required>
+      <button type="submit" class="btn btn-primaire" style="margin-top:8px;"><i class="bi bi-upload"></i> Restaurer</button>
+    </form>
+  </div>
+
+  <div class="carte">
+    <h2 style="font-size:15px;color:var(--bleu-fonce);margin:0 0 8px;"><i class="bi bi-calendar-check"></i> Planification</h2>
+    <p style="color:var(--gris);font-size:12px;margin:0 0 12px;">
+      Enregistré avec le bouton <strong>Enregistrer</strong> à gauche.
+    </p>
+    <div class="champ-case">
+      <input type="checkbox" form="form-reglages" id="sauvegarde_planifiee" name="sauvegarde_planifiee" <%= parametre.sauvegarde_planifiee ? 'checked' : '' %>>
+      <label for="sauvegarde_planifiee">Sauvegarde automatique</label>
+    </div>
+    <label for="sauvegarde_intervalle_heures">Intervalle (heures)</label>
+    <input type="number" form="form-reglages" id="sauvegarde_intervalle_heures" name="sauvegarde_intervalle_heures" min="1" max="168"
+      value="<%= parametre.sauvegarde_intervalle_heures || 24 %>" style="max-width:120px;">
+    <label for="sauvegarde_dossier">Dossier de sauvegarde</label>
+    <input type="text" form="form-reglages" id="sauvegarde_dossier" name="sauvegarde_dossier"
+      value="<%= parametre.sauvegarde_dossier || '' %>"
+      placeholder="ex. C:\GLO\backups ou /var/backups/glo"
+      style="width:100%;box-sizing:border-box;">
+    <p style="font-size:11px;color:var(--gris);">
+      Chemin absolu sur le serveur. Vide = dossier par défaut
+      <code>Server/uploads/sauvegardes-auto/</code>
+    </p>
+
+    <div class="champ-case" style="margin-top:12px;">
+      <input type="checkbox" form="form-reglages" id="journal_nettoyage_actif" name="journal_nettoyage_actif" <%= parametre.journal_nettoyage_actif ? 'checked' : '' %>>
+      <label for="journal_nettoyage_actif">Nettoyage auto du journal</label>
+    </div>
+    <label for="journal_retention_jours">Rétention (jours)</label>
+    <input type="number" form="form-reglages" id="journal_retention_jours" name="journal_retention_jours" min="7" max="3650"
+      value="<%= parametre.journal_retention_jours || 90 %>" style="max-width:120px;">
+  </div>
 </div>
+</div>
+
+<style>
+.reglages-grille {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .reglages-grille { grid-template-columns: 1fr; }
+}
+.reglages-col-droite { display: flex; flex-direction: column; gap: 16px; }
+.reglages-col-droite .carte { max-width: none; }
+</style>
 
 <%- include('partials/footer') %>

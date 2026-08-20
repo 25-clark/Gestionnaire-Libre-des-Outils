@@ -263,5 +263,110 @@ async function verifierAcces(req, res, next) {
     } catch (err) { next(err); }
 }
 
-module.exports = { getAll, getArborescence, getById, create, update, remove, updateReglages, verifierAcces };
+
+const { parseCsv } = require('../utils/importCsv');
+
+/**
+ * Import utilisateurs ou outils dans une activité.
+ * body: { type: 'utilisateurs'|'outils', mode: 'creer'|'modifier'|'supprimer', csv: string }
+ */
+async function importerDonnees(req, res, next) {
+    try {
+        const activite = await Activite.findByPk(req.params.id);
+        if (!activite) return res.status(404).json({ message: 'Activité introuvable.' });
+        const { type, mode, csv } = req.body;
+        if (!['utilisateurs', 'outils'].includes(type)) {
+            return res.status(400).json({ message: 'type doit être utilisateurs ou outils.' });
+        }
+        if (!['creer', 'modifier', 'supprimer'].includes(mode)) {
+            return res.status(400).json({ message: 'mode doit être creer, modifier ou supprimer.' });
+        }
+        const { rows } = parseCsv(csv || '');
+        if (!rows.length) return res.status(400).json({ message: 'Aucune ligne de données.' });
+
+        const resultats = { ok: 0, erreurs: [], ignores: 0 };
+
+        if (type === 'utilisateurs') {
+            const { Utilisateur, Role } = require('../models');
+            const roleDef = await Role.findOne({ order: [['id', 'ASC']] });
+            for (const row of rows) {
+                try {
+                    const matricule = (row.matricule || row.login || '').trim();
+                    if (!matricule) { resultats.ignores++; continue; }
+                    const exist = await Utilisateur.unscoped().findOne({ where: { matricule } });
+                    if (mode === 'creer') {
+                        if (exist) { resultats.ignores++; continue; }
+                        const [p] = await require('../models').Parametre.findOrCreate({ where: { id: 1 }, defaults: {} });
+                        await Utilisateur.create({
+                            matricule,
+                            nom: row.nom || matricule,
+                            prenom: row.prenom || '',
+                            email: row.email || null,
+                            telephone: row.telephone || null,
+                            id_activite: activite.id,
+                            id_role: roleDef ? roleDef.id : null,
+                            mot_de_passe: hacher(p.mot_de_passe_defaut || 'Bienvenue123'),
+                            doit_changer_mdp: true
+                        });
+                        resultats.ok++;
+                    } else if (mode === 'modifier') {
+                        if (!exist) { resultats.ignores++; continue; }
+                        const data = {};
+                        if (row.nom) data.nom = row.nom;
+                        if (row.prenom) data.prenom = row.prenom;
+                        if (row.email !== undefined) data.email = row.email || null;
+                        if (row.telephone !== undefined) data.telephone = row.telephone || null;
+                        await exist.update(data);
+                        resultats.ok++;
+                    } else if (mode === 'supprimer') {
+                        if (!exist) { resultats.ignores++; continue; }
+                        await exist.destroy();
+                        resultats.ok++;
+                    }
+                } catch (e) {
+                    resultats.erreurs.push(e.message);
+                }
+            }
+        } else {
+            const { Outil } = require('../models');
+            for (const row of rows) {
+                try {
+                    const nom = (row.nom || row.name || '').trim();
+                    if (!nom) { resultats.ignores++; continue; }
+                    let outil = await Outil.findOne({ where: { nom } });
+                    if (mode === 'creer') {
+                        if (outil) { resultats.ignores++; continue; }
+                        outil = await Outil.create({
+                            nom,
+                            lien: row.lien || row.url || null,
+                            adresse: row.adresse || row.ip || null,
+                            active: true,
+                            id_user: req.currentUser.id
+                        });
+                        await outil.setActivites([activite.id]);
+                        resultats.ok++;
+                    } else if (mode === 'modifier') {
+                        if (!outil) { resultats.ignores++; continue; }
+                        const data = {};
+                        if (row.lien || row.url) data.lien = row.lien || row.url;
+                        if (row.adresse || row.ip) data.adresse = row.adresse || row.ip;
+                        await outil.update(data);
+                        resultats.ok++;
+                    } else if (mode === 'supprimer') {
+                        if (!outil) { resultats.ignores++; continue; }
+                        await outil.destroy();
+                        resultats.ok++;
+                    }
+                } catch (e) {
+                    resultats.erreurs.push(e.message);
+                }
+            }
+        }
+
+        res.json({ message: `Import terminé : ${resultats.ok} traité(s), ${resultats.ignores} ignoré(s).`, resultats });
+    } catch (err) { next(err); }
+}
+
+
+module.exports = { importerDonnees,  getAll, getArborescence, getById, create, update, remove, updateReglages, verifierAcces };
 

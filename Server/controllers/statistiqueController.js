@@ -63,4 +63,50 @@ async function obtenir(req, res, next) {
     } catch (err) { next(err); }
 }
 
-module.exports = { obtenir };
+
+async function obtenirPublic(req, res, next) {
+    try {
+        const { Parametre } = require('../models');
+        const [p] = await Parametre.findOrCreate({ where: { id: 1 }, defaults: {} });
+        if (!p.stats_publiques) {
+            return res.status(403).json({ message: 'Les statistiques publiques sont désactivées.' });
+        }
+        // Agrégats uniquement (pas de journal détaillé)
+        const {
+            Activite, SousActivite, Outil, Utilisateur, Role, sequelize
+        } = require('../models');
+        const { Op } = require('sequelize');
+        const [
+            nbActivites, nbSousActivites, nbUtilisateurs,
+            nbOutilsActifs, nbOutilsArchives, nbOutilsEnLigne, nbOutilsHorsLigne, nbOutilsSurveilles
+        ] = await Promise.all([
+            Activite.count(),
+            SousActivite.count(),
+            Utilisateur.count(),
+            Outil.count({ where: { active: true } }),
+            Outil.count({ where: { active: false } }),
+            Outil.count({ where: { dernier_statut: 'en_ligne' } }),
+            Outil.count({ where: { dernier_statut: 'hors_ligne' } }),
+            Outil.count({ where: { adresse: { [Op.ne]: null } } })
+        ]);
+        const repartitionRolesBrute = await Utilisateur.findAll({
+            attributes: ['id_role', [sequelize.fn('COUNT', sequelize.col('Utilisateur.id')), 'total']],
+            include: [{ model: Role, attributes: ['nom', 'abbreviation'] }],
+            group: ['id_role', 'Role.id', 'Role.nom', 'Role.abbreviation'],
+            raw: true
+        });
+        const repartitionRoles = repartitionRolesBrute.map(ligne => ({
+            nom: ligne['Role.nom'],
+            abbreviation: ligne['Role.abbreviation'],
+            total: parseInt(ligne.total, 10)
+        }));
+        res.json({
+            nbActivites, nbSousActivites, nbUtilisateurs,
+            nbOutilsActifs, nbOutilsArchives, nbOutilsEnLigne, nbOutilsHorsLigne, nbOutilsSurveilles,
+            repartitionRoles
+        });
+    } catch (err) { next(err); }
+}
+
+module.exports = { obtenir, obtenirPublic };
+

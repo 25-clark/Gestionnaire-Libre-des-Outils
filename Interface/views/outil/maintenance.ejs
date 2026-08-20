@@ -9,7 +9,18 @@
         Informez les utilisateurs d’une <strong>coupure</strong>, d’une <strong>latence</strong> ou d’un test planifié.
         Un bandeau s’affichera sur l’outil pendant la fenêtre indiquée.
     </p>
-    <form action="/outils/<%= outil.id %>/maintenance" method="POST">
+    
+<div class="carte" style="max-width:640px;margin-bottom:14px;background:#eff6ff;border:1px solid #bfdbfe;">
+  <h2 style="font-size:15px;margin:0 0 8px;"><i class="bi bi-info-circle"></i> Comment fonctionne la maintenance ?</h2>
+  <ol style="font-size:13px;margin:0;padding-left:18px;color:var(--gris-fonce);">
+    <li><strong>Note de maintenance</strong> : message affiché aux utilisateurs sur la fiche de l’outil (ex. redémarrage prévu).</li>
+    <li><strong>Début / fin de dérangement</strong> : période pendant laquelle l’outil est signalé comme indisponible ou dégradé.</li>
+    <li><strong>Message de dérangement</strong> : texte court visible pendant cette période (cause, durée estimée).</li>
+    <li>Laissez les dates vides pour retirer le signalement. La note peut rester affichée sans dates.</li>
+  </ol>
+</div>
+
+<form action="/outils/<%= outil.id %>/maintenance" method="POST">
         <input type="hidden" name="retour" value="<%= retour %>">
 
         <label for="note_maintenance">Note de maintenance</label>

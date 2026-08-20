@@ -2,7 +2,7 @@ const { Utilisateur, Role, Parametre } = require('../models');
 const { verifier, hacher, validerPolitiqueMotDePasse } = require('../utils/motDePasse');
 const { consigner } = require('../utils/journal');
 const { verifierBlocageIp, enregistrerEchecIp, reinitialiserIp } = require('../utils/limiteurIp');
-const { genererSecret, verifierTotp, otpauthUrl } = require('../utils/totp');
+const { genererSecret, verifierTotp, otpauthUrl, genererCodesRecuperation } = require('../utils/totp');
 const { envoyerCodeConnexion } = require('../utils/email');
 
 // Réglages de sécurité toujours disponibles (créés à la volée s'ils
@@ -403,10 +403,23 @@ async function activer2fa(req, res, next) {
             return res.status(400).json({ message: 'Code invalide. Vérifiez votre application d\'authentification.' });
         }
         const user = await Utilisateur.findByPk(req.currentUser.id);
-        await user.update({ totp_secret: secret, totp_actif: true });
+        const codesRecup = genererCodesRecuperation(8);
+        // Stockage haché simple (sha256) — usage unique
+        const codesHash = codesRecup.map(code => ({
+            h: require('crypto').createHash('sha256').update(code.replace(/-/g, '').toUpperCase()).digest('hex'),
+            used: false
+        }));
+        let prefs = user.preferences || {};
+        if (typeof prefs === 'string') { try { prefs = JSON.parse(prefs); } catch { prefs = {}; } }
+        prefs.totp_recovery = codesHash;
+        await user.update({ totp_secret: secret, totp_actif: true, preferences: prefs });
         delete req.session.pendingTotpSecret;
         delete req.session.doit_configurer_2fa;
-        res.json({ message: 'Authentification à deux facteurs activée.', totp_actif: true });
+        res.json({
+            message: 'Authentification à deux facteurs activée. Conservez vos codes de récupération.',
+            totp_actif: true,
+            codes_recuperation: codesRecup
+        });
     } catch (err) { next(err); }
 }
 
@@ -467,5 +480,77 @@ async function verifierCodeEmail(req, res, next) {
     } catch (err) { next(err); }
 }
 
-module.exports = { login, logout, me, changerMotDePasse, verifier2fa, setup2fa, activer2fa, desactiver2fa, verifierCodeEmail };
+
+/** Demande un code de secours 2FA par e-mail (téléphone perdu). */
+async function recuperer2faParEmail(req, res, next) {
+    try {
+        const { matricule } = req.body;
+        if (!matricule) return res.status(400).json({ message: 'Matricule requis.' });
+        const user = await Utilisateur.scope('avecMotDePasse').findOne({ where: { matricule: String(matricule).trim() } });
+        if (!user || !user.totp_actif) {
+            // Ne pas révéler si le compte existe
+            return res.json({ message: 'Si ce compte existe et a la 2FA active, un code a été envoyé par e-mail.' });
+        }
+        const email = (user.email || '').trim();
+        if (!email || !email.includes('@')) {
+            return res.status(400).json({ message: 'Aucune adresse e-mail sur ce compte. Contactez un administrateur.' });
+        }
+        const code = genererCodeAuth();
+        req.session.pending2faRecoveryUserId = user.id;
+        req.session.pending2faRecoveryCode = code;
+        req.session.pending2faRecoveryExpire = Date.now() + 10 * 60 * 1000;
+        const { envoyerCodeConnexion } = require('../utils/email');
+        await envoyerCodeConnexion(email, code, { prenom: user.prenom, matricule: user.matricule });
+        const masque = email.replace(/(.{2})(.*)(@.*)/, (_, a, b, d) => a + '***' + d);
+        res.json({ message: `Un code de secours a été envoyé à ${masque}.`, email_masque: masque });
+    } catch (err) { next(err); }
+}
+
+async function validerRecuperation2fa(req, res, next) {
+    try {
+        const { code, code_recuperation } = req.body;
+        const pendingId = req.session.pending2faRecoveryUserId || req.session.pending2faUserId;
+        const exp = req.session.pending2faRecoveryExpire || 0;
+        if (!pendingId) return res.status(401).json({ message: 'Session de récupération expirée.' });
+
+        const user = await Utilisateur.findByPk(pendingId, { include: [{ model: Role }] });
+        if (!user) return res.status(401).json({ message: 'Utilisateur introuvable.' });
+
+        let ok = false;
+        // Code envoyé par e-mail
+        if (code && req.session.pending2faRecoveryCode && Date.now() <= exp) {
+            ok = String(code).trim() === String(req.session.pending2faRecoveryCode);
+        }
+        // Code de récupération à usage unique
+        if (!ok && code_recuperation) {
+            let prefs = user.preferences || {};
+            if (typeof prefs === 'string') { try { prefs = JSON.parse(prefs); } catch { prefs = {}; } }
+            const list = Array.isArray(prefs.totp_recovery) ? prefs.totp_recovery : [];
+            const h = require('crypto').createHash('sha256')
+                .update(String(code_recuperation).replace(/-/g, '').toUpperCase()).digest('hex');
+            const found = list.find(c => c && !c.used && c.h === h);
+            if (found) {
+                found.used = true;
+                prefs.totp_recovery = list;
+                await user.update({ preferences: prefs });
+                ok = true;
+            }
+        }
+        if (!ok) return res.status(401).json({ message: 'Code de récupération incorrect ou expiré.' });
+
+        delete req.session.pending2faRecoveryUserId;
+        delete req.session.pending2faRecoveryCode;
+        delete req.session.pending2faRecoveryExpire;
+        delete req.session.pending2faUserId;
+        delete req.session.pending2faExpire;
+        req.session.userId = user.id;
+
+        const userSans = user.toJSON ? user.toJSON() : { ...user };
+        delete userSans.mot_de_passe;
+        delete userSans.totp_secret;
+        res.json({ message: 'Récupération réussie.', user: userSans });
+    } catch (err) { next(err); }
+}
+
+module.exports = { login, logout, me, changerMotDePasse, verifier2fa, setup2fa, activer2fa, desactiver2fa, verifierCodeEmail, recuperer2faParEmail, validerRecuperation2fa };
 

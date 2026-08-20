@@ -128,6 +128,36 @@ module.exports = (sequelize) => {
             type: DataTypes.BOOLEAN,
             allowNull: false,
             defaultValue: false
+        },
+        sauvegarde_planifiee: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
+        },
+        sauvegarde_intervalle_heures: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 24
+        },
+        sauvegarde_dossier: {
+            type: DataTypes.STRING(500),
+            allowNull: true,
+            defaultValue: null
+        },
+        journal_retention_jours: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 90
+        },
+        journal_nettoyage_actif: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
+        },
+        stats_publiques: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
         }
     }, {
         tableName: 'parametres',

@@ -105,8 +105,22 @@ async function getAll(req, res, next) {
         }
         if (req.query.mine === '1') tickets = tickets.filter(t => t.id_createur === req.currentUser.id);
         if (req.query.assignes === '1') tickets = tickets.filter(t => t.id_assigne === req.currentUser.id);
-        if (req.query.id_createur) tickets = tickets.filter(t => t.id_createur === parseInt(req.query.id_createur, 10));
-        if (req.query.id_assigne) tickets = tickets.filter(t => t.id_assigne === parseInt(req.query.id_assigne, 10));
+        if (req.query.id_createur) {
+            const ids = String(req.query.id_createur).split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+            if (ids.length) tickets = tickets.filter(t => ids.includes(t.id_createur));
+        }
+        if (req.query.id_assigne) {
+            const ids = String(req.query.id_assigne).split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+            if (ids.length) {
+                tickets = tickets.filter(t => {
+                    if (ids.includes(t.id_assigne)) return true;
+                    let au = t.assignees_users;
+                    if (typeof au === 'string') { try { au = JSON.parse(au); } catch { au = []; } }
+                    if (Array.isArray(au) && au.some(id => ids.includes(Number(id)))) return true;
+                    return false;
+                });
+            }
+        }
         if (req.query.q) {
             const terme = req.query.q.trim().toLowerCase();
             tickets = tickets.filter(t =>

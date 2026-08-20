@@ -87,6 +87,64 @@ router.post('/login/auth-email', async (req, res) => {
     }
 });
 
+
+router.get('/login/2fa/recuperation', (req, res) => {
+    res.render('login-2fa-recuperation', { titre: 'Récupération 2FA', erreur: null, succes: null, etape: 'demande' });
+});
+
+router.post('/login/2fa/recuperation', async (req, res) => {
+    try {
+        const api = apiClientAnonyme();
+        // reuse session cookie from prior login attempt if any
+        const response = await api.post('/auth/2fa/recuperation', { matricule: req.body.matricule });
+        const setCookie = response.headers['set-cookie'];
+        if (setCookie && setCookie.length) {
+            req.session.apiCookie = setCookie[0].split(';')[0];
+        }
+        req.session.pending2faRecovery = true;
+        res.render('login-2fa-recuperation', {
+            titre: 'Récupération 2FA',
+            erreur: null,
+            succes: response.data.message,
+            etape: 'code',
+            email_masque: response.data.email_masque || null
+        });
+    } catch (err) {
+        res.render('login-2fa-recuperation', {
+            titre: 'Récupération 2FA',
+            erreur: err.response?.data?.message || 'Erreur',
+            succes: null,
+            etape: 'demande'
+        });
+    }
+});
+
+router.post('/login/2fa/recuperation/valider', async (req, res) => {
+    try {
+        const api = apiClient(req);
+        const response = await api.post('/auth/2fa/recuperation/valider', {
+            code: req.body.code,
+            code_recuperation: req.body.code_recuperation
+        });
+        const setCookie = response.headers['set-cookie'];
+        if (setCookie && setCookie.length) {
+            req.session.apiCookie = setCookie[0].split(';')[0];
+        }
+        const me = await api.get('/auth/me');
+        req.session.user = me.data.user || me.data;
+        delete req.session.pending2faRecovery;
+        res.redirect('/');
+    } catch (err) {
+        res.render('login-2fa-recuperation', {
+            titre: 'Récupération 2FA',
+            erreur: err.response?.data?.message || 'Code incorrect',
+            succes: null,
+            etape: 'code'
+        });
+    }
+});
+
+
 router.get('/login/2fa', (req, res) => {
     if (!req.session.pending_2fa || !req.session.apiCookie) {
         return res.redirect('/login');

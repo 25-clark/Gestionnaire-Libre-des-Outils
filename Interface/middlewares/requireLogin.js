@@ -1,4 +1,6 @@
 function requireLogin(req, res, next) {
+    if (req.path && req.path.startsWith('/public')) return next();
+
     if (!req.session.user || !req.session.apiCookie) {
         return res.redirect('/login');
     }

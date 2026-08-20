@@ -5,6 +5,7 @@ const session = require('express-session');
 const cookieParser = require('cookie-parser');
 
 const authRoutes = require('./routes/authRoutes');
+const publicRoutes = require('./routes/publicRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const activiteRoutes = require('./routes/activiteRoutes');
 const sousActiviteRoutes = require('./routes/sousActiviteRoutes');
@@ -245,7 +246,7 @@ app.use(async (req, res, next) => {
     }
 
     const estInstallation = pth === '/installation' || pth.startsWith('/installation/');
-    const estPublic = pth === '/login' || pth.startsWith('/login') || pth === '/cgu';
+    const estPublic = pth === '/login' || pth.startsWith('/login') || pth === '/cgu' || pth.startsWith('/public');
     if (!pub.installation_terminee && !estInstallation && !estPublic) {
         return res.redirect('/installation');
     }
@@ -255,6 +256,7 @@ app.use(async (req, res, next) => {
 
 app.use('/installation', installationRoutes);
 app.use('/aide', aideRoutes);
+app.use('/public', publicRoutes);
 app.use('/', authRoutes);
 app.use('/', dashboardRoutes);
 app.use('/activites', activiteRoutes);

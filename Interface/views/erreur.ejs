@@ -1,9 +1,39 @@
+<%
+  var msg = String(typeof message !== 'undefined' ? message : '');
+  var nonAuth = /non authentifi|non connect|session expir|token|unauthorized|401/i.test(msg)
+    || (typeof titre !== 'undefined' && /non authentifi/i.test(String(titre)));
+%>
+<% if (typeof currentUser !== 'undefined' && currentUser) { %>
 <%- include('partials/header') %>
+<% } else { %>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof titre !== 'undefined' ? titre : 'Erreur' %> · GLO</title>
+  <link rel="stylesheet" href="/vendor/bootstrap-icons/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/design-modern.css">
+</head>
+<body>
+<% } %>
 
-<div class="carte" style="text-align:center; padding:50px 20px;">
- <h1 style="margin-top:0;"><%= titre %></h1>
- <p style="color: var(--gris);"><%= message %></p>
+<div class="carte" style="text-align:center; padding:50px 20px; max-width:480px; margin:40px auto;">
+ <h1 style="margin-top:0;"><%= typeof titre !== 'undefined' ? titre : 'Erreur' %></h1>
+ <p style="color: var(--gris);"><%= msg %></p>
+ <% if (nonAuth) { %>
+ <a href="/login" class="btn btn-primaire"><i class="bi bi-box-arrow-in-right"></i> Page de connexion</a>
+ <% } else if (typeof currentUser !== 'undefined' && currentUser) { %>
  <a href="/" class="btn btn-primaire">Retour au tableau de bord</a>
+ <% } else { %>
+ <a href="/login" class="btn btn-primaire"><i class="bi bi-box-arrow-in-right"></i> Page de connexion</a>
+ <% } %>
 </div>
 
+<% if (typeof currentUser !== 'undefined' && currentUser) { %>
 <%- include('partials/footer') %>
+<% } else { %>
+</body>
+</html>
+<% } %>

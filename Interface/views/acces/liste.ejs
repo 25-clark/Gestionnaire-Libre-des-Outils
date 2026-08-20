@@ -136,4 +136,139 @@
  <% } %>
 </div>
 
+
+<script>
+(function () {
+  var RECENT_KEY = 'glo_acces_recent';
+  function getRecent(kind) {
+    try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '{}')[kind] || []; } catch (e) { return []; }
+  }
+  function pushRecent(kind, id, label) {
+    var all = {};
+    try { all = JSON.parse(localStorage.getItem(RECENT_KEY) || '{}'); } catch (e) {}
+    var list = (all[kind] || []).filter(function (x) { return String(x.id) !== String(id); });
+    list.unshift({ id: String(id), label: label });
+    all[kind] = list.slice(0, 8);
+    localStorage.setItem(RECENT_KEY, JSON.stringify(all));
+  }
+
+  function enhanceSelect(sel, kind) {
+    if (!sel || sel.dataset.enhanced) return;
+    sel.dataset.enhanced = '1';
+    sel.style.display = 'none';
+
+    var options = Array.prototype.map.call(sel.options, function (o) {
+      return { value: o.value, text: o.textContent.trim() };
+    });
+
+    var wrap = document.createElement('div');
+    wrap.className = 'glo-acces-combo';
+    wrap.style.cssText = 'position:relative;min-width:220px;';
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'glo-acces-combo-btn';
+    btn.style.cssText = 'width:100%;text-align:left;padding:8px 10px;border:1px solid var(--gris-bordure,#cbd5e1);border-radius:8px;background:#fff;cursor:pointer;font-size:13px;';
+    function currentLabel() {
+      var v = sel.value;
+      var o = options.find(function (x) { return String(x.value) === String(v); });
+      return o ? o.text : '—';
+    }
+    btn.textContent = currentLabel();
+
+    var panel = document.createElement('div');
+    panel.hidden = true;
+    panel.style.cssText = 'position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:50;background:#fff;border:1px solid var(--gris-bordure,#cbd5e1);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:8px;max-height:280px;overflow:auto;';
+
+    var search = document.createElement('input');
+    search.type = 'search';
+    search.placeholder = 'Rechercher…';
+    search.style.cssText = 'width:100%;box-sizing:border-box;margin-bottom:6px;padding:7px 9px;border:1px solid var(--gris-bordure,#cbd5e1);border-radius:8px;font-size:13px;';
+
+    var list = document.createElement('div');
+
+    function pick(value, label) {
+      sel.value = value;
+      btn.textContent = label || currentLabel();
+      panel.hidden = true;
+      if (value) pushRecent(kind, value, label);
+      // Déclencher change (ex. recharger sous-activités)
+      var ev = document.createEvent('HTMLEvents');
+      ev.initEvent('change', true, false);
+      sel.dispatchEvent(ev);
+    }
+
+    function render(q) {
+      q = (q || '').trim().toLowerCase();
+      list.innerHTML = '';
+      var recent = getRecent(kind);
+      var shown = {};
+
+      function addItem(value, text, meta) {
+        if (shown[String(value)] && value !== '') return;
+        shown[String(value)] = true;
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.style.cssText = 'display:block;width:100%;text-align:left;padding:7px 9px;border:none;background:transparent;border-radius:6px;cursor:pointer;font-size:13px;';
+        b.textContent = text + (meta ? ' · ' + meta : '');
+        if (String(sel.value) === String(value)) b.style.background = 'var(--bleu-clair,#eff6ff)';
+        b.addEventListener('click', function (e) {
+          e.stopPropagation();
+          pick(value, text);
+        });
+        list.appendChild(b);
+      }
+
+      // Options vides en premier
+      options.filter(function (o) { return !o.value; }).forEach(function (o) {
+        addItem(o.value, o.text);
+      });
+      // Récents
+      recent.forEach(function (r) {
+        if (!r.id) return;
+        var match = options.find(function (o) { return String(o.value) === String(r.id); });
+        if (!match) return;
+        if (q && String(match.text).toLowerCase().indexOf(q) < 0) return;
+        addItem(match.value, match.text, 'récent');
+      });
+      // Reste filtré
+      options.forEach(function (o) {
+        if (!o.value) return;
+        if (q && o.text.toLowerCase().indexOf(q) < 0 && String(o.value).indexOf(q) < 0) return;
+        addItem(o.value, o.text);
+      });
+    }
+
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var open = panel.hidden;
+      document.querySelectorAll('.glo-acces-combo div[data-panel]').forEach(function (p) { p.hidden = true; });
+      panel.hidden = !open;
+      if (!panel.hidden) {
+        render(search.value);
+        setTimeout(function () { search.focus(); }, 10);
+      }
+    });
+    search.addEventListener('input', function () { render(search.value); });
+    search.addEventListener('click', function (e) { e.stopPropagation(); });
+    panel.setAttribute('data-panel', '1');
+    panel.appendChild(search);
+    panel.appendChild(list);
+    wrap.appendChild(btn);
+    wrap.appendChild(panel);
+    sel.parentNode.insertBefore(wrap, sel);
+    wrap.appendChild(sel);
+  }
+
+  document.addEventListener('click', function () {
+    document.querySelectorAll('.glo-acces-combo div[data-panel]').forEach(function (p) { p.hidden = true; });
+  });
+
+  enhanceSelect(document.getElementById('id_user'), 'user');
+  enhanceSelect(document.getElementById('id_activite'), 'activite');
+  enhanceSelect(document.getElementById('id_sous_activite'), 'sous');
+})();
+</script>
+
+
 <%- include('../partials/footer') %>

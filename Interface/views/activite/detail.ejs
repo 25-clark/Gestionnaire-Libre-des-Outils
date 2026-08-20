@@ -13,16 +13,13 @@
  <% if (peut('activites', 'update') || peut('activites', 'delete')) { %>
  <div style="display:flex; gap:8px;">
  <% if (peut('activites', 'update')) { %>
- <a href="/activites/<%= activite.id %>/modifier" class="btn btn-gris">Modifier</a>
- <% } %>
+<% } %>
  <% if (peut('activites', 'delete')) { %>
- <form action="/activites/<%= activite.id %>/supprimer" method="POST" class="form-inline"
- onsubmit="return confirm('Supprimer cette activité ?');">
- <button type="submit" class="btn btn-danger">Supprimer</button>
- </form>
- <% } %>
+<% } %>
  </div>
-    <% if (peut("activites", "update")) { %><a href="/activites/<%= activite.id %>/reglages" class="btn btn-gris btn-petit"><i class="bi bi-sliders"></i> Réglages locaux</a><% } %>
+    <% if (peut("activites", "update")) { %><a href="/activites/<%= activite.id %>/reglages" class="btn btn-gris btn-petit"><i class="bi bi-sliders"></i> Réglages locaux</a>
+    <a href="/activites/<%= activite.id %>/importer" class="btn btn-gris btn-petit"><i class="bi bi-upload"></i> Import CSV</a>
+    <% } %>
 
  <% } %>
 </div>

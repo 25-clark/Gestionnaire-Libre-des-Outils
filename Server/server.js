@@ -18,6 +18,7 @@ const session = require('express-session');
 const { sequelize } = require('./models');
 const { demarrerSurveillance } = require('./utils/surveillance');
 const { demarrerSlaTickets } = require('./utils/slaTickets');
+const { demarrerPlanification } = require('./utils/planification');
 const { assurerColonnes } = require('./utils/assurerColonnes');
 
 const authRoutes = require('./routes/authRoutes');
@@ -102,6 +103,7 @@ sequelize.authenticate()
             console.log(`Serveur GLO démarré sur http://localhost:${PORT}`);
             demarrerSurveillance();
             demarrerSlaTickets();
+            demarrerPlanification();
         });
     })
     .catch((err) => {

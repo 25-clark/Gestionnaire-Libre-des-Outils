@@ -8,11 +8,9 @@
  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
  <link rel="manifest" href="/site.webmanifest">
  <title><%= typeof titre !== 'undefined' ? titre + ' · ' + nomApplication : nomApplication %></title>
- <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/design-modern.css">
- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+ <link rel="stylesheet" href="/vendor/bootstrap-icons/font/bootstrap-icons.min.css">
  <% 
  var prefsTheme = (typeof prefs !== 'undefined' && prefs.theme) ? prefs.theme : 'clair';
  if (typeof currentUser !== 'undefined' && currentUser && currentUser.preferences && currentUser.preferences.theme) {

@@ -36,7 +36,6 @@ function base32Decode(str) {
 
 function hotp(secretBuf, counter) {
     const bufr = Buffer.alloc(8);
-    // write counter as big-endian 64-bit
     bufr.writeUInt32BE(Math.floor(counter / 0x100000000), 0);
     bufr.writeUInt32BE(counter >>> 0, 4);
     const hmac = crypto.createHmac('sha1', secretBuf).update(bufr).digest();
@@ -80,4 +79,15 @@ function otpauthUrl(opts) {
         '&algorithm=SHA1&digits=6&period=30';
 }
 
-module.exports = { genererSecret, totp, verifierTotp, otpauthUrl };
+/** Génère 8 codes de récupération à usage unique (format XXXX-XXXX). */
+function genererCodesRecuperation(n) {
+    n = n || 8;
+    const codes = [];
+    for (let i = 0; i < n; i++) {
+        const raw = crypto.randomBytes(4).toString('hex').toUpperCase();
+        codes.push(raw.slice(0, 4) + '-' + raw.slice(4, 8));
+    }
+    return codes;
+}
+
+module.exports = { genererSecret, totp, verifierTotp, otpauthUrl, genererCodesRecuperation };

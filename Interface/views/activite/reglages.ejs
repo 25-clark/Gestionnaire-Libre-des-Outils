@@ -125,4 +125,17 @@
     </form>
 </div>
 
+
+<div class="carte" style="max-width:640px;margin-top:18px;border:1px solid #fecaca;">
+  <h2 style="font-size:15px;color:#b91c1c;"><i class="bi bi-exclamation-triangle"></i> Actions sur l’activité</h2>
+  <p style="font-size:13px;color:var(--gris);">Modification du nom / logo et suppression définitive.</p>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;">
+    <a href="/activites/<%= activite.id %>/modifier" class="btn btn-gris"><i class="bi bi-pencil"></i> Modifier l’activité</a>
+    <form action="/activites/<%= activite.id %>/supprimer" method="POST" class="form-inline"
+      onsubmit="return confirm('Supprimer définitivement cette activité et ses données liées ?');">
+      <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Supprimer l’activité</button>
+    </form>
+  </div>
+</div>
+
 <%- include('../partials/footer') %>

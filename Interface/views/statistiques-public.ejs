@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tableau de bord public · GLO</title>
+  <link rel="stylesheet" href="/vendor/bootstrap-icons/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/design-modern.css">
+  <style>
+    body { background: #f1f5f9; min-height: 100vh; margin: 0; }
+    .public-top {
+      background: linear-gradient(135deg, #1e3a5f, #0f172a);
+      color: #fff;
+      padding: 18px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .public-top a { color: #93c5fd; text-decoration: none; }
+    .public-wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+    .stats-grille {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 14px;
+      margin-top: 8px;
+    }
+    .stat-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+      border: 1px solid #e2e8f0;
+    }
+    .stat-card .n { font-size: 1.75rem; font-weight: 700; color: #1e3a5f; }
+    .stat-card .l { font-size: 13px; color: #64748b; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="public-top">
+    <div>
+      <strong style="font-size:1.1rem;"><i class="bi bi-bar-chart-line"></i> Tableau de bord public</strong>
+      <span style="opacity:.75;font-size:13px;margin-left:8px;">Vue d’ensemble (sans connexion)</span>
+    </div>
+    <a href="/login"><i class="bi bi-box-arrow-in-right"></i> Connexion</a>
+  </div>
+  <div class="public-wrap">
+    <% var s = stats || {}; %>
+    <div class="stats-grille">
+      <div class="stat-card"><div class="n"><%= s.nbUtilisateurs != null ? s.nbUtilisateurs : '—' %></div><div class="l">Utilisateurs</div></div>
+      <div class="stat-card"><div class="n"><%= s.nbActivites != null ? s.nbActivites : '—' %></div><div class="l">Activités</div></div>
+      <div class="stat-card"><div class="n"><%= s.nbSousActivites != null ? s.nbSousActivites : '—' %></div><div class="l">Sous-activités</div></div>
+      <div class="stat-card"><div class="n"><%= s.nbOutilsActifs != null ? s.nbOutilsActifs : '—' %></div><div class="l">Outils actifs</div></div>
+      <div class="stat-card"><div class="n"><%= s.nbOutilsArchives != null ? s.nbOutilsArchives : '—' %></div><div class="l">Outils archivés</div></div>
+      <div class="stat-card"><div class="n"><%= s.nbOutilsEnLigne != null ? s.nbOutilsEnLigne : '—' %></div><div class="l">En ligne</div></div>
+      <div class="stat-card"><div class="n"><%= s.nbOutilsHorsLigne != null ? s.nbOutilsHorsLigne : '—' %></div><div class="l">Hors ligne</div></div>
+      <div class="stat-card"><div class="n"><%= s.nbOutilsSurveilles != null ? s.nbOutilsSurveilles : '—' %></div><div class="l">Surveillés</div></div>
+    </div>
+    <% if (s.repartitionRoles && s.repartitionRoles.length) { %>
+    <div class="carte" style="margin-top:18px;">
+      <h2 style="font-size:15px;margin:0 0 10px;">Répartition par rôle</h2>
+      <table class="tableau">
+        <thead><tr><th>Rôle</th><th>Abréviation</th><th>Effectif</th></tr></thead>
+        <tbody>
+        <% s.repartitionRoles.forEach(function(r) { %>
+          <tr><td><%= r.nom %></td><td><%= r.abbreviation %></td><td><%= r.total %></td></tr>
+        <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+    <p style="margin-top:20px;font-size:13px;color:#64748b;">
+      Activez cette page dans <strong>Réglages généraux → Planification → Dashboard public</strong>.
+    </p>
+  </div>
+</body>
+</html>

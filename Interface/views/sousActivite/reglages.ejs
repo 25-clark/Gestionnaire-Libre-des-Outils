@@ -1,0 +1,22 @@
+<%- include('../partials/header') %>
+<div class="entete-page">
+  <h1><i class="bi bi-sliders"></i> Réglages locaux — <%= sousActivite.nom %></h1>
+  <a href="/sous-activites/<%= sousActivite.id %>" class="btn btn-gris">Retour</a>
+</div>
+
+<div class="carte" style="max-width:640px;">
+  <p style="font-size:13px;color:var(--gris);">
+    Les paramètres de sécurité et de module suivent l’activité parente
+    <strong><%= activite ? activite.nom : '' %></strong>.
+    Utilisez cette page pour les actions structurelles sur la sous-activité.
+  </p>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;">
+    <a href="/sous-activites/<%= sousActivite.id %>/modifier" class="btn btn-gris"><i class="bi bi-pencil"></i> Modifier</a>
+    <a href="/sous-activites/<%= sousActivite.id %>/copier" class="btn btn-gris"><i class="bi bi-files"></i> Copier</a>
+    <form action="/sous-activites/<%= sousActivite.id %>/supprimer" method="POST" class="form-inline"
+      onsubmit="return confirm('Supprimer cette sous-activité ?');">
+      <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Supprimer</button>
+    </form>
+  </div>
+</div>
+<%- include('../partials/footer') %>

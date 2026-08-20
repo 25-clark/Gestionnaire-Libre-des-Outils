@@ -105,6 +105,30 @@ async function construireFilAriane(api, sousActivite) {
 // Par défaut et par sécurité, seul l'onglet "Outils" est actif : les
 // sous-activités enfants et les accès particuliers ne sont montrés que si
 // le rôle de l'utilisateur a la permission de lecture correspondante.
+
+router.get('/:id/reglages', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const { data: sousActivite } = await api.get(`/sous-activites/${req.params.id}`);
+        let activite = null;
+        try {
+            const r = await api.get(`/activites/${sousActivite.id_activite}`);
+            activite = r.data;
+        } catch (_) {}
+        res.locals.breadcrumbs = [
+            { label: 'Tableau de bord', href: '/' },
+            { label: (activite && activite.nom) || 'Activité', href: activite ? '/activites/' + activite.id : undefined },
+            { label: sousActivite.nom, href: '/sous-activites/' + sousActivite.id },
+            { label: 'Réglages' }
+        ];
+        res.render('sousActivite/reglages', {
+            titre: 'Réglages — ' + sousActivite.nom,
+            sousActivite,
+            activite
+        });
+    } catch (err) { next(err); }
+});
+
 router.get('/:id', async (req, res, next) => {
     try {
         const api = apiClient(req);

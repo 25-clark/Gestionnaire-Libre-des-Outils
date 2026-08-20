@@ -149,47 +149,49 @@ document.getElementById('theme').addEventListener('change', function () {
 });
 </script>
 
-    <div class="carte" style="margin-top:18px;">
-        <h2><i class="bi bi-shield-check"></i> Facteurs d’authentification</h2>
-        <p style="color:var(--gris);font-size:13px;max-width:560px;">
-            En plus de votre mot de passe, choisissez les facteurs que <strong>vous</strong> souhaitez utiliser :
-            application 2FA (TOTP), code à usage unique, ou les deux. Rien n’est imposé globalement.
-        </p>
-        <form action="/profil" method="POST">
-            <input type="hidden" name="section" value="auth_facteurs">
-            <label style="display:flex;align-items:center;gap:8px;margin:12px 0;cursor:pointer;">
-                <input type="checkbox" disabled <%= user.totp_actif ? 'checked' : '' %>>
-                <span>2FA (application d’authentification) — <%= user.totp_actif ? 'activée (voir section ci-dessous)' : 'à configurer dans la section 2FA ci-dessous' %></span>
-            </label>
-            <label style="display:flex;align-items:center;gap:8px;margin:12px 0;cursor:pointer;">
-                <input type="checkbox" name="auth_code_actif" value="1" <%= (user.preferences && user.preferences.auth_code_actif) ? 'checked' : '' %>>
-                <span>Code de connexion par e-mail</span>
-            </label>
-            <p style="font-size:12px;color:var(--gris);max-width:560px;">
-                <strong>Les facteurs se cumulent, ils ne se remplacent pas :</strong>
-            </p>
-            <ul style="font-size:12px;color:var(--gris);max-width:560px;margin:6px 0 12px 18px;">
-                <li><strong>2FA seule</strong> (app type Google Authenticator) → mot de passe puis code de l’app</li>
-                <li><strong>E-mail seul</strong> → mot de passe puis code reçu sur Gmail</li>
-                <li><strong>2FA + e-mail</strong> → mot de passe, <em>puis</em> code de l’app, <em>puis</em> code reçu par e-mail</li>
-            </ul>
-            <p style="font-size:12px;color:var(--gris);max-width:560px;">
-                Une adresse e-mail valide est obligatoire pour activer le code par e-mail.
-            </p>
-            <button type="submit" class="btn btn-primaire btn-petit">Enregistrer</button>
-        </form>
-    </div>
 
 
-    <div class="carte" style="grid-column: 1 / -1;">
-        <h2><i class="bi bi-shield-lock"></i> Authentification à deux facteurs (2FA)</h2>
-        <p style="color:var(--gris);font-size:13px; max-width:640px;">
-            La 2FA ajoute un <strong>code à 6 chiffres</strong> (qui change toutes les 30 secondes)
-            en plus de votre mot de passe. Ce code est généré par une application sur votre téléphone.
-        </p>
-        <div id="bloc-2fa">
+<div class="profil-grille" style="margin-top:18px;">
+<div class="carte">
+            <h2><i class="bi bi-envelope-check"></i> Code de connexion par e-mail</h2>
+            <p style="font-size:13px;color:var(--gris);max-width:520px;">
+                Facteur optionnel : après le mot de passe (et la 2FA si active), GLO envoie un code à 6 chiffres
+                à l’adresse renseignée dans vos informations personnelles.
+            </p>
+            <form action="/profil" method="POST">
+                <input type="hidden" name="section" value="auth_facteurs">
+                <div class="champ-case">
+                    <input type="checkbox" name="auth_code_actif" id="auth_code_actif" value="1" <%= (prefs && prefs.auth_code_actif) ? 'checked' : '' %>>
+                    <label for="auth_code_actif">Activer le code de connexion par e-mail</label>
+                </div>
+                <p style="font-size:12px;color:var(--gris);max-width:520px;">
+                    Les facteurs se <strong>cumulent</strong> : mot de passe → 2FA (si active) → code e-mail (si actif).
+                    Une adresse e-mail valide est obligatoire.
+                </p>
+                <button type="submit" class="btn btn-primaire btn-petit">Enregistrer</button>
+            </form>
+        </div>
+
+        <div class="carte">
+            <h2><i class="bi bi-shield-lock"></i> Authentification à deux facteurs (2FA)</h2>
+            <p style="color:var(--gris);font-size:13px; max-width:640px;">
+                La 2FA ajoute un <strong>code à 6 chiffres</strong> (qui change toutes les 30 secondes)
+                en plus de votre mot de passe. Ce code est généré par une application sur votre téléphone
+                (Google Authenticator, Authy, etc.).
+            </p>
+            <div id="bloc-2fa">
+
             <p>Statut : <strong id="2fa-statut"><%= user.totp_actif ? 'Activée ✓' : 'Désactivée' %></strong></p>
             <% if (!user.totp_actif) { %>
+            <div class="message-info" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:13px;color:#9a3412;max-width:560px;">
+                <strong><i class="bi bi-exclamation-triangle"></i> Avant d’activer la 2FA</strong>
+                <ul style="margin:8px 0 0 18px;padding:0;">
+                    <li>Scannez le QR code avec Google Authenticator (ou équivalent).</li>
+                    <li><strong>Copiez le secret</strong> et conservez-le dans un endroit sûr (coffre-fort, gestionnaire de mots de passe).</li>
+                    <li>Après activation, <strong>notez les codes de récupération</strong> : ils permettent de vous reconnecter si vous perdez votre téléphone.</li>
+                    <li>Un code de secours peut aussi être envoyé sur votre <strong>e-mail</strong> (renseigné dans vos infos personnelles).</li>
+                </ul>
+            </div>
             <button type="button" class="btn btn-primaire" id="btn-2fa-setup">Commencer la configuration</button>
             <div id="2fa-setup-panel" hidden style="margin-top:16px; max-width:560px;">
                 <ol style="padding-left:20px; line-height:1.55; font-size:14px;">
@@ -235,8 +237,10 @@ document.getElementById('theme').addEventListener('change', function () {
             </div>
             <% } %>
             <p id="2fa-msg" style="font-size:13px;margin-top:10px;"></p>
+            </div>
         </div>
-    </div>
+</div>
+
 <script>
 (function(){
   var msg = document.getElementById('2fa-msg');
@@ -265,7 +269,27 @@ document.getElementById('theme').addEventListener('change', function () {
     fetch('/profil/2fa/activer', { method:'POST', credentials:'same-origin',
       headers:{'Content-Type':'application/json'}, body: JSON.stringify({code:code}) })
       .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
-      .then(function(x){ if(x.ok){ say(x.d.message,true); location.reload(); } else say(x.d.message||'Code incorrect'); });
+      .then(function(x){
+        if(x.ok){
+          say(x.d.message,true);
+          if (x.d.codes_recuperation && x.d.codes_recuperation.length) {
+            var box = document.getElementById('2fa-codes-recup');
+            if (!box) {
+              box = document.createElement('div');
+              box.id = '2fa-codes-recup';
+              box.style.cssText = 'margin-top:16px;padding:14px;background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;max-width:560px;';
+              (document.getElementById('bloc-2fa')||document.body).appendChild(box);
+            }
+            box.innerHTML = '<strong>Codes de récupération — copiez-les maintenant</strong>' +
+              '<p style="font-size:12px;margin:6px 0;">Chaque code ne fonctionne qu\'une seule fois. Conservez-les hors ligne.</p>' +
+              '<ul style="font-family:monospace;letter-spacing:0.08em;">' +
+              x.d.codes_recuperation.map(function(c){ return '<li>'+c+'</li>'; }).join('') +
+              '</ul><p style="font-size:12px;color:#92400e;">Cette liste ne sera plus réaffichée. Si vous perdez votre téléphone, utilisez un code ou demandez un envoi par e-mail sur l\'écran 2FA.</p>';
+          } else {
+            location.reload();
+          }
+        } else say(x.d.message||'Code incorrect');
+      });
   });
   var btnOff = document.getElementById('btn-2fa-off');
   if (btnOff) btnOff.addEventListener('click', function(){
