@@ -44,6 +44,8 @@ async function assurerColonnes() {
     await ajouterColonne('parametres', 'journal_retention_jours', 'INT NOT NULL DEFAULT 90');
     await ajouterColonne('parametres', 'journal_nettoyage_actif', 'TINYINT(1) NOT NULL DEFAULT 0');
     await ajouterColonne('parametres', 'stats_publiques', 'TINYINT(1) NOT NULL DEFAULT 0');
+    await ajouterColonne('parametres', 'rafraichissement_auto', 'TINYINT(1) NOT NULL DEFAULT 0');
+    await ajouterColonne('parametres', 'rafraichissement_intervalle_min', 'INT NOT NULL DEFAULT 5');
 
 
     await ajouterColonne('utilisateurs', 'session_active_id', 'VARCHAR(255) NULL');

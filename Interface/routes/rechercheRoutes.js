@@ -136,7 +136,11 @@ router.get('/api', async (req, res) => {
                             icon: 'bi-person',
                             label: ((u.prenom || '') + ' ' + (u.nom || '')).trim(),
                             meta: u.matricule || 'Utilisateur',
-                            href: '/utilisateurs'
+                            href: (u.id_sous_activite
+                                ? ('/sous-activites/' + u.id_sous_activite + '?user=' + u.id)
+                                : (u.id_activite
+                                    ? ('/activites/' + u.id_activite + '?onglet=utilisateurs&user=' + u.id)
+                                    : '/'))
                         });
                     });
                 }).catch(() => {})

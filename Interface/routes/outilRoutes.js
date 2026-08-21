@@ -1,5 +1,22 @@
 const express = require('express');
 const router = express.Router();
+
+function breadcrumbsOutil(outil, pageLabel) {
+    const crumbs = [{ label: 'Tableau de bord', href: '/' }];
+    const act = (outil.activites && outil.activites[0]) || outil.Activite || null;
+    const sa = (outil.sousActivites && outil.sousActivites[0]) || outil.SousActivite || null;
+    if (act) {
+        crumbs.push({ label: act.nom, href: '/activites/' + act.id });
+    }
+    if (sa) {
+        crumbs.push({ label: sa.nom, href: '/sous-activites/' + sa.id });
+    }
+    crumbs.push({ label: outil.nom || 'Outil' });
+    if (pageLabel) crumbs.push({ label: pageLabel });
+    return crumbs;
+}
+
+
 const { requireLogin } = require('../middlewares/requireLogin');
 const { uploadOutilImage } = require('../middlewares/upload');
 const { apiClient } = require('../config/api');
@@ -207,6 +224,7 @@ router.get('/:id/credentials', async (req, res, next) => {
         }
         const api = apiClient(req);
         const { data: outil } = await api.get(`/outils/${req.params.id}`);
+        res.locals.breadcrumbs = breadcrumbsOutil(outil, 'Credentials');
         res.render('outil/credentials', {
             titre: `Credentials — ${outil.nom}`,
             outil,
@@ -296,6 +314,7 @@ router.get('/:id/modifier', async (req, res, next) => {
             api.get('/activites'),
             api.get('/sous-activites').catch(() => ({ data: [] }))
         ]);
+        res.locals.breadcrumbs = breadcrumbsOutil(outil, 'Modifier');
         res.render('outil/form', {
             titre: 'Modifier l\'outil',
             outil,

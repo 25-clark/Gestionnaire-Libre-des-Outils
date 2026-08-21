@@ -15,8 +15,7 @@
  <form action="<%= estEdition ? '/outils/' + outil.id + '/modifier' : '/outils' %>" method="POST" enctype="multipart/form-data" id="form-outil">
  <input type="hidden" name="id_activite" value="<%= id_activite %>">
  <input type="hidden" name="retour" value="<%= typeof retour !== 'undefined' ? retour : '/' %>">
- <% if (!estEdition) { %><input type="hidden" name="credentials" id="credentials-json" value="[]"><% } %>
-
+ 
  <label for="nom">Nom de l'outil</label>
  <input type="text" id="nom" name="nom" required value="<%= estEdition ? (outil.nom || '') : '' %>">
 
@@ -44,20 +43,7 @@
 
  <label for="image">Image (optionnel)</label>
  <input type="file" id="image" name="image" accept="image/*">
-
- <% if (typeof credentialsActifs !== 'undefined' && credentialsActifs && peut('credentials', 'create')) { %>
- <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
- <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 6px;"><i class="bi bi-key"></i> Mes credentials pour cet outil (optionnel)</h2>
- <p style="color:var(--gris);font-size:13px;">Uniquement pour votre compte — non partagés avec les autres utilisateurs.</p>
- <p style="color:var(--gris); font-size:13px; margin-top:0;">
- Identifiants de connexion à cet outil (login, mot de passe, clé API…). Ils pourront être copiés d’un clic à l’ouverture.
- </p>
- <div id="creds-liste" class="contacts-liste"></div>
- <button type="button" class="btn-ajouter-contact" id="btn-ajouter-cred">+ Ajouter un champ</button>
-
- <% } %>
-
- <div class="actions-form" style="margin-top:18px;">
+<div class="actions-form" style="margin-top:18px;">
  <button type="submit" class="btn btn-primaire"><%= estEdition ? "Enregistrer" : "Créer" %></button>
  <a href="<%= id_activite ? '/activites/' + id_activite + '?onglet=outils' : '/' %>" class="btn btn-gris">Annuler</a>
  </div>

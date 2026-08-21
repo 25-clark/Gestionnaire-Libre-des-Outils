@@ -48,7 +48,7 @@
           <td>
             <% if (o.lien) { %>
               <a href="<%= o.lien %>" target="_blank" rel="noopener" class="lien-ouvrir-outil"
-                 data-creds='<%= JSON.stringify(o.credentials || []).replace(/'/g, "&#39;") %>'>Ouvrir</a>
+                 data-creds-b64="<%= Buffer.from(JSON.stringify(o.credentials || [])).toString('base64') %>" >Ouvrir</a>
             <% } else { %>—<% } %>
           </td>
           <td><%= o.Utilisateur ? (o.Utilisateur.prenom + ' ' + o.Utilisateur.nom) : '—' %></td>
@@ -107,6 +107,7 @@
          data-outil-id="<%= o.id %>"
          data-outil-nom="<%= o.nom %>"
          data-outil-lien="<%= o.lien || '' %>"
+         data-outil-creds-b64="<%= Buffer.from(JSON.stringify(o.credentials || [])).toString('base64') %>" 
          data-outil-active="<%= o.active ? '1' : '0' %>"
          data-outil-adresse="<%= o.adresse || '' %>"
          data-outil-epingle="<%= _ep ? '1' : '0' %>"
@@ -121,7 +122,7 @@
       <p class="meta"><%= o.Utilisateur ? (o.Utilisateur.prenom + ' ' + o.Utilisateur.nom) : '—' %></p>
       <p><% if (o.active) { %><span class="pastille pastille-active">Actif</span><% } else { %><span class="pastille pastille-inactive">Inactif</span><% } %></p>
       <%- include('statut-reseau', { o: o, retour: retourUrl }) %>
-      <p style="font-size:12px;color:var(--gris);margin-top:8px;">Cliquez pour sélectionner · double-clic pour ouvrir</p>
+      
     </div>
     <% }) %>
   </div>
@@ -137,6 +138,7 @@
          data-outil-id="<%= o.id %>"
          data-outil-nom="<%= o.nom %>"
          data-outil-lien="<%= o.lien || '' %>"
+         data-outil-creds-b64="<%= Buffer.from(JSON.stringify(o.credentials || [])).toString('base64') %>" 
          data-outil-active="<%= o.active ? '1' : '0' %>"
          data-outil-adresse="<%= o.adresse || '' %>"
          data-outil-epingle="<%= _ep ? '1' : '0' %>"
@@ -198,7 +200,8 @@
     var html = '';
     html += '<button type="button" class="btn btn-gris btn-petit btn-favori' + (ep ? ' est-epingle' : '') + '" data-favori-type="outil" data-favori-id="' + id + '" title="' + (ep ? 'Retirer des favoris' : 'Ajouter aux favoris') + '"><i class="bi ' + (ep ? 'bi-pin-angle-fill' : 'bi-pin-angle') + '"></i></button>';
     if (lien) {
-      html += '<a class="btn btn-primaire btn-petit lien-ouvrir-outil" href="' + lien + '" target="_blank" rel="noopener">Ouvrir</a>';
+      var cb64 = el.getAttribute('data-outil-creds-b64') || '';
+      html += '<a class="btn btn-primaire btn-petit lien-ouvrir-outil" href="' + lien + '" target="_blank" rel="noopener" data-creds-b64="' + cb64 + '">Ouvrir</a>';
     }
     if (el.getAttribute('data-peut-update') === '1') {
       html += '<a class="btn btn-gris btn-petit" href="/outils/' + id + '/modifier?retour=' + encodeURIComponent(retour) + '" title="Modifier"><i class="bi bi-pencil"></i></a>';
@@ -244,16 +247,42 @@
 document.addEventListener('click', function (e) {
   var a = e.target.closest && e.target.closest('a.lien-ouvrir-outil');
   if (!a) return;
-  var raw = a.getAttribute('data-creds');
-  if (!raw) return;
+  var b64 = a.getAttribute('data-creds-b64');
+  if (!b64) return;
   try {
-    var creds = JSON.parse(raw);
+    var json = atob(b64);
+    var creds = JSON.parse(json);
     if (!Array.isArray(creds) || !creds.length) return;
-    var parts = creds.filter(function (c) { return c && c.valeur; })
-      .map(function (c) { return (c.label || 'Champ') + ' : ' + c.valeur; });
-    if (parts.length && typeof gloCopier === 'function') {
-      setTimeout(function () { gloCopier(parts.join('\n')); }, 50);
+    var aCopier = creds.filter(function (c) {
+      if (!c || !c.valeur) return false;
+      // Si aucun flag explicitement false → rétrocompat : tout copier
+      if (c.copier_ouverture === false || c.copier_ouverture === 0) return false;
+      return true;
+    });
+    if (!aCopier.length) return;
+    var parts = aCopier.map(function (c) { return (c.label || 'Champ') + ' : ' + c.valeur; });
+    var texte = parts.join('\n');
+    function ok() {
+      var el = document.createElement('div');
+      el.textContent = 'Credentials copiés';
+      el.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#0f172a;color:#fff;padding:10px 14px;border-radius:10px;z-index:9999;font-size:13px;';
+      document.body.appendChild(el);
+      setTimeout(function () { el.remove(); }, 1800);
     }
-  } catch (_) {}
+    function fallback(t) {
+      var ta = document.createElement('textarea');
+      ta.value = t;
+      ta.style.cssText = 'position:fixed;left:-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); ok(); } catch (_) {}
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(texte).then(ok).catch(function () { fallback(texte); });
+    } else {
+      fallback(texte);
+    }
+  } catch (err) { console.warn('creds copy', err); }
 });
 </script>

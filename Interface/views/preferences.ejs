@@ -1,0 +1,191 @@
+<%- include('partials/header') %>
+<% 
+ var prefs = (user.preferences && typeof user.preferences === 'object')
+   ? user.preferences
+   : { theme: 'clair', langue: 'fr' };
+ if (typeof user.preferences === 'string') {
+   try { prefs = JSON.parse(user.preferences); } catch (_) {}
+ }
+%>
+<div class="entete-page">
+  <h1><i class="bi bi-sliders"></i> Préférences de compte</h1>
+  <a href="/profil" class="btn btn-gris">Mon profil</a>
+</div>
+
+<% if (typeof erreur !== 'undefined' && erreur) { %><div class="message-erreur"><%= erreur %></div><% } %>
+<% if (typeof succes !== 'undefined' && succes) { %><div class="message-succes">Préférences enregistrées.</div><% } %>
+
+<form action="/preferences" method="POST" id="form-prefs">
+<div class="prefs-grille">
+
+  <div class="carte">
+    <h2 style="font-size:15px;margin:0 0 12px;"><i class="bi bi-palette"></i> Apparence</h2>
+    <label for="theme">Thème</label>
+    <select id="theme" name="theme">
+      <option value="clair" <%= prefs.theme === 'clair' ? 'selected' : '' %>>Clair</option>
+      <option value="sombre" <%= prefs.theme === 'sombre' ? 'selected' : '' %>>Sombre</option>
+      <option value="systeme" <%= prefs.theme === 'systeme' ? 'selected' : '' %>>Système</option>
+    </select>
+    <label for="langue">Langue</label>
+    <select id="langue" name="langue">
+      <option value="fr" <%= prefs.langue === 'fr' ? 'selected' : '' %>>Français</option>
+      <option value="en" <%= prefs.langue === 'en' ? 'selected' : '' %>>English</option>
+    </select>
+    <label for="densite">Densité d’affichage</label>
+    <select id="densite" name="densite">
+      <option value="confortable" <%= (prefs.densite || 'confortable') === 'confortable' ? 'selected' : '' %>>Confortable</option>
+      <option value="compact" <%= prefs.densite === 'compact' ? 'selected' : '' %>>Compact</option>
+    </select>
+  </div>
+
+  <div class="carte">
+    <h2 style="font-size:15px;margin:0 0 12px;"><i class="bi bi-layout-text-window"></i> Listes & outils</h2>
+    <label for="vue_outils_defaut">Vue outils par défaut</label>
+    <select id="vue_outils_defaut" name="vue_outils_defaut">
+      <option value="liste" <%= prefs.vue_outils_defaut === 'liste' ? 'selected' : '' %>>Liste</option>
+      <option value="cartes" <%= prefs.vue_outils_defaut === 'cartes' ? 'selected' : '' %>>Cartes</option>
+      <option value="vignettes" <%= prefs.vue_outils_defaut === 'vignettes' ? 'selected' : '' %>>Vignettes</option>
+    </select>
+    <label for="par_page_defaut">Éléments par page</label>
+    <select id="par_page_defaut" name="par_page_defaut">
+      <% [10, 25, 50, 100].forEach(function(n) { %>
+      <option value="<%= n %>" <%= Number(prefs.par_page_defaut || 25) === n ? 'selected' : '' %>><%= n %></option>
+      <% }) %>
+    </select>
+    <div class="champ-case" style="margin-top:10px;">
+      <input type="checkbox" id="filtres_tickets_persist" name="filtres_tickets_persist" value="1" <%= prefs.filtres_tickets_persist !== false ? 'checked' : '' %>>
+      <label for="filtres_tickets_persist">Mémoriser les filtres Tickets</label>
+    </div>
+    <div class="champ-case">
+      <input type="checkbox" id="ouvrir_outil_nouvel_onglet" name="ouvrir_outil_nouvel_onglet" value="1" <%= prefs.ouvrir_outil_nouvel_onglet !== false ? 'checked' : '' %>>
+      <label for="ouvrir_outil_nouvel_onglet">Ouvrir les liens d’outils dans un nouvel onglet</label>
+    </div>
+  </div>
+
+  <div class="carte">
+    <h2 style="font-size:15px;margin:0 0 12px;"><i class="bi bi-bell"></i> Notifications</h2>
+    <div class="champ-case">
+      <input type="checkbox" id="notif_son" name="notif_son" value="1" <%= prefs.notif_son ? 'checked' : '' %>>
+      <label for="notif_son">Son pour les nouvelles notifications</label>
+    </div>
+    <div class="champ-case">
+      <input type="checkbox" id="notif_badge" name="notif_badge" value="1" <%= prefs.notif_badge !== false ? 'checked' : '' %>>
+      <label for="notif_badge">Afficher le badge de non-lues</label>
+    </div>
+    <label for="notif_resume">Résumé des notifications</label>
+    <select id="notif_resume" name="notif_resume">
+      <option value="tous" <%= (prefs.notif_resume || 'tous') === 'tous' ? 'selected' : '' %>>Tous les types</option>
+      <option value="alerte" <%= prefs.notif_resume === 'alerte' ? 'selected' : '' %>>Alertes uniquement</option>
+      <option value="aucun" <%= prefs.notif_resume === 'aucun' ? 'selected' : '' %>>Masquer le résumé</option>
+    </select>
+  </div>
+
+  <div class="carte">
+    <h2 style="font-size:15px;margin:0 0 12px;"><i class="bi bi-shield-lock"></i> Confidentialité & session</h2>
+    <div class="champ-case">
+      <input type="checkbox" id="masquer_creds_defaut" name="masquer_creds_defaut" value="1" <%= prefs.masquer_creds_defaut !== false ? 'checked' : '' %>>
+      <label for="masquer_creds_defaut">Masquer les valeurs des credentials par défaut</label>
+    </div>
+    <div class="champ-case">
+      <input type="checkbox" id="confirmer_avant_quitter" name="confirmer_avant_quitter" value="1" <%= prefs.confirmer_avant_quitter ? 'checked' : '' %>>
+      <label for="confirmer_avant_quitter">Confirmer avant de quitter un formulaire non enregistré</label>
+    </div>
+    <div class="champ-case">
+      <input type="checkbox" id="menu_compact" name="menu_compact" value="1" <%= prefs.menu_compact ? 'checked' : '' %>>
+      <label for="menu_compact">Menu compact (mobile)</label>
+    </div>
+    <p style="font-size:12px;color:var(--gris);margin-top:10px;">
+      La durée de session globale se règle dans <a href="/parametres">Réglages généraux</a> (administrateurs).
+    </p>
+  </div>
+
+  <div class="carte">
+    <h2 style="font-size:15px;margin:0 0 12px;"><i class="bi bi-keyboard"></i> Raccourcis</h2>
+    <div class="champ-case">
+      <input type="checkbox" id="raccourci_ctrl_k" name="raccourci_ctrl_k" value="1" <%= prefs.raccourci_ctrl_k !== false ? 'checked' : '' %>>
+      <label for="raccourci_ctrl_k">Activer Ctrl + K (palette de recherche)</label>
+    </div>
+    <div class="champ-case">
+      <input type="checkbox" id="raccourci_aide" name="raccourci_aide" value="1" <%= prefs.raccourci_aide !== false ? 'checked' : '' %>>
+      <label for="raccourci_aide">Afficher l’aide des raccourcis au premier lancement</label>
+    </div>
+    <p style="font-size:12px;color:var(--gris);">
+      Ctrl + K ouvre la recherche rapide dans toute l’application.
+    </p>
+  </div>
+
+
+  <div class="carte">
+    <h2 style="font-size:15px;margin:0 0 12px;"><i class="bi bi-shield-check"></i> Sécurité personnelle</h2>
+    <p style="font-size:13px;color:var(--gris);margin:0 0 10px;">
+      Renforcez votre compte indépendamment des réglages d’entreprise.
+    </p>
+    <ul style="font-size:13px;margin:0 0 12px 18px;color:var(--gris-fonce);">
+      <li><a href="/profil">Mon profil</a> — e-mail, contacts, code de connexion</li>
+      <li><a href="/profil#bloc-2fa">2FA</a> — application d’authentification</li>
+      <li><a href="/changer-mot-de-passe">Changer le mot de passe</a></li>
+    </ul>
+    <div class="champ-case">
+      <input type="checkbox" id="rappel_session" name="rappel_session" value="1" <%= prefs.rappel_session ? 'checked' : '' %>>
+      <label for="rappel_session">Me rappeler de verrouiller la session sur poste partagé</label>
+    </div>
+  </div>
+
+  <div class="carte">
+    <h2 style="font-size:15px;margin:0 0 12px;"><i class="bi bi-download"></i> Exports & impression</h2>
+    <label for="export_format_pref">Format d’export préféré</label>
+    <select id="export_format_pref" name="export_format_pref">
+      <option value="csv" <%= (prefs.export_format_pref || 'csv') === 'csv' ? 'selected' : '' %>>CSV</option>
+      <option value="pdf" <%= prefs.export_format_pref === 'pdf' ? 'selected' : '' %>>PDF</option>
+    </select>
+    <div class="champ-case" style="margin-top:10px;">
+      <input type="checkbox" id="export_filtres_seuls" name="export_filtres_seuls" value="1" <%= prefs.export_filtres_seuls !== false ? 'checked' : '' %>>
+      <label for="export_filtres_seuls">Exporter uniquement la liste filtrée visible</label>
+    </div>
+  </div>
+  <div class="carte">
+    <h2 style="font-size:15px;margin:0 0 12px;"><i class="bi bi-info-circle"></i> À propos de vos préférences</h2>
+    <p style="font-size:13px;color:var(--gris);margin:0;">
+      Ces choix sont liés à <strong>votre compte</strong> uniquement. Ils n’affectent pas les autres utilisateurs.
+      Certaines options d’entreprise (2FA obligatoire, dashboard public, sauvegardes) restent dans
+      <a href="/parametres">Réglages généraux</a>.
+    </p>
+    <p style="font-size:13px;color:var(--gris);">
+      Sécurité : 2FA et code e-mail se configurent dans <a href="/profil">Mon profil</a>.
+    </p>
+  </div>
+
+</div>
+
+<div class="actions-form" style="margin-top:18px;">
+  <button type="submit" class="btn btn-primaire">Enregistrer les préférences</button>
+</div>
+</form>
+
+<style>
+.prefs-grille {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(280px, 1fr));
+  gap: 16px;
+  align-items: start;
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 800px) {
+  .prefs-grille { grid-template-columns: 1fr; }
+}
+.prefs-grille .carte { max-width: none; }
+</style>
+<script>
+document.getElementById('form-prefs').addEventListener('submit', function () {
+  try {
+    var t = document.getElementById('theme');
+    var l = document.getElementById('langue');
+    if (t) localStorage.setItem('glo_theme', t.value);
+    if (l) localStorage.setItem('glo_langue', l.value);
+    var v = document.getElementById('vue_outils_defaut');
+    if (v) localStorage.setItem('glo-vue-outils', v.value);
+  } catch (e) {}
+});
+</script>
+<%- include('partials/footer') %>

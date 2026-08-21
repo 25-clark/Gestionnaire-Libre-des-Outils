@@ -1,0 +1,18 @@
+<%
+  var lang = (typeof lang !== 'undefined' && lang === 'en') ? 'en' : 'fr';
+  var items = [
+    { key: 'support', href: '/aide/support', fr: 'Support', en: 'Support', icon: 'bi-life-preserver' },
+    { key: 'documentation', href: '/aide/documentation', fr: 'Documentation', en: 'Documentation', icon: 'bi-book' },
+    { key: 'mise-a-jour', href: '/aide/mise-a-jour', fr: 'Mise à jour', en: 'Updates', icon: 'bi-arrow-repeat' },
+    { key: 'extensions', href: '/aide/extensions', fr: 'Extensions', en: 'Extensions', icon: 'bi-puzzle' },
+    { key: 'soutien', href: '/aide/soutien', fr: 'Soutien', en: 'Support us', icon: 'bi-heart' },
+    { key: 'confidentialite', href: '/aide/confidentialite', fr: 'Confidentialité', en: 'Privacy', icon: 'bi-shield-check' }
+  ];
+%>
+<nav class="aide-nav" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;">
+  <% items.forEach(function(it) { %>
+  <a href="<%= it.href %>" class="btn btn-petit <%= pageAide === it.key ? 'btn-primaire' : 'btn-gris' %>">
+    <i class="bi <%= it.icon %>"></i> <%= lang === 'en' ? it.en : it.fr %>
+  </a>
+  <% }); %>
+</nav>

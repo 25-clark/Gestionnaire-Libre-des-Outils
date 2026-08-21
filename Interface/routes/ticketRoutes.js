@@ -21,12 +21,13 @@ const LIBELLES_PRIORITE = { basse: 'Basse', normale: 'Normale', haute: 'Haute', 
 router.get('/', async (req, res, next) => {
     try {
         const api = apiClient(req);
-        const { statut, priorite, id_createur, id_assigne } = req.query;
+        const { statut, priorite, id_createur, id_assigne, q } = req.query;
         const page = parseInt(req.query.page, 10) || 1;
         const par_page = parseInt(req.query.par_page, 10) || 25;
         const params = { page, par_page };
         if (statut) params.statut = statut;
         if (priorite) params.priorite = priorite;
+        if (q) params.q = q;
         if (id_createur) params.id_createur = id_createur;
         if (id_assigne) params.id_assigne = id_assigne;
 
@@ -47,6 +48,7 @@ router.get('/', async (req, res, next) => {
             utilisateurs,
             statut: statut || '',
             priorite: priorite || '',
+            q: q || '',
             id_createur: id_createur || '',
             id_assigne: id_assigne || '',
             page: pagination ? pagination.page : 1,
@@ -87,10 +89,11 @@ function ticketVersLigne(t) {
 
 async function recupererTicketsFiltres(req) {
     const api = apiClient(req);
-    const { statut, priorite, id_createur, id_assigne } = req.query;
+    const { statut, priorite, id_createur, id_assigne, q } = req.query;
     const params = { page: 1, par_page: 100 };
     if (statut) params.statut = statut;
     if (priorite) params.priorite = priorite;
+    if (q) params.q = q;
     if (id_createur) params.id_createur = id_createur;
     if (id_assigne) params.id_assigne = id_assigne;
     // Récupérer toutes les pages pour l'export

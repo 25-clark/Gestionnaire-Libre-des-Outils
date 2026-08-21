@@ -1,18 +1,66 @@
 <%- include('../partials/header') %>
-<div class="entete-page"><h1><i class="bi bi-question-circle"></i> <%= titre %></h1></div>
-<div class="carte" style="max-width:720px;">
+<% var L = (typeof lang !== 'undefined' && lang === 'en') ? 'en' : 'fr';
+   var urlMaj = typeof updateUrl !== 'undefined' ? updateUrl : '#';
+   var ver = typeof versionGlo !== 'undefined' ? versionGlo : '1.0.0';
+%>
+<div class="entete-page">
+  <h1><i class="bi bi-arrow-repeat"></i> <%= titre %></h1>
+</div>
+<%- include('_nav') %>
 
-<p>GLO est installé <strong>localement</strong> dans votre entreprise.</p>
-<ul>
-<li>Les mises à jour sont fournies sous forme d'archive (ZIP) par votre équipe projet.</li>
-<li>Procédure type&nbsp;: sauvegarde BDD → remplacer Server/Interface → <code>npm install</code> → redémarrer.</li>
-<li>Les migrations de colonnes s'appliquent au démarrage du serveur.</li>
-</ul>
-<p>Aucune télémétrie externe n'est envoyée par défaut.</p>
+<div class="carte" style="max-width:900px;">
+<% if (L === 'en') { %>
+  <p>GLO is typically installed <strong>on your organisation’s own servers</strong>. Updates are applied by your IT team, not automatically from the cloud.</p>
 
-<p style="margin-top:20px;">
-<a href="/aide/documentation" class="btn btn-gris btn-petit">Documentation</a>
-<a href="/aide/support" class="btn btn-gris btn-petit">Support</a>
-</p>
+  <h2 style="font-size:1.05rem;"><i class="bi bi-info-circle"></i> Current version</h2>
+  <p>Displayed package version (reference): <strong><code><%= ver %></code></strong></p>
+
+  <h2 style="font-size:1.05rem;margin-top:20px;"><i class="bi bi-download"></i> Download the latest release</h2>
+  <p>Administrators can obtain the official package from the download link configured for your deployment:</p>
+  <p>
+    <a class="btn btn-primaire" href="<%= urlMaj %>" target="_blank" rel="noopener">
+      <i class="bi bi-box-arrow-up-right"></i> Open download page
+    </a>
+  </p>
+  <p style="font-size:13px;color:var(--gris);">If the link does not open a release page, ask your administrator to set <code>GLO_UPDATE_URL</code> in the server environment.</p>
+
+  <h2 style="font-size:1.05rem;margin-top:20px;"><i class="bi bi-list-check"></i> Recommended update steps (administrators)</h2>
+  <ol>
+    <li><strong>Backup</strong> — create a full backup from General settings (database + files) before any upgrade.</li>
+    <li><strong>Read the release notes</strong> — note breaking changes and new configuration keys.</li>
+    <li><strong>Stop</strong> the Interface and Server processes during the file replacement.</li>
+    <li><strong>Replace</strong> application files with the new package (keep your <code>.env</code> files).</li>
+    <li><strong>Install dependencies</strong> — run <code>npm install</code> in Server and Interface if required by the release notes.</li>
+    <li><strong>Start</strong> Server first, then Interface, and verify login, dashboard and tickets.</li>
+    <li><strong>Communicate</strong> to end users if a short maintenance window is needed.</li>
+  </ol>
+  <p>End users do not need to install anything on their PC: after the server update, simply refresh the browser.</p>
+<% } else { %>
+  <p>GLO est en général installé <strong>sur les serveurs de votre organisation</strong>. Les mises à jour sont appliquées par l’équipe informatique, et non automatiquement depuis le cloud.</p>
+
+  <h2 style="font-size:1.05rem;"><i class="bi bi-info-circle"></i> Version actuelle</h2>
+  <p>Version de référence du paquet&nbsp;: <strong><code><%= ver %></code></strong></p>
+
+  <h2 style="font-size:1.05rem;margin-top:20px;"><i class="bi bi-download"></i> Télécharger la dernière version</h2>
+  <p>Les administrateurs peuvent obtenir le paquet officiel via le lien configuré pour votre déploiement&nbsp;:</p>
+  <p>
+    <a class="btn btn-primaire" href="<%= urlMaj %>" target="_blank" rel="noopener">
+      <i class="bi bi-box-arrow-up-right"></i> Ouvrir la page de téléchargement
+    </a>
+  </p>
+  <p style="font-size:13px;color:var(--gris);">Si le lien n’ouvre pas une page de version, demandez à l’administrateur de renseigner <code>GLO_UPDATE_URL</code> dans l’environnement du Server.</p>
+
+  <h2 style="font-size:1.05rem;margin-top:20px;"><i class="bi bi-list-check"></i> Étapes recommandées (administrateurs)</h2>
+  <ol>
+    <li><strong>Sauvegarde</strong> — réaliser une sauvegarde complète depuis les Réglages généraux (base + fichiers) avant toute montée de version.</li>
+    <li><strong>Lire les notes de version</strong> — repérer les changements importants et les nouvelles clés de configuration.</li>
+    <li><strong>Arrêter</strong> les processus Interface et Server le temps du remplacement des fichiers.</li>
+    <li><strong>Remplacer</strong> les fichiers de l’application par le nouveau paquet (conserver vos fichiers <code>.env</code>).</li>
+    <li><strong>Dépendances</strong> — exécuter <code>npm install</code> dans Server et Interface si les notes de version le demandent.</li>
+    <li><strong>Redémarrer</strong> d’abord le Server, puis l’Interface, puis vérifier connexion, tableau de bord et tickets.</li>
+    <li><strong>Informer</strong> les utilisateurs finaux en cas de fenêtre de maintenance courte.</li>
+  </ol>
+  <p>Les utilisateurs finaux n’installent rien sur leur poste&nbsp;: après la mise à jour serveur, un simple rafraîchissement du navigateur suffit.</p>
+<% } %>
 </div>
 <%- include('../partials/footer') %>

@@ -50,7 +50,8 @@
  <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 4px;"><i class="bi bi-clock-history"></i> Session</h2>
  <label for="session_duree_heures">Durée de session (heures)</label>
  <input type="number" id="session_duree_heures" name="session_duree_heures" min="1" max="168"
- value="<%= parametre.session_duree_heures %>" style="max-width:120px;">
+ value="<%= parametre.session_duree_heures || 8 %>" style="max-width:120px;">
+ <p style="font-size:12px;color:var(--gris);">Durée pendant laquelle un utilisateur reste connecté sans se ré-authentifier (1 à 168 h). Défaut : 8 h. La session se prolonge tant qu’il y a de l’activité.</p>
 
  <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
  <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 4px;"><i class="bi bi-hdd-network"></i> Surveillance réseau</h2>
@@ -93,6 +94,20 @@
  URL : <a href="/public/statistiques" target="_blank"><code>/public/statistiques</code></a>
  </p>
 
+ <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
+ <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 4px;"><i class="bi bi-arrow-clockwise"></i> Rafraîchissement automatique</h2>
+ <div class="champ-case">
+ <input type="checkbox" id="rafraichissement_auto" name="rafraichissement_auto" <%= parametre.rafraichissement_auto ? 'checked' : '' %>>
+ <label for="rafraichissement_auto">Activer le rechargement automatique des pages</label>
+ </div>
+ <label for="rafraichissement_intervalle_min">Intervalle (minutes)</label>
+ <input type="number" id="rafraichissement_intervalle_min" name="rafraichissement_intervalle_min" min="1" max="120"
+  value="<%= parametre.rafraichissement_intervalle_min || 5 %>" style="max-width:120px;">
+ <p style="font-size:12px;color:var(--gris);">
+  Recharge la page courante à intervalle régulier (utile pour le tableau de bord, tickets, surveillance).
+  Désactivez si vous saisissez de longs formulaires.
+ </p>
+
  <div class="actions-form">
  <button type="submit" class="btn btn-primaire">Enregistrer</button>
  </div>
@@ -129,13 +144,31 @@
     <input type="number" form="form-reglages" id="sauvegarde_intervalle_heures" name="sauvegarde_intervalle_heures" min="1" max="168"
       value="<%= parametre.sauvegarde_intervalle_heures || 24 %>" style="max-width:120px;">
     <label for="sauvegarde_dossier">Dossier de sauvegarde</label>
-    <input type="text" form="form-reglages" id="sauvegarde_dossier" name="sauvegarde_dossier"
-      value="<%= parametre.sauvegarde_dossier || '' %>"
-      placeholder="ex. C:\GLO\backups ou /var/backups/glo"
-      style="width:100%;box-sizing:border-box;">
-    <p style="font-size:11px;color:var(--gris);">
-      Chemin absolu sur le serveur. Vide = dossier par défaut
-      <code>Server/uploads/sauvegardes-auto/</code>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <input type="text" form="form-reglages" id="sauvegarde_dossier" name="sauvegarde_dossier"
+        value="<%= parametre.sauvegarde_dossier || '' %>"
+        placeholder="ex. C:\GLO\backups ou /var/backups/glo"
+        style="flex:1;min-width:180px;box-sizing:border-box;" list="suggestions-dossiers">
+      <datalist id="suggestions-dossiers">
+        <option value="C:\GLO\backups"></option>
+        <option value="D:\Backups\GLO"></option>
+        <option value="/var/backups/glo"></option>
+        <option value="/opt/glo/sauvegardes"></option>
+      </datalist>
+      <button type="button" class="btn btn-gris btn-petit" id="btn-parcourir-dossier" title="Suggérer un chemin depuis un dossier local (si le navigateur le permet)">
+        <i class="bi bi-folder2-open"></i> Parcourir…
+      </button>
+      <input type="file" id="input-parcourir-dossier" webkitdirectory directory multiple style="display:none;">
+    </div>
+    <p style="font-size:12px;color:var(--gris);margin:6px 0 0;">
+      Saisissez un chemin <strong>absolu sur la machine qui héberge le Server GLO</strong>
+      (pas seulement le poste de l’administrateur). Vide = <code>Server/uploads/sauvegardes-auto/</code>.
+      Le bouton Parcourir peut préremplir un chemin si le navigateur expose le dossier (même machine).
+    </p>
+    <p style="font-size:12px;color:#9a3412;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px 10px;margin:8px 0 0;">
+      <i class="bi bi-exclamation-triangle"></i>
+      <strong>GLO doit avoir un accès en écriture</strong> sur ce dossier
+      (compte Windows/Linux du processus Node.js du Server). Sans ce droit, les sauvegardes automatiques échoueront.
     </p>
 
     <div class="champ-case" style="margin-top:12px;">
@@ -162,5 +195,35 @@
 .reglages-col-droite { display: flex; flex-direction: column; gap: 16px; }
 .reglages-col-droite .carte { max-width: none; }
 </style>
+
+
+<script>
+(function () {
+  var btn = document.getElementById('btn-parcourir-dossier');
+  var inp = document.getElementById('input-parcourir-dossier');
+  var champ = document.getElementById('sauvegarde_dossier');
+  if (!btn || !inp || !champ) return;
+  btn.addEventListener('click', function () { inp.click(); });
+  inp.addEventListener('change', function () {
+    if (!inp.files || !inp.files.length) return;
+    var f = inp.files[0];
+    // Chromium expose parfois path (file://) ou webkitRelativePath
+    var pathHint = f.path || '';
+    if (!pathHint && f.webkitRelativePath) {
+      // webkitRelativePath = "MonDossier/fichier" → on ne connaît pas la racine absolue
+      var folder = f.webkitRelativePath.split('/')[0];
+      alert('Le navigateur ne fournit pas le chemin absolu du serveur.\n' +
+        'Dossier sélectionné (nom) : ' + folder + '\n' +
+        'Saisissez manuellement le chemin complet accessible par le Server GLO.');
+      return;
+    }
+    if (pathHint) {
+      // Retirer le nom de fichier pour garder le dossier
+      pathHint = pathHint.replace(/[\\\/][^\\\/]+$/, '');
+      champ.value = pathHint;
+    }
+  });
+})();
+</script>
 
 <%- include('partials/footer') %>

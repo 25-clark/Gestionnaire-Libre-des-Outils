@@ -163,6 +163,7 @@
  <% if (peut('profil', 'read')) { %>
  <a href="/profil" class="<%= nav.item==='profil' ? 'nav-actif' : '' %>"><i class="bi bi-person"></i> <%= t('nav.profile') %></a>
  <% } %>
+ <a href="/preferences" class="<%= nav.item==='preferences' ? 'nav-actif' : '' %>"><i class="bi bi-sliders"></i> Préférences</a>
  <form action="/logout" method="POST" class="form-logout-menu">
  <button type="submit"><i class="bi bi-box-arrow-right"></i> <%= t('nav.logout') %></button>
  </form>

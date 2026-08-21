@@ -14,6 +14,7 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
+const FileSessionStore = require('./utils/fileSessionStore');
 
 const { sequelize } = require('./models');
 const { demarrerSurveillance } = require('./utils/surveillance');
@@ -37,6 +38,7 @@ const ticketRoutes = require('./routes/ticketRoutes');
 const ldapRoutes = require('./routes/ldapRoutes');
 const setupRoutes = require('./routes/setupRoutes');
 const sauvegardeRoutes = require('./routes/sauvegardeRoutes');
+const supportRoutes = require('./routes/supportRoutes');
 
 const app = express();
 app.disable('x-powered-by');
@@ -52,13 +54,12 @@ app.use(session({
     secret: process.env.SESSION_SECRET || 'change_moi',
     resave: false,
     saveUninitialized: false,
+    rolling: true,
+    store: new FileSessionStore(),
     cookie: {
         httpOnly: true,
-        // Valeur de repli avant la première connexion (ex: options publiques
-        // /api/parametres/public). La vraie durée, configurable dans les
-        // Réglages généraux, est appliquée à chaque connexion réussie
-        // (voir authController.js : req.session.cookie.maxAge = ...).
-        maxAge: 1000 * 60 * 60 * 8 // 8h
+        sameSite: 'lax',
+        maxAge: 1000 * 60 * 60 * 8 // 8h par défaut
     }
 }));
 
@@ -82,6 +83,7 @@ app.use('/api/tickets', ticketRoutes);
 app.use('/api/ldap', ldapRoutes);
 app.use('/api/setup', setupRoutes);
 app.use('/api/sauvegarde', sauvegardeRoutes);
+app.use('/api/support', supportRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 

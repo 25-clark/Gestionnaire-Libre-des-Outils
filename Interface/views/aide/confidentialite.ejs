@@ -1,18 +1,75 @@
 <%- include('../partials/header') %>
-<div class="entete-page"><h1><i class="bi bi-question-circle"></i> <%= titre %></h1></div>
-<div class="carte" style="max-width:720px;">
+<% var L = (typeof lang !== 'undefined' && lang === 'en') ? 'en' : 'fr'; %>
+<div class="entete-page">
+  <h1><i class="bi bi-shield-check"></i> <%= titre %></h1>
+</div>
+<%- include('_nav') %>
 
-<p>Données traitées localement dans votre SI&nbsp;:</p>
-<ul>
-<li>Comptes, rôles, activités, outils, tickets, journal.</li>
-<li>Credentials personnels chiffrés (AES-256-GCM) si activés.</li>
-<li>Secrets 2FA côté serveur uniquement.</li>
-</ul>
-<p>Aucune donnée n'est envoyée vers un cloud GLO externe par défaut.</p>
+<div class="carte" style="max-width:900px;">
+<% if (L === 'en') { %>
+  <h2 style="font-size:1.05rem;margin-top:0;">Open source & local control</h2>
+  <p>GLO is designed as an <strong>open-source</strong>, on-premises application. Your organisation hosts the software and the database. Data stays under your operational control; there is no mandatory cloud account to use the core product.</p>
 
-<p style="margin-top:20px;">
-<a href="/aide/documentation" class="btn btn-gris btn-petit">Documentation</a>
-<a href="/aide/support" class="btn btn-gris btn-petit">Support</a>
-</p>
+  <h2 style="font-size:1.05rem;margin-top:20px;">What data does GLO process?</h2>
+  <ul>
+    <li>Identity data needed to sign in (employee ID, name, optional e-mail and phone).</li>
+    <li>Business data you enter: activities, tools, tickets, notifications, audit journal entries.</li>
+    <li>Optional personal tool credentials, stored encrypted when the feature is enabled.</li>
+    <li>Security signals such as failed login attempts and concurrent session notices.</li>
+  </ul>
+
+  <h2 style="font-size:1.05rem;margin-top:20px;">Security measures (high level)</h2>
+  <ul>
+    <li>Password hashing and configurable password policy.</li>
+    <li>Optional two-factor authentication (authenticator app) and e-mail login codes.</li>
+    <li>Role-based permissions; deny overrides grant when multiple roles apply.</li>
+    <li>Encrypted storage for sensitive credentials (AES-256-GCM or the algorithm chosen by administrators).</li>
+    <li>Audit journal for sensitive actions, with optional retention cleanup.</li>
+  </ul>
+
+  <h2 style="font-size:1.05rem;margin-top:20px;">Your responsibilities as a user</h2>
+  <ul>
+    <li>Protect your password and recovery codes.</li>
+    <li>Use only the access granted to you; do not attempt to bypass restrictions.</li>
+    <li>Avoid storing personal secrets unrelated to work in free-text ticket fields.</li>
+  </ul>
+
+  <h2 style="font-size:1.05rem;margin-top:20px;">Organisation responsibilities</h2>
+  <p>Your employer’s administrators configure retention, backups, LDAP, SMTP and who may access which pages. For formal privacy notices or data-subject requests, contact your organisation’s data protection contact—not the public internet, unless your admin publishes one.</p>
+
+  <p style="font-size:13px;color:var(--gris);margin-top:20px;">This page is informative and does not replace your company’s legal privacy policy.</p>
+<% } else { %>
+  <h2 style="font-size:1.05rem;margin-top:0;">Open source & maîtrise locale</h2>
+  <p>GLO est conçu comme une application <strong>open source</strong>, déployée en local. Votre organisation héberge le logiciel et la base de données. Les données restent sous votre contrôle opérationnel&nbsp;; aucun compte cloud n’est obligatoire pour utiliser le produit de base.</p>
+
+  <h2 style="font-size:1.05rem;margin-top:20px;">Quelles données GLO traite-t-il&nbsp;?</h2>
+  <ul>
+    <li>Données d’identité nécessaires à la connexion (matricule, nom, e-mail et téléphone optionnels).</li>
+    <li>Données métier que vous saisissez&nbsp;: activités, outils, tickets, notifications, événements du journal.</li>
+    <li>Crédentiels personnels d’outils, stockés chiffrés lorsque la fonctionnalité est activée.</li>
+    <li>Signaux de sécurité tels que les échecs de connexion et les alertes de session concurrente.</li>
+  </ul>
+
+  <h2 style="font-size:1.05rem;margin-top:20px;">Mesures de sécurité (vue d’ensemble)</h2>
+  <ul>
+    <li>Hachage des mots de passe et politique configurable.</li>
+    <li>Authentification à deux facteurs optionnelle (application) et codes de connexion par e-mail.</li>
+    <li>Permissions par rôle&nbsp;; en cas de rôles multiples, le refus prime sur l’accord.</li>
+    <li>Stockage chiffré des crédentiels sensibles (AES-256-GCM ou algorithme choisi par les administrateurs).</li>
+    <li>Journal d’audit des actions sensibles, avec nettoyage de rétention optionnel.</li>
+  </ul>
+
+  <h2 style="font-size:1.05rem;margin-top:20px;">Vos responsabilités en tant qu’utilisateur</h2>
+  <ul>
+    <li>Protéger votre mot de passe et vos codes de récupération.</li>
+    <li>N’utiliser que les accès qui vous sont accordés&nbsp;; ne pas tenter de contourner les restrictions.</li>
+    <li>Éviter de déposer des secrets personnels hors contexte professionnel dans les champs libres des tickets.</li>
+  </ul>
+
+  <h2 style="font-size:1.05rem;margin-top:20px;">Responsabilités de l’organisation</h2>
+  <p>Les administrateurs de votre entreprise configurent la rétention, les sauvegardes, le LDAP, le SMTP et les pages accessibles. Pour une notice de confidentialité formelle ou une demande relative à vos données, contactez le référent de votre organisation.</p>
+
+  <p style="font-size:13px;color:var(--gris);margin-top:20px;">Cette page est informative et ne remplace pas la politique de confidentialité légale de votre entreprise.</p>
+<% } %>
 </div>
 <%- include('../partials/footer') %>

@@ -53,6 +53,7 @@
  <input type="hidden" name="priorite" id="hid-priorite" value="<%= priorite || '' %>">
  <input type="hidden" name="id_createur" id="hid-id_createur" value="<%= id_createur || '' %>">
  <input type="hidden" name="id_assigne" id="hid-id_assigne" value="<%= id_assigne || '' %>">
+ <input type="hidden" name="q" id="hid-q" value="<%= typeof q !== 'undefined' && q ? q : '' %>">
 
  <div class="filtres-actions">
  <div>
@@ -175,7 +176,8 @@
       statut: statut || '',
       priorite: priorite || '',
       id_createur: id_createur || '',
-      id_assigne: id_assigne || ''
+      id_assigne: id_assigne || '',
+      q: (typeof q !== 'undefined' && q) ? q : ''
     }
   };
 %>
@@ -213,7 +215,7 @@
   var LIB_PRIORITE = _data.libPriorite || {};
   var USERS = _data.users || [];
   var CURRENT_ID = _data.currentId || '';
-  var initial = _data.initial || { statut: '', priorite: '', id_createur: '', id_assigne: '' };
+  var initial = _data.initial || { statut: '', priorite: '', id_createur: '', id_assigne: '', q: '' };
 
   var blocs = document.getElementById('blocs-filtres');
   var blocIndex = 0;
@@ -244,15 +246,16 @@
     if (window.history && window.history.replaceState) {
       window.history.replaceState({}, '', '/tickets');
     }
-    initial = { statut: '', priorite: '', id_createur: '', id_assigne: '' };
+    initial = { statut: '', priorite: '', id_createur: '', id_assigne: '', q: '' };
   } else {
-    var hasUrl = !!(initial.statut || initial.priorite || initial.id_createur || initial.id_assigne);
+    var hasUrl = !!(initial.statut || initial.priorite || initial.id_createur || initial.id_assigne || initial.q);
     if (hasUrl) {
       setActifs({
         statut: initial.statut || '',
         priorite: initial.priorite || '',
         id_createur: initial.id_createur || '',
         id_assigne: initial.id_assigne || '',
+        q: initial.q || '',
         par_page: params.get('par_page') || ''
       });
       // Nettoyer le marqueur _r dans l'URL si présent
@@ -266,7 +269,7 @@
       var hasSaved = !!(saved && (saved.statut || saved.priorite || saved.id_createur || saved.id_assigne));
       if (hasSaved && params.get('_r') !== '1') {
         var q = new URLSearchParams();
-        ['statut', 'priorite', 'id_createur', 'id_assigne'].forEach(function (k) {
+        ['statut', 'priorite', 'id_createur', 'id_assigne', 'q'].forEach(function (k) {
           if (saved[k]) q.set(k, saved[k]);
         });
         if (saved.par_page) q.set('par_page', saved.par_page);
@@ -279,7 +282,8 @@
           statut: saved.statut || '',
           priorite: saved.priorite || '',
           id_createur: saved.id_createur || '',
-          id_assigne: saved.id_assigne || ''
+          id_assigne: saved.id_assigne || '',
+          q: saved.q || ''
         };
       }
     }
@@ -411,6 +415,12 @@
       '<button type="button" class="btn btn-gris btn-petit btn-rm-bloc" title="Retirer ce filtre">×</button>' +
       '</div>' +
       '<div class="filtres-selects" style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;">' +
+      '<div style="flex:1 1 180px;min-width:160px;"><label>Recherche</label>' +
+      '<div style="position:relative;">' +
+      '<i class="bi bi-search" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--gris,#94a3b8);font-size:12px;pointer-events:none;"></i>' +
+      '<input type="search" class="f-q" placeholder="Titre ou description…" value="' + String(values.q || '').replace(/"/g, '&quot;') + '" ' +
+      'style="width:100%;box-sizing:border-box;padding:6px 8px 6px 28px;border:1px solid var(--gris-bordure,#e2e8f0);border-radius:8px;font-size:13px;">' +
+      '</div></div>' +
       '<div><label>Statut</label><select class="f-statut">' + optsStatut(values.statut || '') + '</select></div>' +
       '<div><label>Priorité</label><select class="f-priorite">' + optsPriorite(values.priorite || '') + '</select></div>' +
       '<div class="user-wrap-c"><label>Créé par</label><div class="f-createur-slot"></div></div>' +
@@ -423,6 +433,7 @@
       if (blocs.querySelectorAll('.bloc-filtre').length <= 1) {
         box.querySelector('.f-statut').value = '';
         box.querySelector('.f-priorite').value = '';
+        var fq = box.querySelector('.f-q'); if (fq) fq.value = '';
         var slotC = box.querySelector('.f-createur-slot');
         var slotA = box.querySelector('.f-assigne-slot');
         if (slotC) { slotC.innerHTML = ''; slotC.appendChild(buildUserCombobox('')); }
@@ -441,7 +452,9 @@
     var pp = splitVal(initial.priorite);
     var cc = splitVal(initial.id_createur);
     var aa = splitVal(initial.id_assigne);
-    var n = Math.max(ss.length, pp.length, cc.length, aa.length, 0);
+    // Recherche : un terme par filtre (séparés par | pour ne pas casser les espaces)
+    var qq = String(initial.q || '').split('|').map(function (s) { return s.trim(); });
+    var n = Math.max(ss.length, pp.length, cc.length, aa.length, qq.filter(Boolean).length, 0);
     if (n === 0) {
       addFiltreBloc({});
     } else {
@@ -450,7 +463,8 @@
           statut: ss[i] || '',
           priorite: pp[i] || '',
           id_createur: cc[i] || '',
-          id_assigne: aa[i] || ''
+          id_assigne: aa[i] || '',
+          q: qq[i] || ''
         });
       }
     }
@@ -460,11 +474,13 @@
   if (btnAdd) btnAdd.addEventListener('click', function () { addFiltreBloc({}); });
 
   function collectFromBlocs() {
-    var map = { statut: [], priorite: [], id_createur: [], id_assigne: [] };
-    if (!blocs) return { statut: '', priorite: '', id_createur: '', id_assigne: '' };
+    var map = { statut: [], priorite: [], id_createur: [], id_assigne: [], q: [] };
+    if (!blocs) return { statut: '', priorite: '', id_createur: '', id_assigne: '', q: '' };
     blocs.querySelectorAll('.bloc-filtre').forEach(function (box) {
       var s = box.querySelector('.f-statut').value;
       var p = box.querySelector('.f-priorite').value;
+      var qEl = box.querySelector('.f-q');
+      var qv = qEl ? String(qEl.value || '').trim() : '';
       var cEl = box.querySelector('.user-wrap-c .val-user');
       var aEl = box.querySelector('.user-wrap-a .val-user');
       var cv = cEl ? cEl.value : '';
@@ -473,12 +489,17 @@
       if (p) map.priorite.push(p);
       if (cv) map.id_createur.push(cv);
       if (av) map.id_assigne.push(av);
+      // Toujours pousser un slot q (même vide) pour aligner les filtres multi
+      map.q.push(qv);
     });
+    // Joindre les recherches non vides avec | (un terme par filtre)
+    var qs = map.q.filter(Boolean);
     return {
       statut: map.statut.join(','),
       priorite: map.priorite.join(','),
       id_createur: map.id_createur.join(','),
-      id_assigne: map.id_assigne.join(',')
+      id_assigne: map.id_assigne.join(','),
+      q: qs.join('|')
     };
   }
 
@@ -492,10 +513,12 @@
       var hp = document.getElementById('hid-priorite');
       var hc = document.getElementById('hid-id_createur');
       var ha = document.getElementById('hid-id_assigne');
+      var hq = document.getElementById('hid-q');
       if (hs) hs.value = m.statut;
       if (hp) hp.value = m.priorite;
       if (hc) hc.value = m.id_createur;
       if (ha) ha.value = m.id_assigne;
+      if (hq) hq.value = m.q || '';
     });
   }
 
@@ -514,7 +537,7 @@
       m[cle] = '';
       setActifs(m);
       var q = new URLSearchParams();
-      ['statut', 'priorite', 'id_createur', 'id_assigne', 'par_page'].forEach(function (k) {
+      ['statut', 'priorite', 'id_createur', 'id_assigne', 'q', 'par_page'].forEach(function (k) {
         if (m[k]) q.set(k, m[k]);
       });
       window.location.href = '/tickets' + (q.toString() ? ('?' + q.toString()) : '');

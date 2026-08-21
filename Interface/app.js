@@ -41,9 +41,10 @@ app.use(express.static(path.join(__dirname, 'public'), {
 
 app.use(session({
     secret: process.env.SESSION_SECRET || 'glo_interface_secret',
+    rolling: true,
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 1000 * 60 * 60 * 8 } // 8h
+    cookie: { maxAge: 1000 * 60 * 60 * 8, httpOnly: true, sameSite: 'lax' } // 8h, rolling
 }));
 
 const { peutFaire } = require('./middlewares/requireLogin');
@@ -52,7 +53,7 @@ const { apiClient, apiClientAnonyme } = require('./config/api');
 
 // Petit cache en mémoire (30s) pour éviter d'appeler l'API à chaque requête
 // juste pour le nom de l'entreprise, affiché dans l'en-tête et le login.
-let cachePublic = { nom_entreprise: null, credentials_actifs: false, expire: 0 };
+let cachePublic = { nom_entreprise: null, credentials_actifs: false, rafraichissement_auto: false, rafraichissement_intervalle_min: 5, expire: 0 };
 async function obtenirParametresPublics() {
     if (Date.now() < cachePublic.expire) return cachePublic;
     try {
@@ -60,11 +61,13 @@ async function obtenirParametresPublics() {
         cachePublic = {
             nom_entreprise: data.nom_entreprise,
             credentials_actifs: !!data.credentials_actifs,
+            rafraichissement_auto: !!data.rafraichissement_auto,
+            rafraichissement_intervalle_min: data.rafraichissement_intervalle_min || 5,
             installation_terminee: !!data.installation_terminee,
             expire: Date.now() + 60000
         };
     } catch {
-        cachePublic = { nom_entreprise: null, credentials_actifs: false, installation_terminee: true, expire: Date.now() + 60000 };
+        cachePublic = { nom_entreprise: null, credentials_actifs: false, rafraichissement_auto: false, rafraichissement_intervalle_min: 5, installation_terminee: true, expire: Date.now() + 60000 };
     }
     return cachePublic;
 }
@@ -150,6 +153,10 @@ function deduireNavigation(reqPath) {
         nav.section = 'notifications';
         nav.item = 'notifications';
         crumbs.push({ label: 'Notifications' });
+    } else if (p.startsWith('/preferences')) {
+        nav.section = 'profil';
+        nav.item = 'preferences';
+        crumbs.push({ label: 'Préférences' });
     } else if (p.startsWith('/profil') || p.startsWith('/changer-mot-de-passe')) {
         nav.section = 'profil';
         nav.item = 'profil';
@@ -205,6 +212,8 @@ app.use(async (req, res, next) => {
     const pub = await obtenirParametresPublics();
     res.locals.nomEntreprise = pub.nom_entreprise;
     res.locals.credentialsActifs = pub.credentials_actifs;
+    res.locals.rafraichissementAuto = !!pub.rafraichissement_auto;
+    res.locals.rafraichissementIntervalleMin = pub.rafraichissement_intervalle_min || 5;
     res.locals.nomApplication = res.locals.nomEntreprise || 'Gestionnaire Outils';
 
     // Badge notif : session cache, pas d'appel API à chaque navigation
@@ -281,6 +290,22 @@ app.use((req, res) => {
 
 // Gestion d'erreurs
 app.use((err, req, res, next) => {
+    // Session API expirée / invalide → déconnexion propre côté Interface
+    // API inaccessible (Server non démarré / mauvais port)
+    if (err.code === 'ECONNREFUSED' || err.code === 'ECONNRESET' || (err.cause && (err.cause.code === 'ECONNREFUSED' || err.cause.code === 'ECONNRESET')) ||
+        (err.message && String(err.message).includes('ECONNREFUSED') || String(err.message).includes('ECONNRESET'))) {
+        return res.status(503).render('erreur', {
+            titre: 'Serveur API indisponible',
+            message: 'Impossible de joindre le Server GLO (connexion refusée). Vérifiez que le Server est démarré et que API_URL dans Interface/.env pointe vers le bon port (ex. http://localhost:2520/api).'
+        });
+    }
+    if (err.response && err.response.status === 401) {
+        try {
+            req.session.user = null;
+            req.session.apiCookie = null;
+        } catch (_) {}
+        return res.redirect('/login?erreur=' + encodeURIComponent('Session expirée. Veuillez vous reconnecter.'));
+    }
     console.error(err);
     const message = err.response?.data?.message || err.message || 'Erreur inattendue.';
     res.status(err.response?.status || 500).render('erreur', { titre: 'Erreur', message });

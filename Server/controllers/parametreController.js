@@ -32,6 +32,8 @@ async function obtenirPublic(req, res, next) {
         res.json({
             nom_entreprise: parametre.nom_entreprise,
             credentials_actifs: !!parametre.credentials_actifs,
+            rafraichissement_auto: !!parametre.rafraichissement_auto,
+            rafraichissement_intervalle_min: parametre.rafraichissement_intervalle_min || 5,
             chiffrement_algo: parametre.chiffrement_algo || 'aes-256-gcm',
             auth_3fa_actif: !!parametre.auth_3fa_actif,
             sauvegarde_planifiee: !!parametre.sauvegarde_planifiee,
@@ -89,6 +91,8 @@ async function mettreAJour(req, res, next) {
             journal_retention_jours,
             journal_nettoyage_actif,
             stats_publiques,
+            rafraichissement_auto,
+            rafraichissement_intervalle_min,
             totp_disponible,
             totp_obligatoire
         } = req.body;
@@ -141,6 +145,10 @@ async function mettreAJour(req, res, next) {
             journal_retention_jours: journal_retention_jours !== undefined ? borner(journal_retention_jours, 7, 3650, 90) : (parametre.journal_retention_jours || 90),
             journal_nettoyage_actif: journal_nettoyage_actif !== undefined ? !!journal_nettoyage_actif : parametre.journal_nettoyage_actif,
             stats_publiques: stats_publiques !== undefined ? !!stats_publiques : parametre.stats_publiques,
+            rafraichissement_auto: rafraichissement_auto !== undefined ? !!rafraichissement_auto : parametre.rafraichissement_auto,
+            rafraichissement_intervalle_min: rafraichissement_intervalle_min !== undefined
+                ? borner(rafraichissement_intervalle_min, 1, 120, 5)
+                : (parametre.rafraichissement_intervalle_min || 5),
             totp_disponible: totp_disponible !== undefined ? !!totp_disponible : parametre.totp_disponible,
             totp_obligatoire: totp_obligatoire !== undefined ? !!totp_obligatoire : parametre.totp_obligatoire
         });

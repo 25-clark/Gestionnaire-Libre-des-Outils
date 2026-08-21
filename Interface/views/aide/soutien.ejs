@@ -1,17 +1,55 @@
 <%- include('../partials/header') %>
-<div class="entete-page"><h1><i class="bi bi-question-circle"></i> <%= titre %></h1></div>
-<div class="carte" style="max-width:720px;">
+<% var L = (typeof lang !== 'undefined' && lang === 'en') ? 'en' : 'fr';
+   var tel = typeof soutienTel !== 'undefined' ? soutienTel : '';
+   var banque = typeof soutienBanque !== 'undefined' ? soutienBanque : '';
+   var titulaire = typeof soutienTitulaire !== 'undefined' ? soutienTitulaire : '';
+%>
+<div class="entete-page">
+  <h1><i class="bi bi-heart"></i> <%= titre %></h1>
+</div>
+<%- include('_nav') %>
 
-<p>GLO est un <strong>gestionnaire libre</strong> destiné aux organisations.</p>
-<ul>
-<li>Soutenez les équipes internes qui le maintiennent.</li>
-<li>Pour contribuer (retours, correctifs), contactez le référent projet GLO.</li>
-<li>Aucun paiement n'est intégré à l'application.</li>
-</ul>
+<div class="carte" style="max-width:820px;">
+<% if (L === 'en') { %>
+  <h2 style="font-size:1.05rem;margin-top:0;">Why support the project?</h2>
+  <p>GLO is developed and maintained with care so organisations can manage tools, activities and assistance tickets <strong>on their own infrastructure</strong>. Voluntary support helps the creator continue improvements: security fixes, accessibility, new user features and documentation.</p>
+  <p>Your contribution is never required to use GLO. It is a free gesture of thanks when the product brings value to your teams.</p>
 
-<p style="margin-top:20px;">
-<a href="/aide/documentation" class="btn btn-gris btn-petit">Documentation</a>
-<a href="/aide/support" class="btn btn-gris btn-petit">Support</a>
-</p>
+  <h2 style="font-size:1.05rem;margin-top:20px;"><i class="bi bi-bank"></i> How to donate</h2>
+  <p>You may transfer a donation to the account below (details can be customised by the publisher via environment variables):</p>
+  <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin:12px 0;">
+    <p style="margin:0 0 6px;"><strong>Account holder:</strong> <%= titulaire %></p>
+    <p style="margin:0 0 6px;"><strong>Bank / account reference:</strong> <%= banque %></p>
+    <p style="margin:0;"><strong>Contact phone:</strong> <%= tel %></p>
+  </div>
+  <p style="font-size:13px;color:var(--gris);">Please mention “GLO support” in the transfer label. For an invoice or receipt, contact the holder using the phone number above.</p>
+
+  <h2 style="font-size:1.05rem;margin-top:20px;"><i class="bi bi-stars"></i> Other ways to help</h2>
+  <ul>
+    <li>Share constructive feedback through the Support form.</li>
+    <li>Report defects with clear steps to reproduce.</li>
+    <li>Promote good security practices among colleagues (2FA, no shared passwords).</li>
+  </ul>
+<% } else { %>
+  <h2 style="font-size:1.05rem;margin-top:0;">Pourquoi soutenir le projet&nbsp;?</h2>
+  <p>GLO est développé et maintenu avec attention pour permettre aux organisations de gérer outils, activités et tickets d’assistance <strong>sur leur propre infrastructure</strong>. Un soutien volontaire aide le créateur à poursuivre les améliorations&nbsp;: correctifs de sécurité, accessibilité, nouvelles fonctions métier et documentation.</p>
+  <p>Votre contribution n’est jamais obligatoire pour utiliser GLO. C’est un geste libre de remerciement lorsque le produit apporte de la valeur à vos équipes.</p>
+
+  <h2 style="font-size:1.05rem;margin-top:20px;"><i class="bi bi-bank"></i> Comment faire un don</h2>
+  <p>Vous pouvez effectuer un virement vers le compte ci-dessous (coordonnées personnalisables par l’éditeur via variables d’environnement)&nbsp;:</p>
+  <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin:12px 0;">
+    <p style="margin:0 0 6px;"><strong>Titulaire :</strong> <%= titulaire %></p>
+    <p style="margin:0 0 6px;"><strong>Banque / référence de compte :</strong> <%= banque %></p>
+    <p style="margin:0;"><strong>Téléphone de contact :</strong> <%= tel %></p>
+  </div>
+  <p style="font-size:13px;color:var(--gris);">Indiquez « Soutien GLO » en libellé de virement. Pour un reçu, contactez le titulaire au numéro ci-dessus.</p>
+
+  <h2 style="font-size:1.05rem;margin-top:20px;"><i class="bi bi-stars"></i> Autres façons d’aider</h2>
+  <ul>
+    <li>Partager un retour constructif via le formulaire Support.</li>
+    <li>Signaler les anomalies avec des étapes de reproduction claires.</li>
+    <li>Promouvoir les bonnes pratiques de sécurité auprès des collègues (2FA, pas de mots de passe partagés).</li>
+  </ul>
+<% } %>
 </div>
 <%- include('../partials/footer') %>

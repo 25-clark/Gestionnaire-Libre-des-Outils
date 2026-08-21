@@ -143,8 +143,10 @@
  <td><span class="badge-role" style="background:var(--bleu);"><%= u.Role ? u.Role.abbreviation : '—' %></span></td>
  <td><%= u.Activite ? u.Activite.nom : '—' %></td>
  <td style="text-align:right;">
- <% if (u.id_activite) { %>
- <a href="/activites/<%= u.id_activite %>?onglet=utilisateurs" class="btn btn-gris btn-petit">Voir</a>
+ <% if (u.id_sous_activite) { %>
+ <a href="/sous-activites/<%= u.id_sous_activite %>?user=<%= u.id %>" class="btn btn-gris btn-petit">Voir</a>
+ <% } else if (u.id_activite) { %>
+ <a href="/activites/<%= u.id_activite %>?onglet=utilisateurs&user=<%= u.id %>" class="btn btn-gris btn-petit">Voir</a>
  <% } %>
  </td>
  </tr>

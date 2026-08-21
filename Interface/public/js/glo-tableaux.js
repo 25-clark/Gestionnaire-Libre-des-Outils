@@ -101,9 +101,10 @@
 
   // ---- Copie presse-papier (credentials) ----
   window.gloCopier = function (texte) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
+    if (!texte) return;
+    if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(texte).then(function () {
-        alert('Copié dans le presse-papier');
+        toastCopy('Copié dans le presse-papier');
       }).catch(function () {
         fallbackCopy(texte);
       });
@@ -111,12 +112,29 @@
       fallbackCopy(texte);
     }
   };
+  function toastCopy(msg) {
+    var el = document.createElement('div');
+    el.textContent = msg;
+    el.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#0f172a;color:#fff;padding:10px 14px;border-radius:10px;z-index:9999;font-size:13px;';
+    document.body.appendChild(el);
+    setTimeout(function () { el.remove(); }, 1600);
+  }
   function fallbackCopy(texte) {
     const ta = document.createElement('textarea');
     ta.value = texte;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
     document.body.appendChild(ta);
+    ta.focus();
     ta.select();
-    try { document.execCommand('copy'); alert('Copié'); } catch (_) {}
+    try {
+      var ok = document.execCommand('copy');
+      if (ok) toastCopy('Copié');
+      else prompt('Copiez manuellement :', texte);
+    } catch (_) {
+      prompt('Copiez manuellement :', texte);
+    }
     document.body.removeChild(ta);
   }
 

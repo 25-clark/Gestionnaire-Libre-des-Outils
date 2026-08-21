@@ -1,20 +1,99 @@
 <%- include('../partials/header') %>
-<div class="entete-page"><h1><i class="bi bi-question-circle"></i> <%= titre %></h1></div>
-<div class="carte" style="max-width:720px;">
+<% var L = (typeof lang !== 'undefined' && lang === 'en') ? 'en' : 'fr'; %>
+<div class="entete-page">
+  <h1><i class="bi bi-book"></i> <%= titre %></h1>
+</div>
+<%- include('_nav') %>
 
-<p>Documentation essentielle de GLO (Gestionnaire Libre des Outils).</p>
-<ol>
-<li><strong>Tableau de bord</strong> — activités et sous-activités.</li>
-<li><strong>Outils</strong> — fiches, surveillance, credentials personnels, maintenance.</li>
-<li><strong>Tickets</strong> — demandes, SLA, escalade.</li>
-<li><strong>Administration</strong> — rôles, accès, journal d'audit, paramètres.</li>
-<li><strong>Raccourcis</strong> — <kbd>Ctrl</kbd>+<kbd>K</kbd> recherche rapide&nbsp;; épingles sur outils et activités.</li>
-<li><strong>Sécurité</strong> — 2FA optionnelle dans Mon profil&nbsp;; politiques dans Réglages généraux.</li>
-</ol>
+<div class="carte" style="max-width:900px;">
+<% if (L === 'en') { %>
+  <p class="lead" style="font-size:15px;color:var(--gris-fonce);">This guide is written for <strong>everyday users</strong> of GLO. It explains what you can do in the application without technical jargon.</p>
 
-<p style="margin-top:20px;">
-<a href="/aide/documentation" class="btn btn-gris btn-petit">Documentation</a>
-<a href="/aide/support" class="btn btn-gris btn-petit">Support</a>
-</p>
+  <h2 style="font-size:1.05rem;margin-top:22px;"><i class="bi bi-speedometer2"></i> Dashboard</h2>
+  <p>The home page shows the activities and sub-activities you are allowed to work on. Expand an activity to see its sub-activities. Use the pin icon to keep your most used items at hand.</p>
+
+  <h2 style="font-size:1.05rem;margin-top:22px;"><i class="bi bi-tools"></i> Tools</h2>
+  <p>Tools are the applications, links or resources attached to an activity. You can:</p>
+  <ul>
+    <li>Browse tools as a list, cards or thumbnails (your preference).</li>
+    <li>Open a tool with one click when a link is configured.</li>
+    <li>Pin favourites for faster access.</li>
+    <li>If credentials are enabled for you, open the tool credentials page to view or copy your personal logins (never share them).</li>
+  </ul>
+
+  <h2 style="font-size:1.05rem;margin-top:22px;"><i class="bi bi-ticket-perforated"></i> Tickets (Assistance)</h2>
+  <p>Tickets let you report an issue or request help. You can:</p>
+  <ul>
+    <li>Create a ticket with a clear title and description.</li>
+    <li>Filter the list by status, priority, author, assignee, and full-text search.</li>
+    <li>Save filter sets automatically so they reappear on your next visit.</li>
+    <li>Edit your own message within a short time window after posting.</li>
+  </ul>
+
+  <h2 style="font-size:1.05rem;margin-top:22px;"><i class="bi bi-person-circle"></i> My profile & preferences</h2>
+  <p>From your name in the header menu:</p>
+  <ul>
+    <li><strong>My profile</strong> — contact details, e-mail, optional two-factor authentication and e-mail login codes.</li>
+    <li><strong>Preferences</strong> — theme, language (French / English), default list size, notification options.</li>
+    <li><strong>Sign out</strong> — always sign out on a shared computer.</li>
+  </ul>
+
+  <h2 style="font-size:1.05rem;margin-top:22px;"><i class="bi bi-bell"></i> Notifications</h2>
+  <p>The bell icon shows alerts (assignments, security notices, concurrent login warnings). Mark items as read or clear the list when appropriate.</p>
+
+  <h2 style="font-size:1.05rem;margin-top:22px;"><i class="bi bi-search"></i> Quick search (Ctrl + K)</h2>
+  <p>Press <kbd>Ctrl</kbd> + <kbd>K</kbd> to open the command palette and jump quickly to activities, tools or users you are allowed to see.</p>
+
+  <h2 style="font-size:1.05rem;margin-top:22px;"><i class="bi bi-shield-lock"></i> Security tips for users</h2>
+  <ul>
+    <li>Never share your password, recovery codes or tool credentials.</li>
+    <li>Enable two-factor authentication if offered on your profile.</li>
+    <li>If you receive a concurrent login alert and it was not you, change your password immediately and contact support.</li>
+  </ul>
+<% } else { %>
+  <p class="lead" style="font-size:15px;color:var(--gris-fonce);">Ce guide s’adresse aux <strong>utilisateurs finaux</strong> de GLO. Il décrit les fonctionnalités utiles au quotidien, sans vocabulaire technique d’administration.</p>
+
+  <h2 style="font-size:1.05rem;margin-top:22px;"><i class="bi bi-speedometer2"></i> Tableau de bord</h2>
+  <p>La page d’accueil présente les activités et sous-activités auxquelles vous avez accès. Dépliez une activité pour voir ses sous-activités. L’icône d’épingle permet de garder vos éléments favoris à portée de main.</p>
+
+  <h2 style="font-size:1.05rem;margin-top:22px;"><i class="bi bi-tools"></i> Outils</h2>
+  <p>Les outils sont les applications, liens ou ressources rattachés à une activité. Vous pouvez&nbsp;:</p>
+  <ul>
+    <li>Parcourir les outils en liste, cartes ou vignettes (selon votre préférence).</li>
+    <li>Ouvrir un outil en un clic lorsqu’un lien est configuré.</li>
+    <li>Épingler vos favoris pour un accès plus rapide.</li>
+    <li>Si les crédentiels sont activés pour vous, consulter la page des identifiants personnels d’un outil (ne les partagez jamais).</li>
+  </ul>
+
+  <h2 style="font-size:1.05rem;margin-top:22px;"><i class="bi bi-ticket-perforated"></i> Tickets (Assistance)</h2>
+  <p>Les tickets permettent de signaler un incident ou de demander de l’aide. Vous pouvez&nbsp;:</p>
+  <ul>
+    <li>Créer un ticket avec un titre et une description clairs.</li>
+    <li>Filtrer la liste par statut, priorité, auteur, assigné, et recherche texte.</li>
+    <li>Conserver automatiquement vos filtres d’une visite à l’autre.</li>
+    <li>Modifier votre propre message dans un court délai après publication.</li>
+  </ul>
+
+  <h2 style="font-size:1.05rem;margin-top:22px;"><i class="bi bi-person-circle"></i> Mon profil & préférences</h2>
+  <p>Depuis votre nom dans le menu d’en-tête&nbsp;:</p>
+  <ul>
+    <li><strong>Mon profil</strong> — coordonnées, e-mail, authentification à deux facteurs et codes de connexion par e-mail (si activés).</li>
+    <li><strong>Préférences</strong> — thème, langue (français / anglais), taille des listes, options de notification.</li>
+    <li><strong>Se déconnecter</strong> — toujours vous déconnecter sur un poste partagé.</li>
+  </ul>
+
+  <h2 style="font-size:1.05rem;margin-top:22px;"><i class="bi bi-bell"></i> Notifications</h2>
+  <p>L’icône cloche affiche les alertes (assignations, sécurité, connexion concurrente). Marquez les éléments comme lus ou videz la liste le cas échéant.</p>
+
+  <h2 style="font-size:1.05rem;margin-top:22px;"><i class="bi bi-search"></i> Recherche rapide (Ctrl + K)</h2>
+  <p>Appuyez sur <kbd>Ctrl</kbd> + <kbd>K</kbd> pour ouvrir la palette et accéder rapidement aux activités, outils ou utilisateurs que vous êtes autorisé à voir.</p>
+
+  <h2 style="font-size:1.05rem;margin-top:22px;"><i class="bi bi-shield-lock"></i> Conseils de sécurité</h2>
+  <ul>
+    <li>Ne partagez jamais votre mot de passe, vos codes de récupération ni vos crédentiels d’outils.</li>
+    <li>Activez l’authentification à deux facteurs si elle est proposée dans votre profil.</li>
+    <li>En cas d’alerte de connexion concurrente qui ne vient pas de vous, changez immédiatement votre mot de passe et contactez le support.</li>
+  </ul>
+<% } %>
 </div>
 <%- include('../partials/footer') %>

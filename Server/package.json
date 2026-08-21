@@ -1,11 +1,11 @@
 {
   "name": "glo-server",
   "version": "1.0.0",
-  "description": "Backend - Gestionnaire d'outils par activit\u00e9 (GLO)",
+  "description": "Backend - Gestionnaire d'outils par activité (GLO)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js",
+    "dev": "nodemon --config nodemon.json server.js",
     "seed": "node seed.js",
     "migrate": "node migrate.js",
     "reset-installation": "node reset-installation.js"

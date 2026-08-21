@@ -154,6 +154,16 @@ module.exports = (sequelize) => {
             allowNull: false,
             defaultValue: false
         },
+        rafraichissement_auto: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
+        },
+        rafraichissement_intervalle_min: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 5
+        },
         stats_publiques: {
             type: DataTypes.BOOLEAN,
             allowNull: false,

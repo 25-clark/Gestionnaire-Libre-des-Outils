@@ -1,18 +1,59 @@
 <%- include('../partials/header') %>
-<div class="entete-page"><h1><i class="bi bi-question-circle"></i> <%= titre %></h1></div>
-<div class="carte" style="max-width:720px;">
+<% var L = (typeof lang !== 'undefined' && lang === 'en') ? 'en' : 'fr'; %>
+<div class="entete-page">
+  <h1><i class="bi bi-puzzle"></i> <%= titre %></h1>
+</div>
+<%- include('_nav') %>
 
-<p>Connecteurs pour un SI d'entreprise&nbsp;:</p>
-<ul>
-<li><strong>LDAP / Active Directory</strong> — intégré (Administration).</li>
-<li><strong>API REST</strong> — backend <code>/api/*</code>.</li>
-<li><strong>Export CSV / PDF</strong> — listes et journal.</li>
-<li><strong>Webhooks</strong> — feuille de route Teams/Slack.</li>
-</ul>
+<div class="carte" style="max-width:900px;">
+<% if (L === 'en') { %>
+  <p>Extensions are optional modules that enrich GLO without changing the core product. Below are <strong>example models</strong> that an organisation may enable later. Availability depends on your deployment and licences.</p>
 
-<p style="margin-top:20px;">
-<a href="/aide/documentation" class="btn btn-gris btn-petit">Documentation</a>
-<a href="/aide/support" class="btn btn-gris btn-petit">Support</a>
-</p>
+  <div style="border:1px solid var(--gris-bordure,#e2e8f0);border-radius:12px;padding:14px;margin:14px 0;">
+    <h3 style="margin:0 0 6px;font-size:1rem;"><i class="bi bi-graph-up"></i> Analytics Pack</h3>
+    <p style="margin:0;color:var(--gris-fonce);">Extended charts on activity usage, tool openings and ticket resolution times. Useful for team leads who need a monthly overview without exporting raw data.</p>
+  </div>
+  <div style="border:1px solid var(--gris-bordure,#e2e8f0);border-radius:12px;padding:14px;margin:14px 0;">
+    <h3 style="margin:0 0 6px;font-size:1rem;"><i class="bi bi-chat-dots"></i> Messaging Bridge</h3>
+    <p style="margin:0;color:var(--gris-fonce);">Push critical ticket alerts to a corporate chat channel (e.g. Teams / Slack equivalent). Agents receive a short notification with a deep link back into GLO.</p>
+  </div>
+  <div style="border:1px solid var(--gris-bordure,#e2e8f0);border-radius:12px;padding:14px;margin:14px 0;">
+    <h3 style="margin:0 0 6px;font-size:1rem;"><i class="bi bi-file-earmark-spreadsheet"></i> Advanced Import / Export</h3>
+    <p style="margin:0;color:var(--gris-fonce);">Scheduled CSV/Excel imports for users and tools, plus custom export templates. Designed for large directories that update lists every week.</p>
+  </div>
+  <div style="border:1px solid var(--gris-bordure,#e2e8f0);border-radius:12px;padding:14px;margin:14px 0;">
+    <h3 style="margin:0 0 6px;font-size:1rem;"><i class="bi bi-phone"></i> Mobile Companion</h3>
+    <p style="margin:0;color:var(--gris-fonce);">A lightweight mobile-friendly view focused on tickets and notifications for on-call staff. Does not replace the full desktop experience.</p>
+  </div>
+  <div style="border:1px solid var(--gris-bordure,#e2e8f0);border-radius:12px;padding:14px;margin:14px 0;">
+    <h3 style="margin:0 0 6px;font-size:1rem;"><i class="bi bi-plug"></i> Custom Connector</h3>
+    <p style="margin:0;color:var(--gris-fonce);">Connect GLO tools to an internal API so opening a tool can also create a session on a third-party system. Requires development by your IT partner.</p>
+  </div>
+  <p style="font-size:13px;color:var(--gris);">To request an extension for your site, use the <a href="/aide/support">Support</a> form or contact your GLO administrator.</p>
+<% } else { %>
+  <p>Les extensions sont des modules optionnels qui enrichissent GLO sans modifier le cœur du produit. Voici des <strong>modèles d’exemple</strong> qu’une organisation peut activer ultérieurement. La disponibilité dépend de votre déploiement et des licences.</p>
+
+  <div style="border:1px solid var(--gris-bordure,#e2e8f0);border-radius:12px;padding:14px;margin:14px 0;">
+    <h3 style="margin:0 0 6px;font-size:1rem;"><i class="bi bi-graph-up"></i> Pack Analytique</h3>
+    <p style="margin:0;color:var(--gris-fonce);">Graphiques étendus sur l’usage des activités, les ouvertures d’outils et les délais de résolution des tickets. Utile aux responsables d’équipe pour un bilan mensuel sans exporter les données brutes.</p>
+  </div>
+  <div style="border:1px solid var(--gris-bordure,#e2e8f0);border-radius:12px;padding:14px;margin:14px 0;">
+    <h3 style="margin:0 0 6px;font-size:1rem;"><i class="bi bi-chat-dots"></i> Pont Messagerie</h3>
+    <p style="margin:0;color:var(--gris-fonce);">Envoi d’alertes critiques de tickets vers un canal de messagerie d’entreprise. Les agents reçoivent une notification courte avec un lien direct vers GLO.</p>
+  </div>
+  <div style="border:1px solid var(--gris-bordure,#e2e8f0);border-radius:12px;padding:14px;margin:14px 0;">
+    <h3 style="margin:0 0 6px;font-size:1rem;"><i class="bi bi-file-earmark-spreadsheet"></i> Import / Export avancé</h3>
+    <p style="margin:0;color:var(--gris-fonce);">Imports CSV/Excel planifiés pour utilisateurs et outils, et modèles d’export personnalisés. Conçu pour les annuaires volumineux mis à jour chaque semaine.</p>
+  </div>
+  <div style="border:1px solid var(--gris-bordure,#e2e8f0);border-radius:12px;padding:14px;margin:14px 0;">
+    <h3 style="margin:0 0 6px;font-size:1rem;"><i class="bi bi-phone"></i> Companion mobile</h3>
+    <p style="margin:0;color:var(--gris-fonce);">Vue allégée orientée tickets et notifications pour le personnel d’astreinte. Ne remplace pas l’expérience bureau complète.</p>
+  </div>
+  <div style="border:1px solid var(--gris-bordure,#e2e8f0);border-radius:12px;padding:14px;margin:14px 0;">
+    <h3 style="margin:0 0 6px;font-size:1rem;"><i class="bi bi-plug"></i> Connecteur métier</h3>
+    <p style="margin:0;color:var(--gris-fonce);">Relie un outil GLO à une API interne afin qu’ouvrir l’outil crée aussi une session sur un système tiers. Nécessite un développement par votre partenaire informatique.</p>
+  </div>
+  <p style="font-size:13px;color:var(--gris);">Pour demander une extension sur votre site, utilisez le formulaire <a href="/aide/support">Support</a> ou contactez votre administrateur GLO.</p>
+<% } %>
 </div>
 <%- include('../partials/footer') %>

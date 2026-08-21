@@ -103,55 +103,8 @@
  </form>
  </div>
 
- <div class="carte">
- <h2><i class="bi bi-sliders"></i> <%= t('profile.prefs') %></h2>
- <form action="/profil" method="POST" id="form-prefs">
- <input type="hidden" name="section" value="preferences">
-
- <label for="theme"><%= t('profile.theme') %></label>
- <select id="theme" name="theme">
- <option value="clair" <%= prefs.theme === 'clair' ? 'selected' : '' %>><%= t('profile.theme.light') %></option>
- <option value="sombre" <%= prefs.theme === 'sombre' ? 'selected' : '' %>><%= t('profile.theme.dark') %></option>
- <option value="auto" <%= prefs.theme === 'auto' ? 'selected' : '' %>><%= t('profile.theme.auto') %></option>
- </select>
- <p style="color:var(--gris); font-size:12px; margin-top:-6px;"><%= t('profile.theme.hint') %></p>
-
- <label for="langue"><%= t('profile.lang') %></label>
- <select id="langue" name="langue">
- <option value="fr" <%= prefs.langue === 'fr' ? 'selected' : '' %>>Français</option>
- <option value="en" <%= prefs.langue === 'en' ? 'selected' : '' %>>English</option>
- </select>
-
- <div class="actions-form">
- <button type="submit" class="btn btn-primaire"><%= t('profile.save.prefs') %></button>
- </div>
- </form>
- </div>
-</div>
-
-<script>
-function ajouterContact() {
- var liste = document.getElementById('contacts-liste');
- var div = document.createElement('div');
- div.className = 'contact-ligne';
- div.innerHTML = '<input type="text" name="autres_contacts[]" value="" placeholder="Teams, Slack…">' +
- '<button type="button" class="btn-retirer" onclick="this.parentElement.remove()">&times;</button>';
- liste.appendChild(div);
-}
-// Aperçu immédiat du thème à la sélection
-document.getElementById('theme').addEventListener('change', function () {
- var theme = this.value;
- if (theme === 'auto') {
- theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'sombre' : 'clair';
- }
- document.documentElement.classList.toggle('theme-sombre', theme === 'sombre');
- document.body.classList.toggle('theme-sombre', theme === 'sombre');
-});
-</script>
-
-
-
-<div class="profil-grille" style="margin-top:18px;">
+ 
+<p style="grid-column:1/-1;font-size:13px;"><a href="/preferences"><i class="bi bi-sliders"></i> Gérer les préférences de compte</a></p>
 <div class="carte">
             <h2><i class="bi bi-envelope-check"></i> Code de connexion par e-mail</h2>
             <p style="font-size:13px;color:var(--gris);max-width:520px;">

@@ -1,12 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const { apiClient } = require('../config/api');
-const { requireLogin } = require('../middlewares/requireLogin');
+const { requireLogin, peutFaire } = require('../middlewares/requireLogin');
 
 router.use(requireLogin);
 
+router.use((req, res, next) => {
+    if (!peutFaire(req.session.user, 'notifications', 'read')) {
+        return res.status(403).render('erreur', {
+            titre: 'Accès refusé',
+            message: "Vous n'avez pas accès aux notifications."
+        });
+    }
+    next();
+});
+
 router.get('/', async (req, res, next) => {
     try {
+
         const api = apiClient(req);
         const page = parseInt(req.query.page, 10) || 1;
         const { data } = await api.get('/notifications', { params: { page } });
@@ -53,4 +64,18 @@ router.post('/vider', async (req, res) => {
 });
 
 
+
+router.get('/:id/ouvrir', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const { data: n } = await api.get(`/notifications/${req.params.id}`).catch(() => ({ data: null }));
+        try { await api.post(`/notifications/${req.params.id}/lue`); } catch (_) {}
+        if (n && n.lien) return res.redirect(n.lien);
+        return res.redirect('/notifications');
+    } catch (err) {
+        res.redirect('/notifications');
+    }
+});
+
 module.exports = router;
+

@@ -1,3 +1,29 @@
+
+/** Durée de session en ms — jamais NaN/0 (sinon cookie expiré immédiatement). */
+function dureeSessionMs(parametre) {
+    let h = parametre && parametre.session_duree_heures;
+    h = parseInt(h, 10);
+    if (!Number.isFinite(h) || h < 1) h = 8;
+    if (h > 168) h = 168;
+    return h * 60 * 60 * 1000;
+}
+
+function appliquerDureeSession(req, parametre) {
+    const ms = dureeSessionMs(parametre);
+    if (req.session && req.session.cookie) {
+        req.session.cookie.maxAge = ms;
+        if (typeof req.session.touch === 'function') req.session.touch();
+    }
+    return ms;
+}
+
+function saveSession(req) {
+    return new Promise((resolve, reject) => {
+        if (!req.session) return resolve();
+        req.session.save((err) => (err ? reject(err) : resolve()));
+    });
+}
+
 const { Utilisateur, Role, Parametre } = require('../models');
 const { verifier, hacher, validerPolitiqueMotDePasse } = require('../utils/motDePasse');
 const { consigner } = require('../utils/journal');
@@ -172,7 +198,7 @@ async function login(req, res, next) {
             if (totpOblig && !userTotpActif) {
                 // Connexion autorisée mais devra configurer 2FA (flag session)
                 req.session.userId = user.id;
-                req.session.cookie.maxAge = parametre.session_duree_heures * 60 * 60 * 1000;
+                appliquerDureeSession(req, parametre);
                 req.session.doit_configurer_2fa = true;
             } else if (userTotpActif) {
                 req.session.pending2faUserId = user.id;
@@ -193,9 +219,10 @@ async function login(req, res, next) {
                 return demarrerAuthEmail(req, res, user);
             }
             req.session.userId = user.id;
-            req.session.cookie.maxAge = parametre.session_duree_heures * 60 * 60 * 1000;
+            appliquerDureeSession(req, parametre);
+        }
 
-        // Détection multi-session (même compte sur un autre appareil)
+        // Détection multi-session (informatif — ne détruit pas la session)
         try {
             const fp = req.sessionID || req.session.id || null;
             const prev = user.session_active_id || null;
@@ -237,8 +264,6 @@ async function login(req, res, next) {
             console.warn('[session] détection multi-session:', e.message);
         }
 
-        }
-
         await consigner({
             user,
             action: 'connexion',
@@ -258,6 +283,7 @@ async function login(req, res, next) {
         }
         userSansMdp.totp_actif = !!user.totp_actif;
 
+        await saveSession(req);
         return res.json({
             message: 'Connexion réussie.',
             user: userSansMdp,
@@ -361,7 +387,8 @@ async function verifier2fa(req, res, next) {
             return demarrerAuthEmail(req, res, user);
         }
         req.session.userId = user.id;
-        req.session.cookie.maxAge = parametre.session_duree_heures * 60 * 60 * 1000;
+        appliquerDureeSession(req, parametre);
+        await saveSession(req);
 
         await consigner({
             user,

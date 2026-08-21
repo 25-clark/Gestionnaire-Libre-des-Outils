@@ -1,3 +1,16 @@
+
+function etendreSessionInterface(req, heures) {
+    try {
+        let h = parseInt(heures, 10);
+        if (!Number.isFinite(h) || h < 1) h = 8;
+        if (h > 168) h = 168;
+        if (req.session && req.session.cookie) {
+            req.session.cookie.maxAge = h * 60 * 60 * 1000;
+            if (typeof req.session.touch === 'function') req.session.touch();
+        }
+    } catch (_) {}
+}
+
 const express = require('express');
 const router = express.Router();
 const { apiClient, apiClientAnonyme } = require('../config/api');
@@ -37,6 +50,7 @@ router.post('/login', async (req, res) => {
         }
 
         req.session.user = response.data.user;
+        etendreSessionInterface(req, 8);
         if (response.data.doit_configurer_2fa) {
             return res.redirect('/profil?setup2fa=1');
         }
@@ -75,6 +89,7 @@ router.post('/login/auth-email', async (req, res) => {
         const me = await api.get('/auth/me');
         const user = me.data.user || me.data;
         req.session.user = user;
+            etendreSessionInterface(req, (user && user.session_duree_heures) || 8);
         if (user.doit_changer_mdp) return res.redirect('/changer-mot-de-passe');
         if (user.doit_configurer_2fa) return res.redirect('/profil?setup2fa=1');
         return res.redirect('/');
@@ -132,6 +147,7 @@ router.post('/login/2fa/recuperation/valider', async (req, res) => {
         }
         const me = await api.get('/auth/me');
         req.session.user = me.data.user || me.data;
+        etendreSessionInterface(req, 8);
         delete req.session.pending2faRecovery;
         res.redirect('/');
     } catch (err) {
@@ -174,6 +190,7 @@ router.post('/login/2fa', async (req, res) => {
             return res.redirect('/login/auth-email');
         }
         req.session.user = response.data.user;
+        etendreSessionInterface(req, 8);
         res.redirect(req.session.user.doit_changer_mdp ? '/changer-mot-de-passe' : '/');
     } catch (err) {
         res.render('login-2fa', {
@@ -228,6 +245,75 @@ router.post('/changer-mot-de-passe', async (req, res) => {
 
 
 // ---- Profil utilisateur (champs enrichis + préférences) ----
+
+router.get('/preferences', async (req, res, next) => {
+    try {
+        const { peutFaire } = require('../middlewares/requireLogin');
+        if (!req.session.user) return res.redirect('/login');
+        // Préférences accessibles si profil.read ou toujours pour soi
+        if (!peutFaire(req.session.user, 'profil', 'read') && !peutFaire(req.session.user, 'profil', 'update')) {
+            // permettre quand même les préférences de base pour tout utilisateur connecté
+        }
+        const api = apiClient(req);
+        const { data } = await api.get('/auth/me');
+        const user = data.user || data;
+        res.locals.breadcrumbs = [
+            { label: 'Tableau de bord', href: '/' },
+            { label: 'Préférences' }
+        ];
+        res.render('preferences', {
+            titre: 'Préférences de compte',
+            user,
+            erreur: null,
+            succes: req.query.succes === '1'
+        });
+    } catch (err) { next(err); }
+});
+
+router.post('/preferences', async (req, res, next) => {
+    try {
+        const api = apiClient(req);
+        const prefs = Object.assign({}, (req.session.user && req.session.user.preferences) || {});
+        prefs.theme = req.body.theme || 'clair';
+        prefs.langue = req.body.langue || 'fr';
+        prefs.densite = req.body.densite || 'confortable';
+        prefs.vue_outils_defaut = req.body.vue_outils_defaut || 'liste';
+        prefs.par_page_defaut = parseInt(req.body.par_page_defaut, 10) || 25;
+        prefs.notif_son = req.body.notif_son === '1' || req.body.notif_son === 'on';
+        prefs.notif_badge = req.body.notif_badge === '1' || req.body.notif_badge === 'on';
+        prefs.notif_resume = req.body.notif_resume || 'tous';
+        prefs.filtres_tickets_persist = req.body.filtres_tickets_persist === '1' || req.body.filtres_tickets_persist === 'on';
+        prefs.ouvrir_outil_nouvel_onglet = req.body.ouvrir_outil_nouvel_onglet === '1' || req.body.ouvrir_outil_nouvel_onglet === 'on';
+        prefs.masquer_creds_defaut = req.body.masquer_creds_defaut === '1' || req.body.masquer_creds_defaut === 'on';
+        prefs.confirmer_avant_quitter = req.body.confirmer_avant_quitter === '1' || req.body.confirmer_avant_quitter === 'on';
+        prefs.menu_compact = req.body.menu_compact === '1' || req.body.menu_compact === 'on';
+        prefs.rappel_session = req.body.rappel_session === '1' || req.body.rappel_session === 'on';
+        prefs.export_format_pref = req.body.export_format_pref || 'csv';
+        prefs.export_filtres_seuls = req.body.export_filtres_seuls === '1' || req.body.export_filtres_seuls === 'on';
+        prefs.densite = req.body.densite || 'confortable';
+        prefs.ouvrir_outil_nouvel_onglet = req.body.ouvrir_outil_nouvel_onglet === '1' || req.body.ouvrir_outil_nouvel_onglet === 'on';
+        prefs.notif_badge = req.body.notif_badge === '1' || req.body.notif_badge === 'on';
+        prefs.notif_resume = req.body.notif_resume || 'tous';
+        prefs.masquer_creds_defaut = req.body.masquer_creds_defaut === '1' || req.body.masquer_creds_defaut === 'on';
+        prefs.confirmer_avant_quitter = req.body.confirmer_avant_quitter === '1' || req.body.confirmer_avant_quitter === 'on';
+        prefs.raccourci_ctrl_k = req.body.raccourci_ctrl_k === '1' || req.body.raccourci_ctrl_k === 'on';
+        prefs.raccourci_aide = req.body.raccourci_aide === '1' || req.body.raccourci_aide === 'on';
+
+        prefs.raccourci_ctrl_k = req.body.raccourci_ctrl_k === '1' || req.body.raccourci_ctrl_k === 'on';
+        prefs.raccourci_aide = req.body.raccourci_aide === '1' || req.body.raccourci_aide === 'on';
+        const { data: user } = await api.put(`/utilisateurs/${req.session.user.id}/profil`, { preferences: prefs });
+        if (req.session.user) req.session.user.preferences = user.preferences || prefs;
+        res.redirect('/preferences?succes=1');
+    } catch (err) {
+        res.render('preferences', {
+            titre: 'Préférences de compte',
+            user: req.session.user,
+            erreur: err.response?.data?.message || 'Erreur',
+            succes: false
+        });
+    }
+});
+
 router.get('/profil', async (req, res, next) => {
     if (!req.session.user) return res.redirect('/login');
     try {

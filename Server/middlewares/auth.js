@@ -33,6 +33,12 @@ async function requireAuth(req, res, next) {
         user.rolesEffectifs = roles;
 
         req.currentUser = user;
+        // Rolling session : prolonge l'expiration tant qu'il y a de l'activité
+        try {
+            if (req.session && req.session.cookie && req.session.cookie.maxAge) {
+                req.session.touch();
+            }
+        } catch (_) {}
         next();
     } catch (err) {
         next(err);

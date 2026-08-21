@@ -2,7 +2,7 @@
 
 <div class="entete-page">
  <h1><i class="bi bi-bell"></i> Notifications</h1>
- <% if (notifications.some(function(n) { return !n.lu; })) { %>
+ <% if (notifications && notifications.length) { %>
  <form action="/notifications/vider" method="POST" onsubmit="return confirm('Supprimer définitivement toutes les notifications ?');" style="display:inline;">
  <button type="submit" class="btn btn-gris btn-petit"><i class="bi bi-trash"></i> Vider</button>
  </form>
@@ -17,21 +17,32 @@
 <% } else { %>
  <div class="carte" style="max-width:700px; padding:0;">
  <% notifications.forEach(function(n, i) { %>
- <form action="/notifications/<%= n.id %>/lue" method="POST"
- class="notif-item<%= i < notifications.length - 1 ? ' notif-sep' : '' %>">
- <button type="submit" class="notif-btn<%= n.lu ? '' : ' notif-non-lue' %>">
- <span style="font-size:18px; line-height:1;">
- <% if (n.type === 'alerte') { %><i class="bi bi-exclamation-triangle"></i> <% } else if (n.type === 'succes') { %><i class="bi bi-check-circle"></i> <% } else { %><i class="bi bi-info-circle"></i> <% } %>
- </span>
- <span style="flex:1;">
- <span class="notif-msg<%= n.lu ? '' : ' notif-msg-bold' %>"><%= n.message %></span>
- <span style="display:block; font-size:12px; color:var(--gris); margin-top:2px;">
- <%= new Date(n.createdAt).toLocaleString('fr-FR') %>
- <% if (!n.lu) { %> · <strong>non lue</strong><% } %>
- </span>
- </span>
- </button>
- </form>
+ <div class="notif-item<%= i < notifications.length - 1 ? ' notif-sep' : '' %><%= n.lu ? '' : ' notif-non-lue' %>">
+   <% if (n.lien) { %>
+   <a href="/notifications/<%= n.id %>/ouvrir" class="notif-btn" style="text-decoration:none;color:inherit;display:flex;gap:10px;align-items:flex-start;width:100%;padding:10px 0;">
+   <% } else { %>
+   <form action="/notifications/<%= n.id %>/lue" method="POST" style="flex:1;margin:0;">
+   <button type="submit" class="notif-btn" style="width:100%;text-align:left;">
+   <% } %>
+     <span style="font-size:18px; line-height:1;">
+       <% if (n.type === 'alerte') { %><i class="bi bi-exclamation-triangle"></i>
+       <% } else if (n.type === 'succes') { %><i class="bi bi-check-circle"></i>
+       <% } else { %><i class="bi bi-info-circle"></i><% } %>
+     </span>
+     <span style="flex:1;">
+       <span class="notif-msg<%= n.lu ? '' : ' notif-msg-bold' %>"><%= n.message %></span>
+       <span style="display:block; font-size:12px; color:var(--gris); margin-top:2px;">
+         <%= new Date(n.createdAt).toLocaleString('fr-FR') %>
+         <% if (!n.lu) { %> · <strong>non lue</strong><% } %>
+         <% if (n.lien) { %> · <span style="color:var(--bleu);">Ouvrir</span><% } %>
+       </span>
+     </span>
+   <% if (n.lien) { %>
+   </a>
+   <% } else { %>
+   </button></form>
+   <% } %>
+ </div>
  <% }) %>
  </div>
 

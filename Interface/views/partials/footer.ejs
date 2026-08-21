@@ -3,5 +3,32 @@
 <script src="/js/glo-nav.js" defer></script>
 <script src="/js/glo-palette.js" defer></script>
 <script src="/js/glo-favoris.js" defer></script>
+
+<% if (typeof rafraichissementAuto !== 'undefined' && rafraichissementAuto && typeof currentUser !== 'undefined' && currentUser) { %>
+<script>
+(function () {
+  var min = <%= Number(rafraichissementIntervalleMin) || 5 %>;
+  if (min < 1) min = 1;
+  var path = location.pathname || '';
+  // Pages où un reload ferait perdre du travail ou perturberait l'auth
+  if (/\/(nouveau|modifier|installation|login|credentials|preferences|profil|parametres)/.test(path)) return;
+  // Si l'utilisateur tape dans un champ, reporter le reload
+  var lastActivity = Date.now();
+  document.addEventListener('input', function () { lastActivity = Date.now(); }, true);
+  document.addEventListener('keydown', function () { lastActivity = Date.now(); }, true);
+  function planifier() {
+    setTimeout(function () {
+      if (Date.now() - lastActivity < 30000) {
+        planifier();
+        return;
+      }
+      location.reload();
+    }, min * 60 * 1000);
+  }
+  planifier();
+})();
+</script>
+<% } %>
+
 </body>
 </html>

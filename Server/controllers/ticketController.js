@@ -122,10 +122,17 @@ async function getAll(req, res, next) {
             }
         }
         if (req.query.q) {
-            const terme = req.query.q.trim().toLowerCase();
-            tickets = tickets.filter(t =>
-                t.titre.toLowerCase().includes(terme) || t.description.toLowerCase().includes(terme)
-            );
+            // Plusieurs termes (séparés par | ou espace) : un ticket matche s'il contient au moins un terme
+            const termes = String(req.query.q)
+                .split(/[|]+/)
+                .map(s => s.trim().toLowerCase())
+                .filter(Boolean);
+            if (termes.length) {
+                tickets = tickets.filter(t => {
+                    const hay = ((t.titre || '') + ' ' + (t.description || '')).toLowerCase();
+                    return termes.some(terme => hay.includes(terme));
+                });
+            }
         }
         if (req.query.id_outil) tickets = tickets.filter(t => t.id_outil === parseInt(req.query.id_outil, 10));
 
