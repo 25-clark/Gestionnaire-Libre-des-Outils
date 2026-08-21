@@ -80,6 +80,11 @@ async function mettreAJour(req, res, next) {
             max_tentatives_connexion,
             duree_blocage_minutes,
             session_duree_heures,
+            mdp_expiration_jours,
+            mdp_historique_count,
+            rapport_planifie,
+            rapport_intervalle_heures,
+            rapport_emails,
             surveillance_active,
             surveillance_intervalle_minutes,
             credentials_actifs,
@@ -128,8 +133,18 @@ async function mettreAJour(req, res, next) {
                 ? borner(duree_blocage_minutes, 1, 1440, parametre.duree_blocage_minutes)
                 : parametre.duree_blocage_minutes,
             session_duree_heures: session_duree_heures !== undefined
-                ? borner(session_duree_heures, 1, 168, parametre.session_duree_heures)
+                ? borner(session_duree_heures,
+            mdp_expiration_jours,
+            mdp_historique_count,
+            rapport_planifie,
+            rapport_intervalle_heures,
+            rapport_emails, 1, 168, parametre.session_duree_heures)
                 : parametre.session_duree_heures,
+            mdp_expiration_jours,
+            mdp_historique_count,
+            rapport_planifie,
+            rapport_intervalle_heures,
+            rapport_emails,
             surveillance_active: surveillance_active !== undefined ? !!surveillance_active : parametre.surveillance_active,
             surveillance_intervalle_minutes: surveillance_intervalle_minutes !== undefined
                 ? borner(surveillance_intervalle_minutes, 1, 1440, parametre.surveillance_intervalle_minutes)

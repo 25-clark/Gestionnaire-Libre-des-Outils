@@ -78,6 +78,78 @@ async function assurerColonnes() {
         console.warn('[schema] utilisateur_outil_credentials:', e.message);
     }
 
+    await ajouterColonne('parametres', 'mdp_expiration_jours', 'INT NOT NULL DEFAULT 0');
+    await ajouterColonne('parametres', 'mdp_historique_count', 'INT NOT NULL DEFAULT 0');
+    await ajouterColonne('parametres', 'rapport_planifie', 'TINYINT(1) NOT NULL DEFAULT 0');
+    await ajouterColonne('parametres', 'rapport_intervalle_heures', 'INT NOT NULL DEFAULT 168');
+    await ajouterColonne('parametres', 'rapport_emails', 'TEXT NULL');
+    await ajouterColonne('utilisateurs', 'mot_de_passe_change_le', 'DATETIME NULL');
+    await ajouterColonne('utilisateurs', 'mdp_historique', 'JSON NULL');
+
+    try {
+        await sequelize.query(`
+            CREATE TABLE IF NOT EXISTS \`sessions_utilisateurs\` (
+                \`id\` INT NOT NULL AUTO_INCREMENT,
+                \`id_user\` INT NOT NULL,
+                \`sid\` VARCHAR(255) NOT NULL,
+                \`ip\` VARCHAR(64) NULL,
+                \`user_agent\` VARCHAR(500) NULL,
+                \`derniere_activite\` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                \`revoquee\` TINYINT(1) NOT NULL DEFAULT 0,
+                \`created_at\` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                \`updated_at\` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (\`id\`),
+                KEY \`idx_sess_user\` (\`id_user\`),
+                KEY \`idx_sess_sid\` (\`sid\`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+        console.log('[schema] Table sessions_utilisateurs OK');
+    } catch (e) { console.warn('[schema] sessions_utilisateurs:', e.message); }
+
+    try {
+        await sequelize.query(`
+            CREATE TABLE IF NOT EXISTS \`delegations\` (
+                \`id\` INT NOT NULL AUTO_INCREMENT,
+                \`id_donneur\` INT NOT NULL,
+                \`id_receveur\` INT NOT NULL,
+                \`date_debut\` DATETIME NOT NULL,
+                \`date_fin\` DATETIME NOT NULL,
+                \`perimetre\` JSON NOT NULL,
+                \`motif\` VARCHAR(500) NULL,
+                \`active\` TINYINT(1) NOT NULL DEFAULT 1,
+                \`created_at\` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                \`updated_at\` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (\`id\`),
+                KEY \`idx_del_donneur\` (\`id_donneur\`),
+                KEY \`idx_del_receveur\` (\`id_receveur\`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+        console.log('[schema] Table delegations OK');
+    } catch (e) { console.warn('[schema] delegations:', e.message); }
+
+    try {
+        await sequelize.query(`
+            CREATE TABLE IF NOT EXISTS \`demandes_acces\` (
+                \`id\` INT NOT NULL AUTO_INCREMENT,
+                \`id_demandeur\` INT NOT NULL,
+                \`type_cible\` ENUM('activite','sous_activite','outil') NOT NULL,
+                \`id_cible\` INT NOT NULL,
+                \`message\` TEXT NULL,
+                \`statut\` ENUM('en_attente','approuvee','refusee','annulee') NOT NULL DEFAULT 'en_attente',
+                \`id_valideur\` INT NULL,
+                \`reponse\` TEXT NULL,
+                \`traite_le\` DATETIME NULL,
+                \`created_at\` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                \`updated_at\` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (\`id\`),
+                KEY \`idx_dem_demandeur\` (\`id_demandeur\`),
+                KEY \`idx_dem_statut\` (\`statut\`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+        console.log('[schema] Table demandes_acces OK');
+    } catch (e) { console.warn('[schema] demandes_acces:', e.message); }
+
+
 
     // ---- tickets : SLA / escalade ----
     await ajouterColonne('tickets', 'sla_echeance', 'DATETIME NULL');

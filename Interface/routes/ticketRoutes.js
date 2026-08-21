@@ -23,7 +23,10 @@ router.get('/', async (req, res, next) => {
         const api = apiClient(req);
         const { statut, priorite, id_createur, id_assigne, q } = req.query;
         const page = parseInt(req.query.page, 10) || 1;
-        const par_page = parseInt(req.query.par_page, 10) || 25;
+        const prefsUser = (req.session.user && req.session.user.preferences) || {};
+        const par_page = parseInt(req.query.par_page, 10)
+            || parseInt(prefsUser.par_page_defaut, 10)
+            || 25;
         const params = { page, par_page };
         if (statut) params.statut = statut;
         if (priorite) params.priorite = priorite;

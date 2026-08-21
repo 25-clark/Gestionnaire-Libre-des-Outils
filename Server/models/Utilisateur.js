@@ -113,6 +113,16 @@ module.exports = (sequelize) => {
             allowNull: true,
             defaultValue: { theme: 'clair', langue: 'fr' }
         },
+        mot_de_passe_change_le: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            defaultValue: null
+        },
+        mdp_historique: {
+            type: DataTypes.JSON,
+            allowNull: true,
+            defaultValue: null
+        },
         session_active_id: {
             type: DataTypes.STRING,
             allowNull: true

@@ -6,6 +6,13 @@ const { Utilisateur, Role, SousActivite, UtilisateurActivite, UtilisateurSousAct
  */
 async function requireAuth(req, res, next) {
     try {
+        try {
+            const { rejeterSiRevoquee } = require('../controllers/sessionController');
+            await new Promise((resolve, reject) => {
+                rejeterSiRevoquee(req, res, (err) => err ? reject(err) : resolve());
+            });
+            if (res.headersSent) return;
+        } catch (_) {}
         if (!req.session || !req.session.userId) {
             return res.status(401).json({ message: 'Non authentifié. Veuillez vous connecter.' });
         }

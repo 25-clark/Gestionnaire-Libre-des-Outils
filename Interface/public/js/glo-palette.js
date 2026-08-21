@@ -74,6 +74,11 @@
     }
 
     document.addEventListener('keydown', function (e) {
+    try {
+      var pr = JSON.parse(localStorage.getItem('glo_prefs') || '{}');
+      if (pr && pr.raccourci_ctrl_k === false) return;
+    } catch (err) {}
+
       if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
         e.preventDefault();
         if (root.hidden) openPalette(); else closePalette();

@@ -177,15 +177,54 @@
 .prefs-grille .carte { max-width: none; }
 </style>
 <script>
-document.getElementById('form-prefs').addEventListener('submit', function () {
-  try {
-    var t = document.getElementById('theme');
-    var l = document.getElementById('langue');
-    if (t) localStorage.setItem('glo_theme', t.value);
-    if (l) localStorage.setItem('glo_langue', l.value);
-    var v = document.getElementById('vue_outils_defaut');
-    if (v) localStorage.setItem('glo-vue-outils', v.value);
-  } catch (e) {}
-});
+(function () {
+  function appliquerTheme(pref) {
+    var t = pref;
+    if (t === 'systeme' || t === 'auto') {
+      try {
+        t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'sombre' : 'clair';
+      } catch (e) { t = 'clair'; }
+    }
+    if (t === 'sombre') {
+      document.documentElement.classList.add('theme-sombre');
+      document.body.classList.add('theme-sombre');
+    } else {
+      document.documentElement.classList.remove('theme-sombre');
+      document.body.classList.remove('theme-sombre');
+    }
+  }
+  function appliquerDensite(d) {
+    if (d === 'compact') document.body.classList.add('densite-compact');
+    else document.body.classList.remove('densite-compact');
+  }
+  var themeEl = document.getElementById('theme');
+  var densiteEl = document.getElementById('densite');
+  if (themeEl) {
+    themeEl.addEventListener('change', function () {
+      appliquerTheme(themeEl.value);
+      try { localStorage.setItem('glo_theme', themeEl.value); } catch (e) {}
+    });
+  }
+  if (densiteEl) {
+    densiteEl.addEventListener('change', function () {
+      appliquerDensite(densiteEl.value);
+      try { localStorage.setItem('glo_densite', densiteEl.value); } catch (e) {}
+    });
+  }
+  var form = document.getElementById('form-prefs');
+  if (form) {
+    form.addEventListener('submit', function () {
+      try {
+        var t = document.getElementById('theme');
+        var l = document.getElementById('langue');
+        var d = document.getElementById('densite');
+        if (t) localStorage.setItem('glo_theme', t.value);
+        if (l) localStorage.setItem('glo_langue', l.value);
+        if (d) localStorage.setItem('glo_densite', d.value);
+        if (t) localStorage.setItem('glo-vue-outils', (document.getElementById('vue_outils_defaut') || {}).value || 'liste');
+      } catch (e) {}
+    });
+  }
+})();
 </script>
 <%- include('partials/footer') %>

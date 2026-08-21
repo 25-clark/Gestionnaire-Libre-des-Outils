@@ -30,6 +30,8 @@ const { consigner } = require('../utils/journal');
 const { verifierBlocageIp, enregistrerEchecIp, reinitialiserIp } = require('../utils/limiteurIp');
 const { genererSecret, verifierTotp, otpauthUrl, genererCodesRecuperation } = require('../utils/totp');
 const { envoyerCodeConnexion } = require('../utils/email');
+const { normaliserPreferences } = require('./utilisateurController');
+const { enregistrerSession } = require('./sessionController');
 
 // Réglages de sécurité toujours disponibles (créés à la volée s'ils
 // n'existent pas encore, comme dans parametreController.js).
@@ -187,7 +189,19 @@ async function login(req, res, next) {
             await user.update({ tentatives_echouees: 0, bloque_jusqu_a: null });
         }
 
-        const totpDispo = parametre.totp_disponible !== false;
+        
+        // Expiration du mot de passe
+        const joursExp = parseInt(parametre.mdp_expiration_jours, 10) || 0;
+        if (joursExp > 0) {
+            const changeLe = user.mot_de_passe_change_le ? new Date(user.mot_de_passe_change_le).getTime() : 0;
+            const ageMs = changeLe ? (Date.now() - changeLe) : Infinity;
+            if (ageMs > joursExp * 86400000) {
+                await user.update({ doit_changer_mdp: true });
+                user.doit_changer_mdp = true;
+            }
+        }
+
+const totpDispo = parametre.totp_disponible !== false;
         const totpOblig = !!parametre.totp_obligatoire;
         const userTotpActif = !!user.totp_actif && !!user.totp_secret;
 
@@ -275,15 +289,11 @@ async function login(req, res, next) {
         const userSansMdp = user.toJSON();
         delete userSansMdp.mot_de_passe;
         delete userSansMdp.totp_secret;
-        if (userSansMdp.preferences && typeof userSansMdp.preferences === 'string') {
-            try { userSansMdp.preferences = JSON.parse(userSansMdp.preferences); } catch { userSansMdp.preferences = { theme: 'clair', langue: 'fr' }; }
-        }
-        if (!userSansMdp.preferences || typeof userSansMdp.preferences !== 'object') {
-            userSansMdp.preferences = { theme: 'clair', langue: 'fr' };
-        }
+        userSansMdp.preferences = normaliserPreferences(userSansMdp.preferences);
         userSansMdp.totp_actif = !!user.totp_actif;
 
         await saveSession(req);
+        try { await enregistrerSession(req, user.id); } catch (e) { console.warn('[session]', e.message); }
         return res.json({
             message: 'Connexion réussie.',
             user: userSansMdp,
@@ -316,6 +326,7 @@ async function me(req, res) {
     const u = req.currentUser && req.currentUser.toJSON ? req.currentUser.toJSON() : { ...req.currentUser };
     delete u.mot_de_passe;
     delete u.totp_secret;
+    u.preferences = normaliserPreferences(u.preferences);
     res.json({ user: u });
 }
 
@@ -345,9 +356,25 @@ async function changerMotDePasse(req, res, next) {
             return res.status(401).json({ message: "L'ancien mot de passe est incorrect." });
         }
 
+        const hash = hacher(nouveau_mot_de_passe);
+        const maxHist = parseInt(parametre.mdp_historique_count, 10) || 0;
+        let hist = user.mdp_historique || [];
+        if (typeof hist === 'string') { try { hist = JSON.parse(hist); } catch { hist = []; } }
+        if (!Array.isArray(hist)) hist = [];
+        if (maxHist > 0) {
+            for (const ancienHash of hist.slice(0, maxHist)) {
+                if (verifier(nouveau_mot_de_passe, ancienHash)) {
+                    return res.status(400).json({ message: 'Ce mot de passe a déjà été utilisé récemment. Choisissez-en un autre.' });
+                }
+            }
+        }
+        if (user.mot_de_passe) hist.unshift(user.mot_de_passe);
+        hist = maxHist > 0 ? hist.slice(0, maxHist) : [];
         await user.update({
-            mot_de_passe: hacher(nouveau_mot_de_passe),
-            doit_changer_mdp: false
+            mot_de_passe: hash,
+            doit_changer_mdp: false,
+            mot_de_passe_change_le: new Date(),
+            mdp_historique: hist
         });
 
         await consigner({
@@ -527,6 +554,8 @@ async function recuperer2faParEmail(req, res, next) {
         req.session.pending2faRecoveryCode = code;
         req.session.pending2faRecoveryExpire = Date.now() + 10 * 60 * 1000;
         const { envoyerCodeConnexion } = require('../utils/email');
+const { normaliserPreferences } = require('./utilisateurController');
+const { enregistrerSession } = require('./sessionController');
         await envoyerCodeConnexion(email, code, { prenom: user.prenom, matricule: user.matricule });
         const masque = email.replace(/(.{2})(.*)(@.*)/, (_, a, b, d) => a + '***' + d);
         res.json({ message: `Un code de secours a été envoyé à ${masque}.`, email_masque: masque });

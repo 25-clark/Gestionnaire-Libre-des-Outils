@@ -17,6 +17,9 @@ const Ticket = require('./Ticket')(sequelize);
 const TicketMessage = require('./TicketMessage')(sequelize);
 const TicketImage = require('./TicketImage')(sequelize);
 const UtilisateurOutilCredential = require('./UtilisateurOutilCredential')(sequelize);
+const SessionUtilisateur = require('./SessionUtilisateur')(sequelize);
+const Delegation = require('./Delegation')(sequelize);
+const DemandeAcces = require('./DemandeAcces')(sequelize);
 const UtilisateurRole = require('./UtilisateurRole')(sequelize);
 
 // ========================= ASSOCIATIONS =========================
@@ -154,6 +157,17 @@ UtilisateurOutilCredential.belongsTo(Utilisateur, { foreignKey: 'id_user' });
 Outil.hasMany(UtilisateurOutilCredential, { foreignKey: 'id_outil', as: 'credentialsUtilisateurs' });
 UtilisateurOutilCredential.belongsTo(Outil, { foreignKey: 'id_outil' });
 
+// Sessions / délégation / demandes d'accès
+Utilisateur.hasMany(SessionUtilisateur, { foreignKey: 'id_user', as: 'Sessions' });
+SessionUtilisateur.belongsTo(Utilisateur, { foreignKey: 'id_user' });
+Utilisateur.hasMany(Delegation, { foreignKey: 'id_donneur', as: 'DelegationsDonnees' });
+Utilisateur.hasMany(Delegation, { foreignKey: 'id_receveur', as: 'DelegationsRecues' });
+Delegation.belongsTo(Utilisateur, { foreignKey: 'id_donneur', as: 'Donneur' });
+Delegation.belongsTo(Utilisateur, { foreignKey: 'id_receveur', as: 'Receveur' });
+Utilisateur.hasMany(DemandeAcces, { foreignKey: 'id_demandeur', as: 'DemandesAcces' });
+DemandeAcces.belongsTo(Utilisateur, { foreignKey: 'id_demandeur', as: 'Demandeur' });
+DemandeAcces.belongsTo(Utilisateur, { foreignKey: 'id_valideur', as: 'Valideur' });
+
 module.exports = {
     UtilisateurRole,
     sequelize,
@@ -173,5 +187,8 @@ module.exports = {
     Ticket,
     TicketMessage,
     TicketImage,
-    UtilisateurOutilCredential
+    UtilisateurOutilCredential,
+    SessionUtilisateur,
+    Delegation,
+    DemandeAcces
 };

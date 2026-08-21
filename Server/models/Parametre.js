@@ -54,6 +54,31 @@ module.exports = (sequelize) => {
             allowNull: false,
             defaultValue: 8
         },
+        mdp_expiration_jours: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0
+        },
+        mdp_historique_count: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0
+        },
+        rapport_planifie: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
+        },
+        rapport_intervalle_heures: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 168
+        },
+        rapport_emails: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+            defaultValue: null
+        },
         // ---- Surveillance réseau automatique (voir utils/surveillance.js) ----
         surveillance_active: {
             type: DataTypes.BOOLEAN,

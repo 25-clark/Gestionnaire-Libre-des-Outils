@@ -302,7 +302,16 @@ router.post('/preferences', async (req, res, next) => {
         prefs.raccourci_ctrl_k = req.body.raccourci_ctrl_k === '1' || req.body.raccourci_ctrl_k === 'on';
         prefs.raccourci_aide = req.body.raccourci_aide === '1' || req.body.raccourci_aide === 'on';
         const { data: user } = await api.put(`/utilisateurs/${req.session.user.id}/profil`, { preferences: prefs });
-        if (req.session.user) req.session.user.preferences = user.preferences || prefs;
+        if (req.session.user) {
+            const saved = (user && (user.preferences || user)) || prefs;
+            req.session.user.preferences = (saved && saved.theme) ? saved : (user.preferences || prefs);
+            // Fusionner au cas où l'API renverrait un sous-ensemble
+            req.session.user.preferences = Object.assign({}, prefs, req.session.user.preferences || {});
+        }
+        // S'assurer que la session Interface est bien écrite avant le redirect
+        await new Promise(function (resolve) {
+            req.session.save(function () { resolve(); });
+        });
         res.redirect('/preferences?succes=1');
     } catch (err) {
         res.render('preferences', {

@@ -1,0 +1,50 @@
+<%- include('../partials/header') %>
+<div class="entete-page">
+  <h1><i class="bi bi-laptop"></i> <%= titre %></h1>
+  <p style="margin:0;color:var(--gris);font-size:13px;">Administration — sessions de tous les utilisateurs</p>
+</div>
+<% if (succes) { %><div class="message-succes">Opération effectuée.</div><% } %>
+<% if (erreur) { %><div class="message-erreur"><%= erreur %></div><% } %>
+
+<div class="carte">
+  <p style="color:var(--gris);font-size:14px;">
+    Consultez et révoquez les sessions actives sur l’ensemble du parc. Utile en cas de poste volé, départ d’un collaborateur ou connexion suspecte.
+  </p>
+  <table class="tableau">
+    <thead>
+      <tr>
+        <th>Utilisateur</th>
+        <th>IP</th>
+        <th>Navigateur</th>
+        <th>Dernière activité</th>
+        <th>Créée le</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% (sessions || []).forEach(function(s) {
+        var u = s.utilisateur;
+        var libU = u ? (u.prenom + ' ' + u.nom + ' (' + u.matricule + ')') : ('#' + s.id_user);
+      %>
+      <tr>
+        <td><%= libU %><% if (s.courante) { %> <span class="pastille-active">vous</span><% } %></td>
+        <td><%= s.ip || '—' %></td>
+        <td style="max-width:260px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<%= s.user_agent || '' %>"><%= s.user_agent || '—' %></td>
+        <td><%= s.derniere_activite ? new Date(s.derniere_activite).toLocaleString('fr-FR') : '—' %></td>
+        <td><%= s.created_at ? new Date(s.created_at).toLocaleString('fr-FR') : '—' %></td>
+        <td>
+          <% if (!s.courante) { %>
+          <form action="/securite/sessions/<%= s.id %>/revoquer" method="POST" style="display:inline;" onsubmit="return confirm('Révoquer cette session ?');">
+            <button type="submit" class="btn btn-danger btn-petit">Révoquer</button>
+          </form>
+          <% } else { %>—<% } %>
+        </td>
+      </tr>
+      <% }); %>
+      <% if (!(sessions || []).length) { %>
+      <tr><td colspan="6" style="color:var(--gris);">Aucune session active enregistrée.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+<%- include('../partials/footer') %>

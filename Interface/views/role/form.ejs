@@ -15,7 +15,10 @@
  profil: 'Mon profil',
  partage: 'Partage (outils / sous-activités)',
  journal: "Journal d'événements",
- credentials: 'Credentials (outils)'
+ credentials: 'Credentials (outils)',
+ sessions: 'Sessions actives (administration)',
+ delegations: 'Délégations temporaires',
+ demandes_acces: "Demandes d'accès"
 };
 var libellesOnglets = {
  outils: 'Outils',
@@ -40,6 +43,11 @@ var libellesActions = { read: 'Lire', create: 'Créer', update: 'Modifier', dele
  value="<%= role ? role.abbreviation : '' %>" <%= role && role.abbreviation === 'ADMIN' ? 'readonly' : '' %>>
 
  <label>Permissions</label>
+ <p style="font-size:13px;color:var(--gris);margin-top:-4px;margin-bottom:10px;">
+  Nouvelles ressources : <strong>Sessions</strong> (Lire / Supprimer = révoquer),
+  <strong>Délégations</strong> (Lire / Créer / Supprimer),
+  <strong>Demandes d'accès</strong> (Lire / Créer / Modifier = approuver ou refuser).
+ </p>
  <table class="tableau">
  <thead>
  <tr>

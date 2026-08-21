@@ -208,21 +208,15 @@ a:hover { text-decoration: underline; }
     margin-top: 6px;
     border: 1px solid var(--gris-bordure);
 }
-.menu-deroulant:hover .contenu-menu-deroulant,
-.menu-deroulant:focus-within .contenu-menu-deroulant {
-    display: block;
-}
-
-/* Ouverture au clic (classe .ouvert) — prioritaire sur le hover tactile */
+/* Ouverture uniquement au clic (.ouvert) — pas de hover */
 .menu-deroulant.ouvert > .contenu-menu-deroulant {
     display: block;
 }
-/* Menu utilisateur : clic uniquement (évite le hover accidentel tablette) */
-.menu-utilisateur:hover > .contenu-menu-utilisateur {
-    display: none;
-}
 .menu-utilisateur.ouvert > .contenu-menu-utilisateur {
     display: block !important;
+}
+.menu-utilisateur:hover > .contenu-menu-utilisateur {
+    display: none;
 }
 
 .contenu-menu-deroulant a {
@@ -1148,3 +1142,15 @@ body.theme-sombre .btn-collapse-activite:hover {
     display: block !important;
   }
 }
+
+
+/* ---------- Densité compacte (préférence compte) ---------- */
+body.densite-compact .carte { padding: 12px 14px; }
+body.densite-compact .entete-page h1 { font-size: 1.25rem; }
+body.densite-compact .tableau th,
+body.densite-compact .tableau td { padding: 6px 8px; font-size: 13px; }
+body.densite-compact .btn { padding: 6px 10px; font-size: 13px; }
+body.densite-compact .topbar { min-height: 48px; }
+body.densite-compact input,
+body.densite-compact select,
+body.densite-compact textarea { padding: 6px 8px; font-size: 13px; }

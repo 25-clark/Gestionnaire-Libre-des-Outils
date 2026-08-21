@@ -1,0 +1,69 @@
+<%- include('../partials/header') %>
+<div class="entete-page">
+  <h1><i class="bi bi-people"></i> <%= titre %></h1>
+  <a href="/securite/sessions" class="btn btn-gris">Sessions</a>
+</div>
+<% if (succes) { %><div class="message-succes">Enregistré.</div><% } %>
+<% if (typeof erreur !== 'undefined' && erreur) { %><div class="message-erreur"><%= erreur %></div><% } %>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
+<div class="carte">
+  <h2 style="font-size:15px;">Nouvelle délégation</h2>
+  <p style="font-size:13px;color:var(--gris);">Transférez temporairement le suivi de vos tickets (et optionnellement vos accès) à un collègue.</p>
+  <form action="/securite/delegations" method="POST">
+    <label>Destinataire</label>
+    <select name="id_receveur" required>
+      <option value="">— Choisir —</option>
+      <% (utilisateurs || []).forEach(function(u) { %>
+      <option value="<%= u.id %>"><%= u.prenom %> <%= u.nom %> (<%= u.matricule %>)</option>
+      <% }); %>
+    </select>
+    <label>Début</label>
+    <input type="datetime-local" name="date_debut">
+    <label>Fin</label>
+    <input type="datetime-local" name="date_fin" required>
+    <div class="champ-case"><input type="checkbox" name="perimetre_tickets" id="pt" checked> <label for="pt">Tickets (assignations / suivi)</label></div>
+    <div class="champ-case"><input type="checkbox" name="perimetre_acces" id="pa"> <label for="pa">Accès (périmètre élargi — usage avancé)</label></div>
+    <label>Motif</label>
+    <input type="text" name="motif" maxlength="500" placeholder="Congés, formation…">
+    <button type="submit" class="btn btn-primaire" style="margin-top:10px;">Créer la délégation</button>
+  </form>
+</div>
+<div class="carte">
+  <h2 style="font-size:15px;">Délégations données</h2>
+  <table class="tableau">
+    <thead><tr><th>À</th><th>Période</th><th>Actif</th><th></th></tr></thead>
+    <tbody>
+      <% (donnees || []).forEach(function(d) { %>
+      <tr>
+        <td><%= d.Receveur ? (d.Receveur.prenom + ' ' + d.Receveur.nom) : d.id_receveur %></td>
+        <td style="font-size:12px;"><%= new Date(d.date_debut).toLocaleDateString('fr-FR') %> → <%= new Date(d.date_fin).toLocaleDateString('fr-FR') %></td>
+        <td><%= d.active ? 'Oui' : 'Non' %></td>
+        <td>
+          <% if (d.active) { %>
+          <form action="/securite/delegations/<%= d.id %>/revoquer" method="POST"><button class="btn btn-gris btn-petit">Révoquer</button></form>
+          <% } %>
+        </td>
+      </tr>
+      <% }); %>
+      <% if (!(donnees || []).length) { %><tr><td colspan="4" style="color:var(--gris);">Aucune</td></tr><% } %>
+    </tbody>
+  </table>
+  <h2 style="font-size:15px;margin-top:18px;">Délégations reçues</h2>
+  <table class="tableau">
+    <thead><tr><th>De</th><th>Période</th><th>Actif</th></tr></thead>
+    <tbody>
+      <% (recues || []).forEach(function(d) { %>
+      <tr>
+        <td><%= d.Donneur ? (d.Donneur.prenom + ' ' + d.Donneur.nom) : d.id_donneur %></td>
+        <td style="font-size:12px;"><%= new Date(d.date_debut).toLocaleDateString('fr-FR') %> → <%= new Date(d.date_fin).toLocaleDateString('fr-FR') %></td>
+        <td><%= d.active ? 'Oui' : 'Non' %></td>
+      </tr>
+      <% }); %>
+      <% if (!(recues || []).length) { %><tr><td colspan="3" style="color:var(--gris);">Aucune</td></tr><% } %>
+    </tbody>
+  </table>
+</div>
+</div>
+<style>@media(max-width:900px){div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important;}}</style>
+<%- include('../partials/footer') %>

@@ -92,20 +92,15 @@
     });
   }
 
-  // Sous-menus au clic (mobile / tablette + menu utilisateur)
+  // Sous-menus : ouverture uniquement au clic (tous les écrans)
   document.querySelectorAll('.menu-deroulant > .lien-menu-deroulant').forEach(function (btnMenu) {
     btnMenu.addEventListener('click', function (e) {
-      var parent = btnMenu.closest('.menu-deroulant');
-      if (!parent) return;
-      var isUser = parent.classList.contains('menu-utilisateur');
-      var needClick = isUser || isMobileNav() || window.matchMedia('(max-width: 1024px)').matches;
-      if (!needClick) return; // desktop hover CSS
-
       e.preventDefault();
       e.stopPropagation();
+      var parent = btnMenu.closest('.menu-deroulant');
+      if (!parent) return;
 
       var wasOpen = parent.classList.contains('ouvert');
-      // Fermer uniquement les autres sous-menus du même parent (drawer ou topbar)
       var root = (nav && nav.contains(parent)) ? nav : bar;
       root.querySelectorAll('.menu-deroulant.ouvert').forEach(function (m) {
         if (m !== parent) m.classList.remove('ouvert');

@@ -8,7 +8,10 @@ router.use(requireLogin);
 const RESSOURCES = [
     'utilisateurs', 'roles', 'activites', 'sous_activites', 'outils', 'acces',
     'tickets', 'diagnostic', 'notifications', 'export', 'profil', 'partage', 'journal',
-    'credentials'
+    'credentials',
+    'sessions',
+    'delegations',
+    'demandes_acces'
 ];
 const ACTIONS = ['read', 'create', 'update', 'delete'];
 // Onglets visibles dans une page activité/sous-activité — indépendant du

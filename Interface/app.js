@@ -23,6 +23,7 @@ const ticketRoutes = require('./routes/ticketRoutes');
 const ldapRoutes = require('./routes/ldapRoutes');
 const installationRoutes = require('./routes/installationRoutes');
 const aideRoutes = require('./routes/aideRoutes');
+const securiteRoutes = require('./routes/securiteRoutes');
 
 const app = express();
 
@@ -138,6 +139,12 @@ function deduireNavigation(reqPath) {
         nav.item = 'settings';
         crumbs.push({ label: 'Administration' });
         crumbs.push({ label: 'Réglages généraux' });
+    } else if (p.startsWith('/securite')) {
+        nav.section = 'securite';
+        crumbs.push({ label: 'Sécurité', href: '/securite/sessions' });
+        if (p.includes('sessions')) { nav.item = 'sessions'; crumbs.push({ label: 'Sessions' }); }
+        else if (p.includes('delegations')) { nav.item = 'delegations'; crumbs.push({ label: 'Délégations' }); }
+        else if (p.includes('demandes')) { nav.item = 'demandes'; crumbs.push({ label: "Demandes d'accès" }); }
     } else if (p.startsWith('/aide')) {
         nav.section = 'aide';
         nav.item = p.split('/')[2] || 'documentation';
@@ -265,6 +272,7 @@ app.use(async (req, res, next) => {
 
 app.use('/installation', installationRoutes);
 app.use('/aide', aideRoutes);
+app.use('/securite', securiteRoutes);
 app.use('/public', publicRoutes);
 app.use('/', authRoutes);
 app.use('/', dashboardRoutes);

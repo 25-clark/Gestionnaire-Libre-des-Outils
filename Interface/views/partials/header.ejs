@@ -11,39 +11,97 @@
 <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/design-modern.css">
  <link rel="stylesheet" href="/vendor/bootstrap-icons/font/bootstrap-icons.min.css">
- <% 
- var prefsTheme = (typeof prefs !== 'undefined' && prefs.theme) ? prefs.theme : 'clair';
- if (typeof currentUser !== 'undefined' && currentUser && currentUser.preferences && currentUser.preferences.theme) {
- prefsTheme = currentUser.preferences.theme;
+ <%
+ var _p = (typeof prefs !== 'undefined' && prefs) ? prefs : {};
+ if (typeof currentUser !== 'undefined' && currentUser && currentUser.preferences) {
+   _p = Object.assign({}, _p, currentUser.preferences);
  }
+ var prefsTheme = _p.theme || 'clair';
+ if (prefsTheme === 'auto') prefsTheme = 'systeme';
+ var prefsDensite = _p.densite === 'compact' ? 'compact' : 'confortable';
+ var prefsLang = (typeof lang !== 'undefined' ? lang : (_p.langue || 'fr'));
+ var bodyClasses = [];
+ if (prefsDensite === 'compact') bodyClasses.push('densite-compact');
+ var _gloPrefsBoot = {
+   theme: prefsTheme,
+   langue: prefsLang,
+   densite: prefsDensite,
+   vue_outils_defaut: _p.vue_outils_defaut || 'liste',
+   par_page_defaut: Number(_p.par_page_defaut) || 25,
+   ouvrir_outil_nouvel_onglet: _p.ouvrir_outil_nouvel_onglet !== false,
+   raccourci_ctrl_k: _p.raccourci_ctrl_k !== false,
+   masquer_creds_defaut: _p.masquer_creds_defaut !== false
+ };
  %>
+ <script type="application/json" id="glo-prefs-boot"><%- JSON.stringify(_gloPrefsBoot) %></script>
  <script>
  (function () {
- var theme = '<%= prefsTheme %>';
- try {
- var stored = localStorage.getItem('glo_theme');
- if (stored === 'clair' || stored === 'sombre' || stored === 'auto') theme = stored;
- } catch (e) {}
- if (theme === 'auto') {
- theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'sombre' : 'clair';
- }
- if (theme === 'sombre') {
- document.documentElement.classList.add('theme-sombre');
- } else {
- document.documentElement.classList.remove('theme-sombre');
- }
- try { localStorage.setItem('glo_theme', '<%= prefsTheme %>'); } catch (e) {}
- try { localStorage.setItem('glo_langue', '<%= typeof lang !== "undefined" ? lang : "fr" %>'); } catch (e) {}
+   var boot = { theme: 'clair', langue: 'fr', densite: 'confortable' };
+   try {
+     var el = document.getElementById('glo-prefs-boot');
+     if (el && el.textContent) boot = JSON.parse(el.textContent);
+   } catch (e) {}
+
+   var themePref = boot.theme || 'clair';
+   var densite = boot.densite || 'confortable';
+   var langue = boot.langue || 'fr';
+
+   try {
+     localStorage.setItem('glo_theme', themePref);
+     localStorage.setItem('glo_langue', langue);
+     localStorage.setItem('glo_densite', densite);
+     localStorage.setItem('glo_prefs', JSON.stringify(boot));
+   } catch (e) {}
+
+   function resoudreTheme(pref) {
+     if (pref === 'systeme' || pref === 'auto') {
+       try {
+         return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'sombre' : 'clair';
+       } catch (e) { return 'clair'; }
+     }
+     return pref === 'sombre' ? 'sombre' : 'clair';
+   }
+
+   function appliquerTheme(pref) {
+     var t = resoudreTheme(pref);
+     if (t === 'sombre') {
+       document.documentElement.classList.add('theme-sombre');
+       if (document.body) document.body.classList.add('theme-sombre');
+     } else {
+       document.documentElement.classList.remove('theme-sombre');
+       if (document.body) document.body.classList.remove('theme-sombre');
+     }
+   }
+
+   appliquerTheme(themePref);
+
+   if (themePref === 'systeme' || themePref === 'auto') {
+     try {
+       window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+         appliquerTheme('systeme');
+       });
+     } catch (e) {}
+   }
+
+   window.__gloAppliquerTheme = appliquerTheme;
+   window.__gloPrefs = boot;
  })();
  </script>
 </head>
-<body class="<%= prefsTheme === 'sombre' ? 'theme-sombre' : '' %>">
+<body class="<%= bodyClasses.join(' ') %>">
 <script>
- if (document.documentElement.classList.contains('theme-sombre')) {
- document.body.classList.add('theme-sombre');
- } else {
- document.body.classList.remove('theme-sombre');
- }
+(function () {
+  var boot = window.__gloPrefs || { theme: 'clair' };
+  var themePref = boot.theme || 'clair';
+  function estSombre() {
+    if (themePref === 'systeme' || themePref === 'auto') {
+      try { return window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) { return false; }
+    }
+    return themePref === 'sombre';
+  }
+  if (estSombre()) document.body.classList.add('theme-sombre');
+  else document.body.classList.remove('theme-sombre');
+})();
 </script>
 <% if (currentUser) { %>
 <% var t = typeof t === 'function' ? t : function(k){ return k; }; %>
@@ -88,6 +146,9 @@
  <% itemsAdmin.push({ href: '/statistiques', label: t('nav.stats'), icon: 'bi-graph-up' }); %>
  <% itemsAdmin.push({ href: '/ldap', label: t('nav.ldap'), icon: 'bi-diagram-3' }); %>
  <% itemsAdmin.push({ href: '/parametres', label: t('nav.settings'), icon: 'bi-gear' }); %>
+ <% if (peut('sessions', 'read')) itemsAdmin.push({ href: '/securite/sessions', label: 'Sessions actives', icon: 'bi-laptop' }); %>
+
+
  <% } %>
  <% if (itemsAdmin.length) { %>
  <div class="menu-deroulant<%= nav.section==='administration' ? ' menu-actif' : '' %>">
@@ -163,7 +224,13 @@
  <% if (peut('profil', 'read')) { %>
  <a href="/profil" class="<%= nav.item==='profil' ? 'nav-actif' : '' %>"><i class="bi bi-person"></i> <%= t('nav.profile') %></a>
  <% } %>
- <a href="/preferences" class="<%= nav.item==='preferences' ? 'nav-actif' : '' %>"><i class="bi bi-sliders"></i> Préférences</a>
+ <a href="/preferences" class="<%= nav.item==='preferences' ? 'nav-actif' : '' %>"><i class="bi bi-sliders"></i> <%= t('nav.preferences') %></a>
+ <% if (peut('delegations', 'read') || peut('delegations', 'create')) { %>
+ <a href="/securite/delegations"><i class="bi bi-people"></i> Délégations</a>
+ <% } %>
+ <% if (peut('demandes_acces', 'read') || peut('demandes_acces', 'create')) { %>
+ <a href="/securite/demandes-acces"><i class="bi bi-shield-check"></i> Demandes d'accès</a>
+ <% } %>
  <form action="/logout" method="POST" class="form-logout-menu">
  <button type="submit"><i class="bi bi-box-arrow-right"></i> <%= t('nav.logout') %></button>
  </form>

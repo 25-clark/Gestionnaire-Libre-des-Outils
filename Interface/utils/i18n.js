@@ -1,89 +1,45 @@
 /**
- * Traductions minimales FR / EN pour l'interface.
+ * Traductions légères FR/EN pour l'Interface.
  * Usage : const t = creerTraducteur(langue); t('nav.dashboard')
  */
 const DICT = {
     fr: {
         'nav.dashboard': 'Tableau de bord',
-        'nav.help': 'Aide',
         'nav.assistance': 'Assistance',
         'nav.administration': 'Administration',
-        'nav.security': 'Administration',
-        'nav.roles': 'Rôles et permissions',
-        'nav.access': "Droits d'accès",
-        'nav.settings': 'Paramètres généraux',
-        'nav.stats': 'Statistiques',
-        'nav.ldap': 'Annuaire LDAP',
-        'nav.journal': "Journal d'audit",
+        'nav.tickets': 'Tickets',
         'nav.diagnostic': 'Diagnostic réseau',
-        'nav.tickets': 'Demandes et tickets',
+        'nav.roles': 'Rôles',
+        'nav.access': 'Accès particuliers',
+        'nav.journal': 'Journal',
+        'nav.stats': 'Statistiques',
+        'nav.ldap': 'LDAP',
+        'nav.settings': 'Réglages généraux',
+        'nav.help': 'Aide',
+        'nav.search': 'Rechercher…',
         'nav.notifications': 'Notifications',
         'nav.profile': 'Mon profil',
-        'nav.logout': 'Se déconnecter',
-        'nav.search': 'Rechercher une activité, un outil, un ticket…',
-        'profile.title': 'Mon profil',
-        'profile.personal': 'Informations personnelles',
-        'profile.prefs': 'Préférences de compte',
-        'profile.email': 'Email',
-        'profile.phone': 'Numéro de téléphone',
-        'profile.contacts': 'Autres contacts',
-        'profile.function': 'Fonction',
-        'profile.address': 'Adresse',
-        'profile.theme': "Thème d'affichage",
-        'profile.lang': "Langue de l'interface",
-        'profile.theme.light': 'Clair',
-        'profile.theme.dark': 'Sombre',
-        'profile.theme.auto': 'Automatique (système)',
-        'profile.save.info': 'Enregistrer les infos',
-        'profile.save.prefs': 'Enregistrer les préférences',
-        'profile.change.password': 'Changer mon mot de passe',
-        'profile.theme.hint': "Le thème s'applique immédiatement après enregistrement.",
-        'profile.prefs.saved': 'Préférences enregistrées.',
-        'profile.info.saved': 'Informations enregistrées.',
-        'btn.cancel': 'Annuler',
-        'btn.save': 'Enregistrer',
-        'common.matricule': 'Matricule'
+        'nav.preferences': 'Préférences',
+        'nav.logout': 'Se déconnecter'
     },
     en: {
         'nav.dashboard': 'Dashboard',
-        'nav.help': 'Help',
-        'nav.assistance': 'Support',
+        'nav.assistance': 'Support desk',
         'nav.administration': 'Administration',
-        'nav.security': 'Administration',
-        'nav.roles': 'Roles & permissions',
-        'nav.access': 'Access rights',
-        'nav.settings': 'General settings',
-        'nav.stats': 'Statistics',
-        'nav.ldap': 'LDAP directory',
+        'nav.tickets': 'Tickets',
+        'nav.diagnostic': 'Network diagnostic',
+        'nav.roles': 'Roles',
+        'nav.access': 'Special access',
         'nav.journal': 'Audit log',
-        'nav.diagnostic': 'Network diagnostics',
-        'nav.tickets': 'Requests & tickets',
+        'nav.stats': 'Statistics',
+        'nav.ldap': 'LDAP',
+        'nav.settings': 'General settings',
+        'nav.help': 'Help',
+        'nav.search': 'Search…',
         'nav.notifications': 'Notifications',
         'nav.profile': 'My profile',
-        'nav.logout': 'Sign out',
-        'nav.search': 'Search activities, tools, tickets…',
-        'profile.title': 'My profile',
-        'profile.personal': 'Personal information',
-        'profile.prefs': 'Account preferences',
-        'profile.email': 'Email',
-        'profile.phone': 'Phone number',
-        'profile.contacts': 'Other contacts',
-        'profile.function': 'Job title',
-        'profile.address': 'Address',
-        'profile.theme': 'Display theme',
-        'profile.lang': 'Interface language',
-        'profile.theme.light': 'Light',
-        'profile.theme.dark': 'Dark',
-        'profile.theme.auto': 'Automatic (system)',
-        'profile.save.info': 'Save information',
-        'profile.save.prefs': 'Save preferences',
-        'profile.change.password': 'Change my password',
-        'profile.theme.hint': 'The theme applies immediately after saving.',
-        'profile.prefs.saved': 'Preferences saved.',
-        'profile.info.saved': 'Information saved.',
-        'btn.cancel': 'Cancel',
-        'btn.save': 'Save',
-        'common.matricule': 'Employee ID'
+        'nav.preferences': 'Preferences',
+        'nav.logout': 'Sign out'
     }
 };
 
@@ -95,16 +51,58 @@ function creerTraducteur(langue) {
     };
 }
 
+/** Conserve toutes les clés de préférences (ne pas écraser theme/langue seuls). */
 function normaliserPreferences(prefs) {
-    if (!prefs) return { theme: 'clair', langue: 'fr' };
-    if (typeof prefs === 'string') {
-        try { prefs = JSON.parse(prefs); } catch { return { theme: 'clair', langue: 'fr' }; }
-    }
-    if (typeof prefs !== 'object') return { theme: 'clair', langue: 'fr' };
-    return {
-        theme: ['clair', 'sombre', 'auto'].includes(prefs.theme) ? prefs.theme : 'clair',
-        langue: ['fr', 'en'].includes(prefs.langue) ? prefs.langue : 'fr'
+    const defaut = {
+        theme: 'clair',
+        langue: 'fr',
+        densite: 'confortable',
+        vue_outils_defaut: 'liste',
+        par_page_defaut: 25,
+        auth_code_actif: false,
+        notif_son: false,
+        notif_badge: true,
+        notif_resume: 'tous',
+        filtres_tickets_persist: true,
+        ouvrir_outil_nouvel_onglet: true,
+        masquer_creds_defaut: true,
+        confirmer_avant_quitter: false,
+        menu_compact: false,
+        rappel_session: false,
+        export_format_pref: 'csv',
+        export_filtres_seuls: true,
+        raccourci_ctrl_k: true,
+        raccourci_aide: true
     };
+    if (!prefs) return { ...defaut };
+    if (typeof prefs === 'string') {
+        try { prefs = JSON.parse(prefs); } catch { return { ...defaut }; }
+    }
+    if (typeof prefs !== 'object' || Array.isArray(prefs)) return { ...defaut };
+
+    const out = { ...defaut, ...prefs };
+    let theme = String(out.theme || 'clair');
+    if (theme === 'auto') theme = 'systeme';
+    if (!['clair', 'sombre', 'systeme'].includes(theme)) theme = 'clair';
+    out.theme = theme;
+    out.langue = ['fr', 'en'].includes(out.langue) ? out.langue : 'fr';
+    out.densite = out.densite === 'compact' ? 'compact' : 'confortable';
+    out.vue_outils_defaut = ['liste', 'cartes', 'vignettes'].includes(out.vue_outils_defaut)
+        ? out.vue_outils_defaut : 'liste';
+    const pp = parseInt(out.par_page_defaut, 10);
+    out.par_page_defaut = [10, 25, 50, 100].includes(pp) ? pp : 25;
+
+    const boolKeys = [
+        'auth_code_actif', 'notif_son', 'notif_badge', 'filtres_tickets_persist',
+        'ouvrir_outil_nouvel_onglet', 'masquer_creds_defaut', 'confirmer_avant_quitter',
+        'menu_compact', 'rappel_session', 'export_filtres_seuls',
+        'raccourci_ctrl_k', 'raccourci_aide'
+    ];
+    for (const k of boolKeys) {
+        const v = out[k];
+        out[k] = v === true || v === 'true' || v === '1' || v === 1 || v === 'on';
+    }
+    return out;
 }
 
 module.exports = { creerTraducteur, normaliserPreferences, DICT };

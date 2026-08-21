@@ -1,0 +1,115 @@
+<%- include('../partials/header') %>
+<div class="entete-page">
+  <h1><i class="bi bi-shield-check"></i> <%= titre %></h1>
+</div>
+<% if (succes) { %><div class="message-succes">Mise à jour effectuée.</div><% } %>
+<% if (erreur) { %><div class="message-erreur"><%= erreur %></div><% } %>
+
+<div style="display:grid;grid-template-columns:1fr 1.4fr;gap:16px;align-items:start;">
+<div class="carte">
+  <h2 style="font-size:15px;">Nouvelle demande</h2>
+  <p style="font-size:13px;color:var(--gris);margin-top:0;">
+    <% var _dem = (typeof demandeur !== 'undefined' && demandeur) ? demandeur : (typeof currentUser !== 'undefined' ? currentUser : null); %>
+    Demandeur : <strong><%= _dem ? (((_dem.prenom || '') + ' ' + (_dem.nom || '')).trim() || _dem.matricule || 'vous') : 'vous' %></strong>
+    <span style="color:var(--gris);">(compte connecté — aucun autre identifiant à saisir)</span>
+  </p>
+  <form action="/securite/demandes-acces" method="POST" id="form-demande-acces">
+    <label for="type_cible">Type de ressource</label>
+    <select name="type_cible" id="type_cible" required>
+      <option value="activite">Activité</option>
+      <option value="sous_activite">Sous-activité</option>
+      <option value="outil">Outil</option>
+    </select>
+
+    <label for="id_cible">Ressource demandée</label>
+    <select name="id_cible" id="id_cible" required>
+      <option value="">— Choisir —</option>
+    </select>
+
+    <label for="message">Motif (optionnel)</label>
+    <textarea name="message" id="message" rows="3" placeholder="Pourquoi avez-vous besoin de cet accès ?"></textarea>
+    <button type="submit" class="btn btn-primaire" style="margin-top:8px;">Envoyer la demande</button>
+  </form>
+</div>
+<div class="carte">
+  <h2 style="font-size:15px;">Liste des demandes</h2>
+  <table class="tableau">
+    <thead>
+      <tr>
+        <th>#</th>
+        <% if (estAdmin) { %><th>Demandeur</th><% } %>
+        <th>Ressource</th>
+        <th>Statut</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% (demandes || []).forEach(function(d) { %>
+      <tr>
+        <td><%= d.id %></td>
+        <% if (estAdmin) { %>
+        <td><%= d.Demandeur ? (d.Demandeur.prenom + ' ' + d.Demandeur.nom) : d.id_demandeur %></td>
+        <% } %>
+        <td><%= d.type_cible %> #<%= d.id_cible %></td>
+        <td><%= d.statut %></td>
+        <td>
+          <% if (d.statut === 'en_attente' && estAdmin) { %>
+          <form action="/securite/demandes-acces/<%= d.id %>/traiter" method="POST" style="display:inline;">
+            <input type="hidden" name="decision" value="approuvee">
+            <button class="btn btn-primaire btn-petit">Approuver</button>
+          </form>
+          <form action="/securite/demandes-acces/<%= d.id %>/traiter" method="POST" style="display:inline;">
+            <input type="hidden" name="decision" value="refusee">
+            <button class="btn btn-danger btn-petit">Refuser</button>
+          </form>
+          <% } else if (d.statut === 'en_attente') { %>
+          <form action="/securite/demandes-acces/<%= d.id %>/annuler" method="POST" style="display:inline;">
+            <button class="btn btn-gris btn-petit">Annuler</button>
+          </form>
+          <% } else { %>—<% } %>
+        </td>
+      </tr>
+      <% }); %>
+      <% if (!(demandes || []).length) { %>
+      <tr><td colspan="5" style="color:var(--gris);">Aucune demande</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+</div>
+
+<script type="application/json" id="glo-demande-catalog">
+<%- JSON.stringify({
+  activites: (typeof activites !== 'undefined' && activites ? activites : []).map(function(a){ return { id: a.id, nom: a.nom }; }),
+  sousActivites: (typeof sousActivites !== 'undefined' && sousActivites ? sousActivites : []).map(function(s){ return { id: s.id, nom: s.nom, activite: s.activite || '' }; }),
+  outils: (typeof outils !== 'undefined' && outils ? outils : []).map(function(o){ return { id: o.id, nom: o.nom }; })
+}) %>
+</script>
+<script>
+(function () {
+  var cat = { activites: [], sousActivites: [], outils: [] };
+  try {
+    cat = JSON.parse(document.getElementById('glo-demande-catalog').textContent || '{}');
+  } catch (e) {}
+  var typeEl = document.getElementById('type_cible');
+  var cibleEl = document.getElementById('id_cible');
+  function remplir() {
+    var t = typeEl.value;
+    var list = [];
+    if (t === 'activite') list = cat.activites || [];
+    else if (t === 'sous_activite') list = cat.sousActivites || [];
+    else list = cat.outils || [];
+    cibleEl.innerHTML = '<option value="">— Choisir —</option>';
+    list.forEach(function (item) {
+      var opt = document.createElement('option');
+      opt.value = item.id;
+      opt.textContent = item.activite ? (item.nom + ' (' + item.activite + ')') : item.nom;
+      cibleEl.appendChild(opt);
+    });
+  }
+  typeEl.addEventListener('change', remplir);
+  remplir();
+})();
+</script>
+<style>@media(max-width:900px){div[style*="grid-template-columns:1fr 1.4fr"]{grid-template-columns:1fr!important;}}</style>
+<%- include('../partials/footer') %>

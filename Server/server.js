@@ -39,6 +39,9 @@ const ldapRoutes = require('./routes/ldapRoutes');
 const setupRoutes = require('./routes/setupRoutes');
 const sauvegardeRoutes = require('./routes/sauvegardeRoutes');
 const supportRoutes = require('./routes/supportRoutes');
+const sessionRoutes = require('./routes/sessionRoutes');
+const delegationRoutes = require('./routes/delegationRoutes');
+const demandeAccesRoutes = require('./routes/demandeAccesRoutes');
 
 const app = express();
 app.disable('x-powered-by');
@@ -84,6 +87,9 @@ app.use('/api/ldap', ldapRoutes);
 app.use('/api/setup', setupRoutes);
 app.use('/api/sauvegarde', sauvegardeRoutes);
 app.use('/api/support', supportRoutes);
+app.use('/api/sessions', sessionRoutes);
+app.use('/api/delegations', delegationRoutes);
+app.use('/api/demandes-acces', demandeAccesRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 

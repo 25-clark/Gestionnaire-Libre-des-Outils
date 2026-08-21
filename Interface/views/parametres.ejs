@@ -53,6 +53,16 @@
  value="<%= parametre.session_duree_heures || 8 %>" style="max-width:120px;">
  <p style="font-size:12px;color:var(--gris);">Durée pendant laquelle un utilisateur reste connecté sans se ré-authentifier (1 à 168 h). Défaut : 8 h. La session se prolonge tant qu’il y a de l’activité.</p>
 
+ <label for="mdp_expiration_jours">Expiration des mots de passe (jours)</label>
+ <input type="number" id="mdp_expiration_jours" name="mdp_expiration_jours" min="0" max="730"
+ value="<%= parametre.mdp_expiration_jours || 0 %>" style="max-width:120px;">
+ <p style="font-size:12px;color:var(--gris);">0 = jamais. Ex. 90 = obligation de renouveler tous les 90 jours.</p>
+ <label for="mdp_historique_count">Historique des mots de passe (nombre)</label>
+ <input type="number" id="mdp_historique_count" name="mdp_historique_count" min="0" max="24"
+ value="<%= parametre.mdp_historique_count || 0 %>" style="max-width:120px;">
+ <p style="font-size:12px;color:var(--gris);">Empêche de réutiliser les N derniers mots de passe (0 = désactivé).</p>
+ <p style="font-size:12px;color:var(--gris);">Durée pendant laquelle un utilisateur reste connecté sans se ré-authentifier (1 à 168 h). Défaut : 8 h. La session se prolonge tant qu’il y a de l’activité.</p>
+
  <hr style="border:none; border-top:1px solid var(--gris-bordure); margin:22px 0;">
  <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 4px;"><i class="bi bi-hdd-network"></i> Surveillance réseau</h2>
  <div class="champ-case">
@@ -178,6 +188,20 @@
     <label for="journal_retention_jours">Rétention (jours)</label>
     <input type="number" form="form-reglages" id="journal_retention_jours" name="journal_retention_jours" min="7" max="3650"
       value="<%= parametre.journal_retention_jours || 90 %>" style="max-width:120px;">
+
+    <hr style="border:none;border-top:1px solid var(--gris-bordure);margin:14px 0;">
+    <div class="champ-case">
+      <input type="checkbox" form="form-reglages" id="rapport_planifie" name="rapport_planifie" <%= parametre.rapport_planifie ? 'checked' : '' %>>
+      <label for="rapport_planifie">Rapports tickets planifiés (e-mail)</label>
+    </div>
+    <label for="rapport_intervalle_heures">Intervalle rapport (heures)</label>
+    <input type="number" form="form-reglages" id="rapport_intervalle_heures" name="rapport_intervalle_heures" min="1" max="720"
+      value="<%= parametre.rapport_intervalle_heures || 168 %>" style="max-width:120px;">
+    <label for="rapport_emails">Destinataires (e-mails)</label>
+    <input type="text" form="form-reglages" id="rapport_emails" name="rapport_emails"
+      value="<%= parametre.rapport_emails || '' %>"
+      placeholder="admin@entreprise.local, responsable@…">
+    <p style="font-size:12px;color:var(--gris);">Séparez les adresses par virgule. SMTP doit être configuré.</p>
   </div>
 </div>
 </div>

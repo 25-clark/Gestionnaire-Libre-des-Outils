@@ -7,15 +7,62 @@ const { notifier } = require('../utils/notification');
 // Renvoie le mot de passe par défaut configuré dans les réglages généraux
 // (créé automatiquement s'il n'existe pas encore).
 function normaliserPreferences(prefs) {
-    if (!prefs) return { theme: 'clair', langue: 'fr', auth_code_actif: false };
+    const defaut = {
+        theme: 'clair',
+        langue: 'fr',
+        densite: 'confortable',
+        vue_outils_defaut: 'liste',
+        par_page_defaut: 25,
+        auth_code_actif: false,
+        notif_son: false,
+        notif_badge: true,
+        notif_resume: 'tous',
+        filtres_tickets_persist: true,
+        ouvrir_outil_nouvel_onglet: true,
+        masquer_creds_defaut: true,
+        confirmer_avant_quitter: false,
+        menu_compact: false,
+        rappel_session: false,
+        export_format_pref: 'csv',
+        export_filtres_seuls: true,
+        raccourci_ctrl_k: true,
+        raccourci_aide: true
+    };
+    if (!prefs) return { ...defaut };
     if (typeof prefs === 'string') {
-        try { prefs = JSON.parse(prefs); } catch { return { theme: 'clair', langue: 'fr', auth_code_actif: false }; }
+        try { prefs = JSON.parse(prefs); } catch { return { ...defaut }; }
     }
-    if (typeof prefs !== 'object') return { theme: 'clair', langue: 'fr', auth_code_actif: false };
-    const theme = ['clair', 'sombre', 'auto'].includes(prefs.theme) ? prefs.theme : 'clair';
-    const langue = ['fr', 'en'].includes(prefs.langue) ? prefs.langue : 'fr';
-    const auth_code_actif = prefs.auth_code_actif === true || prefs.auth_code_actif === 'true' || prefs.auth_code_actif === '1' || prefs.auth_code_actif === 1;
-    return { theme, langue, auth_code_actif };
+    if (typeof prefs !== 'object' || Array.isArray(prefs)) return { ...defaut };
+
+    const out = { ...defaut, ...prefs };
+
+    // Thème : accepter systeme (UI) et auto (ancien)
+    let theme = String(out.theme || 'clair');
+    if (theme === 'auto') theme = 'systeme';
+    if (!['clair', 'sombre', 'systeme'].includes(theme)) theme = 'clair';
+    out.theme = theme;
+
+    out.langue = ['fr', 'en'].includes(out.langue) ? out.langue : 'fr';
+    out.densite = out.densite === 'compact' ? 'compact' : 'confortable';
+    out.vue_outils_defaut = ['liste', 'cartes', 'vignettes'].includes(out.vue_outils_defaut)
+        ? out.vue_outils_defaut
+        : 'liste';
+    const pp = parseInt(out.par_page_defaut, 10);
+    out.par_page_defaut = [10, 25, 50, 100].includes(pp) ? pp : 25;
+    out.notif_resume = ['tous', 'alerte', 'aucun'].includes(out.notif_resume) ? out.notif_resume : 'tous';
+    out.export_format_pref = out.export_format_pref === 'pdf' ? 'pdf' : 'csv';
+
+    const boolKeys = [
+        'auth_code_actif', 'notif_son', 'notif_badge', 'filtres_tickets_persist',
+        'ouvrir_outil_nouvel_onglet', 'masquer_creds_defaut', 'confirmer_avant_quitter',
+        'menu_compact', 'rappel_session', 'export_filtres_seuls',
+        'raccourci_ctrl_k', 'raccourci_aide'
+    ];
+    for (const k of boolKeys) {
+        const v = out[k];
+        out[k] = v === true || v === 'true' || v === '1' || v === 1 || v === 'on';
+    }
+    return out;
 }
 
 async function motDePasseDefautActuel() {
@@ -387,5 +434,5 @@ async function getFavoris(req, res, next) {
     } catch (err) { next(err); }
 }
 
-module.exports = { getAll, getById, create, remove, reinitialiserMotDePasse, updateProfil, update, toggleFavori, getFavoris };
+module.exports = { getAll, getById, create, remove, reinitialiserMotDePasse, updateProfil, update, toggleFavori, getFavoris, normaliserPreferences };
 
