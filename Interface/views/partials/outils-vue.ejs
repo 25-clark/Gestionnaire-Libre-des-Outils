@@ -74,7 +74,7 @@
               <a href="/outils/<%= o.id %>/partager?retour=<%= encodeURIComponent(retourUrl) %>" class="btn btn-gris btn-petit" title="Partager"><i class="bi bi-share"></i></a>
             <% } %>
             <% if (o.adresse) { %>
-              <a href="/diagnostic?cible=<%= encodeURIComponent(o.adresse) %>" class="btn btn-gris btn-petit" title="Diagnostic réseau"><i class="bi bi-heart-pulse"></i></a>
+              <a href="/assistance/diagnostic?cible=<%= encodeURIComponent(o.adresse) %>" class="btn btn-gris btn-petit" title="Diagnostic réseau"><i class="bi bi-heart-pulse"></i></a>
             <% } %>
             <% if (peut('outils', 'update')) { %>
               <form action="/outils/<%= o.id %>/toggle-active" method="POST" class="form-inline" style="display:inline;">
@@ -215,7 +215,7 @@
       html += '<a class="btn btn-gris btn-petit" href="/outils/' + id + '/partager?retour=' + encodeURIComponent(retour) + '" title="Partager"><i class="bi bi-share"></i></a>';
     }
     if (adresse) {
-      html += '<a class="btn btn-gris btn-petit" href="/diagnostic?cible=' + encodeURIComponent(adresse) + '" title="Diagnostic réseau"><i class="bi bi-heart-pulse"></i></a>';
+      html += '<a class="btn btn-gris btn-petit" href="/assistance/diagnostic?cible=' + encodeURIComponent(adresse) + '" title="Diagnostic réseau"><i class="bi bi-heart-pulse"></i></a>';
     }
     if (el.getAttribute('data-peut-delete') === '1') {
       html += '<form action="/outils/' + id + '/supprimer" method="POST" class="form-inline" style="display:inline;" onsubmit="return confirm(\'Confirmer la suppression définitive de cet outil ?\');"><input type="hidden" name="retour" value="' + retour.replace(/"/g, '&quot;') + '"><button type="submit" class="btn btn-danger btn-petit"><i class="bi bi-trash"></i></button></form>';

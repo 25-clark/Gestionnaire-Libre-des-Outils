@@ -96,15 +96,24 @@
  <div class="actions-form">
  <button type="submit" class="btn btn-primaire"><%= t('profile.save.info') %></button>
  </div>
-
- <p style="margin-top:16px;">
- <a href="/changer-mot-de-passe" class="lien-mdp"><i class="bi bi-key"></i> <%= t('profile.change.password') %></a>
- </p>
  </form>
  </div>
 
- 
-<p style="grid-column:1/-1;font-size:13px;"><a href="/preferences"><i class="bi bi-sliders"></i> Gérer les préférences de compte</a></p>
+ <div class="carte profil-carte-aside">
+   <h2><i class="bi bi-gear"></i> Compte</h2>
+   <p style="font-size:13px;color:var(--gris);margin-top:0;">Raccourcis de sécurité et préférences.</p>
+   <div class="profil-liens-aside">
+     <a href="/changer-mot-de-passe" class="profil-lien-action">
+       <i class="bi bi-key"></i>
+       <span><strong><%= t('profile.change.password') %></strong><small>Mettre à jour votre mot de passe de connexion</small></span>
+     </a>
+     <a href="/preferences" class="profil-lien-action">
+       <i class="bi bi-sliders"></i>
+       <span><strong>Préférences de compte</strong><small>Thème, langue, densité, raccourcis…</small></span>
+     </a>
+   </div>
+ </div>
+
 <div class="carte">
             <h2><i class="bi bi-envelope-check"></i> Code de connexion par e-mail</h2>
             <p style="font-size:13px;color:var(--gris);max-width:520px;">

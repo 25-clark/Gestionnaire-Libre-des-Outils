@@ -95,49 +95,49 @@ function deduireNavigation(reqPath) {
         nav.section = 'dashboard';
         nav.item = 'dashboard';
         crumbs = [{ label: 'Tableau de bord' }];
-    } else if (p.startsWith('/tickets')) {
+    } else if (p.startsWith('/assistance/tickets') || p === '/assistance/tickets' || p.startsWith('/assistance/tickets/')) {
         nav.section = 'assistance';
         nav.item = 'tickets';
-        crumbs.push({ label: 'Assistance' });
-        crumbs.push({ label: 'Tickets', href: '/tickets' });
-        if (p === '/tickets/nouveau') crumbs.push({ label: 'Nouveau' });
-        else if (/^\/tickets\/\d+/.test(p)) crumbs.push({ label: 'Détail' });
-    } else if (p.startsWith('/diagnostic')) {
+        crumbs.push({ label: 'Assistance', href: '/assistance/tickets' });
+        crumbs.push({ label: 'Tickets', href: '/assistance/tickets' });
+        if (p.endsWith('/nouveau') || p.includes('/assistance/tickets/nouveau')) crumbs.push({ label: 'Nouveau' });
+        else if (/\/tickets\/\d+/.test(p)) crumbs.push({ label: 'Détail' });
+    } else if (p.startsWith('/assistance/diagnostic') || p.startsWith('/assistance/diagnostic')) {
         nav.section = 'assistance';
         nav.item = 'diagnostic';
-        crumbs.push({ label: 'Assistance' });
-        crumbs.push({ label: 'Diagnostic' });
-    } else if (p.startsWith('/roles')) {
+        crumbs.push({ label: 'Assistance', href: '/assistance/tickets' });
+        crumbs.push({ label: 'Diagnostic réseau' });
+    } else if (p.startsWith('/administration/roles') || p.startsWith('/administration/roles')) {
         nav.section = 'administration';
         nav.item = 'roles';
-        crumbs.push({ label: 'Administration' });
-        crumbs.push({ label: 'Rôles', href: '/roles' });
+        crumbs.push({ label: 'Administration', href: '/administration/roles' });
+        crumbs.push({ label: 'Rôles', href: '/administration/roles' });
         if (p.includes('/nouveau')) crumbs.push({ label: 'Nouveau' });
         else if (p.includes('/modifier')) crumbs.push({ label: 'Modifier' });
-    } else if (p.startsWith('/acces')) {
+    } else if (p.startsWith('/administration/acces') || p.startsWith('/administration/acces')) {
         nav.section = 'administration';
         nav.item = 'acces';
-        crumbs.push({ label: 'Administration' });
+        crumbs.push({ label: 'Administration', href: '/administration/roles' });
         crumbs.push({ label: 'Accès particuliers' });
-    } else if (p.startsWith('/journal')) {
+    } else if (p.startsWith('/administration/journal') || p.startsWith('/administration/journal')) {
         nav.section = 'administration';
         nav.item = 'journal';
-        crumbs.push({ label: 'Administration' });
+        crumbs.push({ label: 'Administration', href: '/administration/roles' });
         crumbs.push({ label: 'Journal d\'audit' });
-    } else if (p.startsWith('/statistiques')) {
+    } else if (p.startsWith('/administration/statistiques') || p.startsWith('/administration/statistiques')) {
         nav.section = 'administration';
         nav.item = 'stats';
-        crumbs.push({ label: 'Administration' });
+        crumbs.push({ label: 'Administration', href: '/administration/roles' });
         crumbs.push({ label: 'Statistiques' });
-    } else if (p.startsWith('/ldap')) {
+    } else if (p.startsWith('/administration/ldap') || p.startsWith('/administration/ldap')) {
         nav.section = 'administration';
         nav.item = 'ldap';
-        crumbs.push({ label: 'Administration' });
+        crumbs.push({ label: 'Administration', href: '/administration/roles' });
         crumbs.push({ label: 'LDAP' });
-    } else if (p.startsWith('/parametres')) {
+    } else if (p.startsWith('/administration/parametres') || p.startsWith('/administration/parametres')) {
         nav.section = 'administration';
         nav.item = 'settings';
-        crumbs.push({ label: 'Administration' });
+        crumbs.push({ label: 'Administration', href: '/administration/roles' });
         crumbs.push({ label: 'Réglages généraux' });
     } else if (p.startsWith('/securite')) {
         nav.section = 'securite';
@@ -156,7 +156,7 @@ function deduireNavigation(reqPath) {
         };
         const key = p.split('/')[2];
         if (key && labels[key]) crumbs.push({ label: labels[key] });
-    } else if (p.startsWith('/notifications')) {
+    } else if (p.startsWith('/assistance/notifications') || p.startsWith('/assistance/notifications')) {
         nav.section = 'notifications';
         nav.item = 'notifications';
         crumbs.push({ label: 'Notifications' });
@@ -202,7 +202,7 @@ app.use(async (req, res, next) => {
 
     const navInfo = deduireNavigation(req.path || '');
     res.locals.nav = navInfo.nav;
-    // breadcrumbs: routes peuvent surcharger via res.locals.breadcrumbs plus tard
+    // breadcrumbs: routes peuvent surcharger via res.locals.breadcrumbs /* set below */ plus tard
     res.locals.breadcrumbs = navInfo.breadcrumbs;
     res.locals.currentUser = req.session.user || null;
     res.locals.page = '';
@@ -221,7 +221,8 @@ app.use(async (req, res, next) => {
     res.locals.credentialsActifs = pub.credentials_actifs;
     res.locals.rafraichissementAuto = !!pub.rafraichissement_auto;
     res.locals.rafraichissementIntervalleMin = pub.rafraichissement_intervalle_min || 5;
-    res.locals.nomApplication = res.locals.nomEntreprise || 'Gestionnaire Outils';
+    res.locals.aliasEntreprise = (res.locals.parametre && res.locals.parametre.alias_entreprise) || null;
+    res.locals.nomApplication = res.locals.aliasEntreprise || res.locals.nomEntreprise || 'Gestionnaire Outils';
 
     // Badge notif : session cache, pas d'appel API à chaque navigation
     res.locals.notificationsNonLues = 0;
@@ -280,16 +281,34 @@ app.use('/activites', activiteRoutes);
 app.use('/sous-activites', sousActiviteRoutes);
 app.use('/utilisateurs', utilisateurRoutes);
 app.use('/outils', outilRoutes);
-app.use('/roles', roleRoutes);
-app.use('/acces', accesRoutes);
+// Préfixes Administration / Assistance
+app.use('/administration/roles', roleRoutes);
+app.use('/administration/acces', accesRoutes);
+app.use('/administration/parametres', parametreRoutes);
+app.use('/administration/journal', journalRoutes);
+app.use('/administration/statistiques', statistiqueRoutes);
+app.use('/administration/ldap', ldapRoutes);
+app.use('/assistance/tickets', ticketRoutes);
+app.use('/assistance/diagnostic', diagnosticRoutes);
+app.use('/assistance/notifications', notificationRoutes);
 app.use('/recherche', rechercheRoutes);
-app.use('/parametres', parametreRoutes);
-app.use('/diagnostic', diagnosticRoutes);
-app.use('/journal', journalRoutes);
-app.use('/statistiques', statistiqueRoutes);
-app.use('/notifications', notificationRoutes);
-app.use('/tickets', ticketRoutes);
-app.use('/ldap', ldapRoutes);
+
+// Redirections compatibilité anciennes URLs
+function redirigerPrefixe(from, to) {
+    app.use(from, (req, res) => {
+        const rest = req.url === '/' ? '' : req.url;
+        res.redirect(301, to + rest);
+    });
+}
+redirigerPrefixe('/roles', '/administration/roles');
+redirigerPrefixe('/acces', '/administration/acces');
+redirigerPrefixe('/parametres', '/administration/parametres');
+redirigerPrefixe('/journal', '/administration/journal');
+redirigerPrefixe('/statistiques', '/administration/statistiques');
+redirigerPrefixe('/ldap', '/administration/ldap');
+redirigerPrefixe('/tickets', '/assistance/tickets');
+redirigerPrefixe('/diagnostic', '/assistance/diagnostic');
+redirigerPrefixe('/notifications', '/assistance/notifications');
 
 // 404
 app.use((req, res) => {

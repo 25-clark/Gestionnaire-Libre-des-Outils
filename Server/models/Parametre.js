@@ -20,6 +20,11 @@ module.exports = (sequelize) => {
             allowNull: true,
             defaultValue: null
         },
+        alias_entreprise: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            defaultValue: null
+        },
         mot_de_passe_defaut: {
             type: DataTypes.STRING,
             allowNull: false,

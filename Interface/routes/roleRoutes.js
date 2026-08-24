@@ -50,7 +50,7 @@ router.post('/', async (req, res, next) => {
             abbreviation: req.body.abbreviation,
             permissions
         });
-        res.redirect('/roles');
+        res.redirect('/administration/roles');
     } catch (err) {
         res.render('role/form', {
             titre: 'Nouveau rôle',
@@ -92,7 +92,7 @@ router.post('/:id/modifier', async (req, res, next) => {
             abbreviation: req.body.abbreviation,
             permissions
         });
-        res.redirect('/roles');
+        res.redirect('/administration/roles');
     } catch (err) { next(err); }
 });
 
@@ -100,7 +100,7 @@ router.post('/:id/supprimer', async (req, res, next) => {
     try {
         const api = apiClient(req);
         await api.delete(`/roles/${req.params.id}`);
-        res.redirect('/roles');
+        res.redirect('/administration/roles');
     } catch (err) { next(err); }
 });
 

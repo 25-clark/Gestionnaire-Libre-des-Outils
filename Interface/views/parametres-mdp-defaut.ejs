@@ -1,0 +1,28 @@
+<%- include('partials/header') %>
+<div class="entete-page">
+  <h1><i class="bi bi-key"></i> Mot de passe par défaut</h1>
+  <a href="/administration/parametres" class="btn btn-gris">Retour aux réglages</a>
+</div>
+<% if (erreur) { %><div class="message-erreur"><%= erreur %></div><% } %>
+<% if (succes) { %><div class="message-succes">Mot de passe par défaut enregistré.</div><% } %>
+
+<div class="carte" style="max-width:480px;">
+  <p style="font-size:14px;color:var(--gris);">
+    Ce mot de passe est attribué aux <strong>nouveaux utilisateurs</strong> et lors d’une
+    <strong>réinitialisation</strong>. L’utilisateur doit le changer à la première connexion
+    (politique de sécurité).
+  </p>
+  <form action="/administration/parametres/mot-de-passe-defaut" method="POST">
+    <label for="mot_de_passe_defaut">Nouveau mot de passe par défaut</label>
+    <input type="password" id="mot_de_passe_defaut" name="mot_de_passe_defaut" minlength="6" required
+      placeholder="Saisir le mot de passe…">
+    <p class="champ-aide" style="color:var(--gris);font-size:13px;">Minimum 6 caractères (ou selon la politique définie dans les réglages).</p>
+    <label for="confirmation">Confirmation</label>
+    <input type="password" id="confirmation" name="confirmation" minlength="6" required>
+    <div class="actions-form" style="margin-top:14px;">
+      <button type="submit" class="btn btn-primaire">Enregistrer</button>
+      <a href="/administration/parametres" class="btn btn-gris">Annuler</a>
+    </div>
+  </form>
+</div>
+<%- include('partials/footer') %>

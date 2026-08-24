@@ -150,7 +150,7 @@ async function getById(req, res, next) {
 
 async function create(req, res, next) {
     try {
-        const { nom, lien, adresse, activites, sousActivites } = req.body;
+        const { nom, lien, adresse, activites, sousActivites, type_outil, emplacement, numero_serie, quantite, etat_physique } = req.body;
 
         if (!nom) {
             return res.status(400).json({ message: 'Le nom est requis.' });
@@ -178,6 +178,11 @@ async function create(req, res, next) {
             nom,
             lien: lien || null,
             adresse: adresse || null,
+            type_outil: type_outil === 'materiel' ? 'materiel' : 'numerique',
+            emplacement: emplacement || null,
+            numero_serie: numero_serie || null,
+            quantite: quantite !== undefined && quantite !== '' ? parseInt(quantite, 10) : 1,
+            etat_physique: etat_physique || 'disponible',
             image,
             id_user
         });
@@ -476,7 +481,7 @@ async function update(req, res, next) {
         const outil = await Outil.findByPk(req.params.id);
         if (!outil) return res.status(404).json({ message: 'Outil introuvable.' });
 
-        let { nom, lien, adresse, activites, sousActivites, id_activite, id_sous_activite } = req.body;
+        let { nom, lien, adresse, activites, sousActivites, id_activite, id_sous_activite, type_outil, emplacement, numero_serie, quantite, etat_physique } = req.body;
         // Formulaire Interface envoie id_activite / id_sous_activite (singulier)
         if (activites === undefined && id_activite) {
             activites = Array.isArray(id_activite) ? id_activite : [id_activite];
@@ -491,6 +496,11 @@ async function update(req, res, next) {
         }
         if (lien !== undefined) data.lien = lien || null;
         if (adresse !== undefined) data.adresse = adresse || null;
+        if (type_outil !== undefined) data.type_outil = type_outil === 'materiel' ? 'materiel' : 'numerique';
+        if (emplacement !== undefined) data.emplacement = emplacement || null;
+        if (numero_serie !== undefined) data.numero_serie = numero_serie || null;
+        if (quantite !== undefined && quantite !== '') data.quantite = parseInt(quantite, 10);
+        if (etat_physique !== undefined) data.etat_physique = etat_physique || 'disponible';
         if (req.file) data.image = `/uploads/outils/${req.file.filename}`;
         else if (req.body.image !== undefined) data.image = req.body.image || null;
 

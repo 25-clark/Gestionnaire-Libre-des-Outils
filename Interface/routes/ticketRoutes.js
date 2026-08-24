@@ -197,7 +197,7 @@ router.get('/nouveau', async (req, res, next) => {
 router.post('/', uploadTicketImages.array('images', 6), async (req, res, next) => {
     try {
         const api = apiClient(req);
-        const images = (req.files || []).map(f => `/uploads/tickets/${f.filename}`);
+        const images = (req.files || []).map(f => `/uploads/assistance/tickets/${f.filename}`);
 
         const { data: ticket } = await api.post('/tickets', {
             titre: req.body.titre,
@@ -208,7 +208,7 @@ router.post('/', uploadTicketImages.array('images', 6), async (req, res, next) =
             id_sous_activite: req.body.id_sous_activite || null,
             images: JSON.stringify(images)
         });
-        res.redirect(`/tickets/${ticket.id}`);
+        res.redirect(`/assistance/tickets/${ticket.id}`);
     } catch (err) {
         try {
             const api = apiClient(req);
@@ -248,7 +248,7 @@ router.get('/:id', async (req, res, next) => {
         res.locals.breadcrumbs = [
             { label: 'Tableau de bord', href: '/' },
             { label: 'Assistance' },
-            { label: 'Tickets', href: '/tickets' },
+            { label: 'Tickets', href: '/assistance/tickets' },
             { label: '#' + (ticket && ticket.id ? ticket.id : '') }
         ];
         res.render('ticket/detail', {
@@ -278,7 +278,7 @@ router.post('/:id/modifier', async (req, res, next) => {
             body.id_assigne = body.assignees_users[0] || null;
         }
         await api.put(`/tickets/${req.params.id}`, body);
-        res.redirect(`/tickets/${req.params.id}`);
+        res.redirect(`/assistance/tickets/${req.params.id}`);
     } catch (err) { next(err); }
 });
 
@@ -288,7 +288,7 @@ router.post('/:id/messages/:messageId/modifier', async (req, res, next) => {
         await api.put(`/tickets/${req.params.id}/messages/${req.params.messageId}`, {
             contenu: req.body.contenu
         });
-        res.redirect(`/tickets/${req.params.id}`);
+        res.redirect(`/assistance/tickets/${req.params.id}`);
     } catch (err) { next(err); }
 });
 
@@ -296,7 +296,7 @@ router.post('/:id/messages', async (req, res, next) => {
     try {
         const api = apiClient(req);
         await api.post(`/tickets/${req.params.id}/messages`, { contenu: req.body.contenu });
-        res.redirect(`/tickets/${req.params.id}`);
+        res.redirect(`/assistance/tickets/${req.params.id}`);
     } catch (err) { next(err); }
 });
 
@@ -304,7 +304,7 @@ router.post('/:id/supprimer', async (req, res, next) => {
     try {
         const api = apiClient(req);
         await api.delete(`/tickets/${req.params.id}`);
-        res.redirect('/tickets');
+        res.redirect('/assistance/tickets');
     } catch (err) { next(err); }
 });
 
@@ -313,7 +313,7 @@ router.post('/:id/escalader', async (req, res, next) => {
     try {
         const api = apiClient(req);
         await api.post(`/tickets/${req.params.id}/escalader`, req.body || {});
-        res.redirect(`/tickets/${req.params.id}?succes=escalade`);
+        res.redirect(`/assistance/tickets/${req.params.id}?succes=escalade`);
     } catch (err) {
         next(err);
     }

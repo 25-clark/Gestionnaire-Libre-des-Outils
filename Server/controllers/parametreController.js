@@ -24,13 +24,13 @@ async function obtenirPublic(req, res, next) {
             const { Utilisateur } = require('../models');
             const n = await Utilisateur.count();
             if (n > 0) {
-                if (chiffrement_algo) definirAlgo(chiffrement_algo);
-        await parametre.update({ installation_terminee: true, cgu_acceptees_le: parametre.cgu_acceptees_le || new Date() });
+                await parametre.update({ installation_terminee: true, cgu_acceptees_le: parametre.cgu_acceptees_le || new Date() });
                 installation_terminee = true;
             }
         }
         res.json({
             nom_entreprise: parametre.nom_entreprise,
+            alias_entreprise: parametre.alias_entreprise,
             credentials_actifs: !!parametre.credentials_actifs,
             rafraichissement_auto: !!parametre.rafraichissement_auto,
             rafraichissement_intervalle_min: parametre.rafraichissement_intervalle_min || 5,
@@ -74,6 +74,7 @@ async function mettreAJour(req, res, next) {
         const parametre = await trouverOuCreer();
         const {
             nom_entreprise,
+            alias_entreprise,
             mot_de_passe_defaut,
             mdp_longueur_min,
             mdp_complexite,
@@ -123,6 +124,7 @@ async function mettreAJour(req, res, next) {
         if (chiffrement_algo) definirAlgo(chiffrement_algo);
         await parametre.update({
             nom_entreprise: nom_entreprise !== undefined ? (nom_entreprise || null) : parametre.nom_entreprise,
+            alias_entreprise: alias_entreprise !== undefined ? (alias_entreprise || null) : parametre.alias_entreprise,
             mot_de_passe_defaut: mot_de_passe_defaut || parametre.mot_de_passe_defaut,
             mdp_longueur_min: nouvelleLongueurMin,
             mdp_complexite: nouvelleComplexite,
@@ -133,18 +135,21 @@ async function mettreAJour(req, res, next) {
                 ? borner(duree_blocage_minutes, 1, 1440, parametre.duree_blocage_minutes)
                 : parametre.duree_blocage_minutes,
             session_duree_heures: session_duree_heures !== undefined
-                ? borner(session_duree_heures,
-            mdp_expiration_jours,
-            mdp_historique_count,
-            rapport_planifie,
-            rapport_intervalle_heures,
-            rapport_emails, 1, 168, parametre.session_duree_heures)
+                ? borner(session_duree_heures, 1, 168, parametre.session_duree_heures)
                 : parametre.session_duree_heures,
-            mdp_expiration_jours,
-            mdp_historique_count,
-            rapport_planifie,
-            rapport_intervalle_heures,
-            rapport_emails,
+            mdp_expiration_jours: mdp_expiration_jours !== undefined
+                ? borner(mdp_expiration_jours, 0, 730, 0)
+                : (parametre.mdp_expiration_jours || 0),
+            mdp_historique_count: mdp_historique_count !== undefined
+                ? borner(mdp_historique_count, 0, 24, 0)
+                : (parametre.mdp_historique_count || 0),
+            rapport_planifie: rapport_planifie !== undefined ? !!rapport_planifie : !!parametre.rapport_planifie,
+            rapport_intervalle_heures: rapport_intervalle_heures !== undefined
+                ? borner(rapport_intervalle_heures, 1, 720, 168)
+                : (parametre.rapport_intervalle_heures || 168),
+            rapport_emails: rapport_emails !== undefined
+                ? (String(rapport_emails || '').trim() || null)
+                : parametre.rapport_emails,
             surveillance_active: surveillance_active !== undefined ? !!surveillance_active : parametre.surveillance_active,
             surveillance_intervalle_minutes: surveillance_intervalle_minutes !== undefined
                 ? borner(surveillance_intervalle_minutes, 1, 1440, parametre.surveillance_intervalle_minutes)

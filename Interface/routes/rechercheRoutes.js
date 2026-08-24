@@ -121,7 +121,7 @@ router.get('/api', async (req, res) => {
                             icon: 'bi-ticket-detailed',
                             label: '#' + t.id + ' — ' + t.titre,
                             meta: t.statut || 'Ticket',
-                            href: '/tickets/' + t.id
+                            href: '/assistance/tickets/' + t.id
                         });
                     });
                 }).catch(() => {})

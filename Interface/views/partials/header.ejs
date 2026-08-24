@@ -120,16 +120,16 @@
 
  <%/* —— Assistance : tickets + diagnostic —— */%>
  <% var itemsAssistance = []; %>
- <% if (peut('tickets', 'read')) itemsAssistance.push({ href: '/tickets', label: t('nav.tickets'), icon: 'bi-ticket-detailed' }); %>
- <% if (peut('diagnostic', 'read')) itemsAssistance.push({ href: '/diagnostic', label: t('nav.diagnostic'), icon: 'bi-hdd-network' }); %>
+ <% if (peut('tickets', 'read')) itemsAssistance.push({ href: '/assistance/tickets', label: t('nav.tickets'), icon: 'bi-ticket-detailed' }); %>
+ <% if (peut('diagnostic', 'read')) itemsAssistance.push({ href: '/assistance/diagnostic', label: t('nav.diagnostic'), icon: 'bi-hdd-network' }); %>
  <% if (itemsAssistance.length === 1) { %>
- <a href="<%= itemsAssistance[0].href %>" class="<%= (itemsAssistance[0].href==='/tickets' && nav.item==='tickets') || (itemsAssistance[0].href==='/diagnostic' && nav.item==='diagnostic') ? 'nav-actif' : '' %>"><%= itemsAssistance[0].label %></a>
+ <a href="<%= itemsAssistance[0].href %>" class="<%= (itemsAssistance[0].href==='/assistance/tickets' && nav.item==='tickets') || (itemsAssistance[0].href==='/assistance/diagnostic' && nav.item==='diagnostic') ? 'nav-actif' : '' %>"><%= itemsAssistance[0].label %></a>
  <% } else if (itemsAssistance.length > 1) { %>
  <div class="menu-deroulant<%= nav.section==='assistance' ? ' menu-actif' : '' %>">
  <button type="button" class="lien-menu-deroulant<%= nav.section==='assistance' ? ' nav-actif' : '' %>"><%= t('nav.assistance') %> <i class="bi bi-chevron-down" style="font-size:0.75em;"></i></button>
  <div class="contenu-menu-deroulant">
  <% itemsAssistance.forEach(function(item) {
-   var itemActif = (item.href==='/tickets' && nav.item==='tickets') || (item.href==='/diagnostic' && nav.item==='diagnostic');
+   var itemActif = (item.href==='/assistance/tickets' && nav.item==='tickets') || (item.href==='/assistance/diagnostic' && nav.item==='diagnostic');
  %>
  <a href="<%= item.href %>" class="<%= itemActif ? 'nav-actif' : '' %>"><% if (item.icon) { %><i class="bi <%= item.icon %>"></i> <% } %><%= item.label %></a>
  <% }) %>
@@ -139,14 +139,13 @@
 
  <%/* —— Administration : rôles, accès, journal, stats, LDAP, réglages —— */%>
  <% var itemsAdmin = []; %>
- <% if (peut('roles', 'read')) itemsAdmin.push({ href: '/roles', label: t('nav.roles'), icon: 'bi-shield-lock' }); %>
- <% if (peut('acces', 'read')) itemsAdmin.push({ href: '/acces', label: t('nav.access'), icon: 'bi-key' }); %>
- <% if (peut('journal', 'read')) itemsAdmin.push({ href: '/journal', label: t('nav.journal'), icon: 'bi-journal-text' }); %>
+ <% if (peut('roles', 'read')) itemsAdmin.push({ href: '/administration/roles', label: t('nav.roles'), icon: 'bi-shield-lock' }); %>
+ <% if (peut('acces', 'read')) itemsAdmin.push({ href: '/administration/acces', label: t('nav.access'), icon: 'bi-key' }); %>
+ <% if (peut('journal', 'read')) itemsAdmin.push({ href: '/administration/journal', label: t('nav.journal'), icon: 'bi-journal-text' }); %>
  <% if (currentUser.Role && currentUser.Role.abbreviation === 'ADMIN') { %>
- <% itemsAdmin.push({ href: '/statistiques', label: t('nav.stats'), icon: 'bi-graph-up' }); %>
- <% itemsAdmin.push({ href: '/ldap', label: t('nav.ldap'), icon: 'bi-diagram-3' }); %>
- <% itemsAdmin.push({ href: '/parametres', label: t('nav.settings'), icon: 'bi-gear' }); %>
- <% if (peut('sessions', 'read')) itemsAdmin.push({ href: '/securite/sessions', label: 'Sessions actives', icon: 'bi-laptop' }); %>
+ <% itemsAdmin.push({ href: '/administration/statistiques', label: t('nav.stats'), icon: 'bi-graph-up' }); %>
+ <% itemsAdmin.push({ href: '/administration/ldap', label: t('nav.ldap'), icon: 'bi-diagram-3' }); %>
+ <% itemsAdmin.push({ href: '/administration/parametres', label: t('nav.settings'), icon: 'bi-gear' }); %>
 
 
  <% } %>
@@ -155,7 +154,7 @@
  <button type="button" class="lien-menu-deroulant<%= nav.section==='administration' ? ' nav-actif' : '' %>"><%= t('nav.administration') %> <i class="bi bi-chevron-down" style="font-size:0.75em;"></i></button>
  <div class="contenu-menu-deroulant">
  <% itemsAdmin.forEach(function(item) {
-   var map = { '/roles': 'roles', '/acces': 'acces', '/journal': 'journal', '/statistiques': 'stats', '/ldap': 'ldap', '/parametres': 'settings' };
+   var map = { '/administration/roles': 'roles', '/administration/acces': 'acces', '/administration/journal': 'journal', '/administration/statistiques': 'stats', '/administration/ldap': 'ldap', '/administration/parametres': 'settings' };
    var itemActif = nav.item && map[item.href] === nav.item;
  %>
  <a href="<%= item.href %>" class="<%= itemActif ? 'nav-actif' : '' %>"><% if (item.icon) { %><i class="bi <%= item.icon %>"></i> <% } %><%= item.label %></a>
@@ -163,7 +162,28 @@
  </div>
  </div>
  <% } %>
-        <%/* —— Aide (items selon permissions.aide du rôle) —— */%>
+        
+ <%/* —— Sécurité : sessions, délégations, demandes —— */%>
+ <% var itemsSecurite = []; %>
+ <% if (peut('sessions', 'read')) itemsSecurite.push({ href: '/securite/sessions', label: 'Sessions actives', icon: 'bi-laptop' }); %>
+ <% if (peut('delegations', 'read') || peut('delegations', 'create')) itemsSecurite.push({ href: '/securite/delegations', label: 'Délégations', icon: 'bi-people' }); %>
+ <% if (peut('demandes_acces', 'read') || peut('demandes_acces', 'create')) itemsSecurite.push({ href: '/securite/demandes-acces', label: 'Demandes d\'accès', icon: 'bi-shield-check' }); %>
+ <% if (itemsSecurite.length === 1) { %>
+ <a href="<%= itemsSecurite[0].href %>" class="<%= nav.section==='securite' ? 'nav-actif' : '' %>"><%= itemsSecurite[0].label %></a>
+ <% } else if (itemsSecurite.length > 1) { %>
+ <div class="menu-deroulant<%= nav.section==='securite' ? ' menu-actif' : '' %>">
+ <button type="button" class="lien-menu-deroulant<%= nav.section==='securite' ? ' nav-actif' : '' %>">Sécurité <i class="bi bi-chevron-down" style="font-size:0.75em;"></i></button>
+ <div class="contenu-menu-deroulant">
+ <% itemsSecurite.forEach(function(item) {
+   var itemActif = (nav.item && item.href.indexOf(nav.item) !== -1) || (typeof pagePath !== 'undefined' && pagePath === item.href);
+ %>
+ <a href="<%= item.href %>" class="<%= itemActif ? 'nav-actif' : '' %>"><i class="bi <%= item.icon %>"></i> <%= item.label %></a>
+ <% }); %>
+ </div>
+ </div>
+ <% } %>
+
+ <%/* —— Aide (items selon permissions.aide du rôle) —— */%>
         <%
           var aidePerms = null;
           if (currentUser && currentUser.Role && currentUser.Role.permissions) {
@@ -205,7 +225,7 @@
 
  <div class="utilisateur">
  <% if (peut('notifications', 'read')) { %>
- <a href="/notifications" class="lien-notifications<%= nav.item==='notifications' ? ' nav-actif' : '' %>" title="<%= t('nav.notifications') %>">
+ <a href="/assistance/notifications" class="lien-notifications<%= nav.item==='notifications' ? ' nav-actif' : '' %>" title="<%= t('nav.notifications') %>">
  <i class="bi bi-bell"></i>
  <% if (notificationsNonLues > 0) { %>
  <span class="badge-notif"><%= notificationsNonLues > 9 ? '9+' : notificationsNonLues %></span>
@@ -225,12 +245,6 @@
  <a href="/profil" class="<%= nav.item==='profil' ? 'nav-actif' : '' %>"><i class="bi bi-person"></i> <%= t('nav.profile') %></a>
  <% } %>
  <a href="/preferences" class="<%= nav.item==='preferences' ? 'nav-actif' : '' %>"><i class="bi bi-sliders"></i> <%= t('nav.preferences') %></a>
- <% if (peut('delegations', 'read') || peut('delegations', 'create')) { %>
- <a href="/securite/delegations"><i class="bi bi-people"></i> Délégations</a>
- <% } %>
- <% if (peut('demandes_acces', 'read') || peut('demandes_acces', 'create')) { %>
- <a href="/securite/demandes-acces"><i class="bi bi-shield-check"></i> Demandes d'accès</a>
- <% } %>
  <form action="/logout" method="POST" class="form-logout-menu">
  <button type="submit"><i class="bi bi-box-arrow-right"></i> <%= t('nav.logout') %></button>
  </form>

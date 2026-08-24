@@ -4,11 +4,11 @@
  <h1><i class="bi bi-ticket-detailed"></i> Tickets</h1>
  <div style="display:flex; gap:8px; flex-wrap:wrap;">
  <% if (peut('export', 'read')) { %>
- <a href="/tickets/export.csv?statut=<%= statut %>&priorite=<%= priorite %>&id_createur=<%= id_createur %>&id_assigne=<%= id_assigne %>" class="btn btn-gris btn-petit"><i class="bi bi-download"></i> CSV</a>
- <a href="/tickets/export-pdf?statut=<%= statut %>&priorite=<%= priorite %>&id_createur=<%= id_createur %>&id_assigne=<%= id_assigne %>" target="_blank" class="btn btn-gris btn-petit"><i class="bi bi-printer"></i> PDF</a>
+ <a href="/assistance/tickets/export.csv?statut=<%= statut %>&priorite=<%= priorite %>&id_createur=<%= id_createur %>&id_assigne=<%= id_assigne %>" class="btn btn-gris btn-petit"><i class="bi bi-download"></i> CSV</a>
+ <a href="/assistance/tickets/export-pdf?statut=<%= statut %>&priorite=<%= priorite %>&id_createur=<%= id_createur %>&id_assigne=<%= id_assigne %>" target="_blank" class="btn btn-gris btn-petit"><i class="bi bi-printer"></i> PDF</a>
  <% } %>
  <% if (peut('tickets', 'create')) { %>
- <a href="/tickets/nouveau" class="btn btn-accent">+ Nouveau ticket</a>
+ <a href="/assistance/tickets/nouveau" class="btn btn-accent">+ Nouveau ticket</a>
  <% } %>
  </div>
 </div>
@@ -38,7 +38,7 @@
    <i class="bi bi-chevron-up" id="icone-toggle-filtres" aria-hidden="true"></i>
  </button>
  <div id="filtres-corps" class="filtres-corps">
- <form action="/tickets" method="GET" id="form-filtres-tickets" class="form-filtres-tickets" style="padding:12px 14px 14px;">
+ <form action="/assistance/tickets" method="GET" id="form-filtres-tickets" class="form-filtres-tickets" style="padding:12px 14px 14px;">
  <p style="font-size:12px;color:var(--gris);margin:0 0 8px;">
    Réglez les critères puis <strong>Appliquer les filtres</strong> — ils restent actifs à chaque visite.
  </p>
@@ -67,7 +67,7 @@
  <button type="submit" class="btn btn-primaire" title="Appliquer tous les filtres sélectionnés">
  <i class="bi bi-funnel"></i> Appliquer les filtres
  </button>
- <a href="/tickets?reset=1" class="btn btn-gris" id="btn-reset-filtres">Réinitialiser</a>
+ <a href="/assistance/tickets?reset=1" class="btn btn-gris" id="btn-reset-filtres">Réinitialiser</a>
  </div>
  </form>
  </div>
@@ -244,7 +244,7 @@
   if (params.get('reset') === '1') {
     setActifs({});
     if (window.history && window.history.replaceState) {
-      window.history.replaceState({}, '', '/tickets');
+      window.history.replaceState({}, '', '/assistance/tickets');
     }
     initial = { statut: '', priorite: '', id_createur: '', id_assigne: '', q: '' };
   } else {
@@ -262,7 +262,7 @@
       if (params.get('_r') && window.history && window.history.replaceState) {
         params.delete('_r');
         var clean = params.toString();
-        window.history.replaceState({}, '', '/tickets' + (clean ? ('?' + clean) : ''));
+        window.history.replaceState({}, '', '/assistance/tickets' + (clean ? ('?' + clean) : ''));
       }
     } else {
       var saved = getActifs();
@@ -274,7 +274,7 @@
         });
         if (saved.par_page) q.set('par_page', saved.par_page);
         q.set('_r', '1');
-        window.location.replace('/tickets?' + q.toString());
+        window.location.replace('/assistance/tickets?' + q.toString());
         return;
       }
       if (hasSaved) {
@@ -540,7 +540,7 @@
       ['statut', 'priorite', 'id_createur', 'id_assigne', 'q', 'par_page'].forEach(function (k) {
         if (m[k]) q.set(k, m[k]);
       });
-      window.location.href = '/tickets' + (q.toString() ? ('?' + q.toString()) : '');
+      window.location.href = '/assistance/tickets' + (q.toString() ? ('?' + q.toString()) : '');
     });
   });
 
@@ -580,7 +580,7 @@
             <% tickets.forEach(function(t) { %>
                 <tr>
                     <td>#<%= t.id %></td>
-                    <td><a href="/tickets/<%= t.id %>"><%= t.titre %></a></td>
+                    <td><a href="/assistance/tickets/<%= t.id %>"><%= t.titre %></a></td>
                     <td><span class="badge-statut badge-statut-<%= t.statut %>"><%= LIBELLES_STATUT[t.statut] || t.statut %></span></td>
                     <td><span class="badge-priorite badge-priorite-<%= t.priorite %>"><%= LIBELLES_PRIORITE[t.priorite] || t.priorite %></span></td>
                     <td style="font-size:13px; color:var(--gris);">
@@ -602,11 +602,11 @@
  <% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
  <div style="display:flex; gap:8px; margin-top:14px; align-items:center; flex-wrap:wrap;">
  <% if (page > 1) { %>
- <a href="/tickets?page=<%= page - 1 %>&par_page=<%= par_page %>&statut=<%= statut %>&priorite=<%= priorite %>&id_createur=<%= id_createur %>&id_assigne=<%= id_assigne %>" class="btn btn-gris btn-petit"><i class="bi bi-arrow-left"></i> Précédent</a>
+ <a href="/assistance/tickets?page=<%= page - 1 %>&par_page=<%= par_page %>&statut=<%= statut %>&priorite=<%= priorite %>&id_createur=<%= id_createur %>&id_assigne=<%= id_assigne %>" class="btn btn-gris btn-petit"><i class="bi bi-arrow-left"></i> Précédent</a>
  <% } %>
  <span style="color:var(--gris); font-size:13px;">Page <%= page %> / <%= totalPages %></span>
  <% if (page < totalPages) { %>
- <a href="/tickets?page=<%= page + 1 %>&par_page=<%= par_page %>&statut=<%= statut %>&priorite=<%= priorite %>&id_createur=<%= id_createur %>&id_assigne=<%= id_assigne %>" class="btn btn-gris btn-petit">Suivant <i class="bi bi-arrow-right"></i> </a>
+ <a href="/assistance/tickets?page=<%= page + 1 %>&par_page=<%= par_page %>&statut=<%= statut %>&priorite=<%= priorite %>&id_createur=<%= id_createur %>&id_assigne=<%= id_assigne %>" class="btn btn-gris btn-petit">Suivant <i class="bi bi-arrow-right"></i> </a>
  <% } %>
  </div>
  <% } %>

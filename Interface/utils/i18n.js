@@ -20,7 +20,24 @@ const DICT = {
         'nav.notifications': 'Notifications',
         'nav.profile': 'Mon profil',
         'nav.preferences': 'Préférences',
-        'nav.logout': 'Se déconnecter'
+        'nav.logout': 'Se déconnecter',
+        'profile.title': 'Mon profil',
+        'profile.personal': 'Informations personnelles',
+        'profile.email': 'E-mail',
+        'profile.phone': 'Téléphone',
+        'profile.contacts': 'Autres contacts',
+        'profile.function': 'Fonction',
+        'profile.address': 'Adresse',
+        'profile.save.info': 'Enregistrer les informations',
+        'profile.change.password': 'Changer mon mot de passe',
+        'profile.info.saved': 'Informations enregistrées.',
+        'profile.prefs.saved': 'Préférences enregistrées.',
+        'common.matricule': 'Matricule',
+        'common.nom': 'Nom',
+        'common.prenom': 'Prénom',
+        'common.role': 'Rôle',
+        'common.save': 'Enregistrer',
+        'common.cancel': 'Annuler'
     },
     en: {
         'nav.dashboard': 'Dashboard',
@@ -39,7 +56,24 @@ const DICT = {
         'nav.notifications': 'Notifications',
         'nav.profile': 'My profile',
         'nav.preferences': 'Preferences',
-        'nav.logout': 'Sign out'
+        'nav.logout': 'Sign out',
+        'profile.title': 'My profile',
+        'profile.personal': 'Personal information',
+        'profile.email': 'Email',
+        'profile.phone': 'Phone',
+        'profile.contacts': 'Other contacts',
+        'profile.function': 'Job title',
+        'profile.address': 'Address',
+        'profile.save.info': 'Save information',
+        'profile.change.password': 'Change my password',
+        'profile.info.saved': 'Information saved.',
+        'profile.prefs.saved': 'Preferences saved.',
+        'common.matricule': 'Employee ID',
+        'common.nom': 'Last name',
+        'common.prenom': 'First name',
+        'common.role': 'Role',
+        'common.save': 'Save',
+        'common.cancel': 'Cancel'
     }
 };
 

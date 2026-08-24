@@ -29,7 +29,9 @@ router.get('/', async (req, res, next) => {
             titre: 'Diagnostic réseau',
             cible: req.query.cible || '',
             port: req.query.port || '',
+            commandeLibre: '',
             test: null,
+            testLibelle: null,
             resultat: null,
             erreur: null,
             parc
@@ -61,6 +63,7 @@ router.get('/executer', async (req, res) => {
             test: test || null,
             resultat: null,
             erreur: 'Cible ou test invalide.',
+            commandeLibre: '',
             parc
         });
     }
@@ -80,6 +83,7 @@ router.get('/executer', async (req, res) => {
             testLibelle: LIBELLES_TESTS[test],
             resultat: data,
             erreur: null,
+            commandeLibre: '',
             parc
         });
     } catch (err) {
@@ -90,7 +94,10 @@ router.get('/executer', async (req, res) => {
             test,
             testLibelle: LIBELLES_TESTS[test],
             resultat: null,
-            erreur: err.response?.data?.sortie || err.response?.data?.message || 'Erreur lors du test.',
+            commandeLibre: '',
+            erreur: (err.response && (err.response.data?.sortie || err.response.data?.message))
+                || err.message
+                || 'Erreur lors du test.',
             parc
         });
     }
@@ -114,6 +121,53 @@ function parcVersLigne(o) {
         proprietaire: o.Utilisateur ? `${o.Utilisateur.prenom} ${o.Utilisateur.nom}` : ''
     };
 }
+
+
+router.post('/commande', async (req, res) => {
+    const commande = (req.body.commande || '').trim();
+    const parc = await recupererParc(req);
+    if (!commande) {
+        return res.render('diagnostic', {
+            titre: 'Diagnostic réseau',
+            cible: '',
+            port: '',
+            commandeLibre: '',
+            test: 'commande',
+            testLibelle: 'Commande libre',
+            resultat: null,
+            erreur: 'Saisissez une commande.',
+            parc
+        });
+    }
+    try {
+        const { data } = await apiClient(req).post('/diagnostic/commande', { commande });
+        res.render('diagnostic', {
+            titre: 'Diagnostic réseau',
+            cible: commande.split(/\s+/)[0] || '',
+            port: '',
+            commandeLibre: commande,
+            test: 'commande',
+            testLibelle: 'Commande libre',
+            resultat: data,
+            erreur: null,
+            parc
+        });
+    } catch (err) {
+        res.render('diagnostic', {
+            titre: 'Diagnostic réseau',
+            cible: '',
+            port: '',
+            commandeLibre: commande,
+            test: 'commande',
+            testLibelle: 'Commande libre',
+            resultat: err.response?.data || null,
+            erreur: (err.response && (err.response.data?.sortie || err.response.data?.message))
+                || err.message
+                || 'Erreur lors de l\'exécution.',
+            parc
+        });
+    }
+});
 
 router.get('/export.csv', exigerExport, async (req, res, next) => {
     try {

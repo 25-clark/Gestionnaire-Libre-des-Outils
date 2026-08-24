@@ -34,7 +34,7 @@ var libellesActions = { read: 'Lire', create: 'Créer', update: 'Modifier', dele
  <div class="message-erreur"><%= erreur %></div>
  <% } %>
 
- <form action="<%= role && role.id ? '/roles/' + role.id + '/modifier' : '/roles' %>" method="POST">
+ <form action="<%= role && role.id ? '/administration/roles/' + role.id + '/modifier' : '/administration/roles' %>" method="POST">
  <label for="nom">Nom du rôle</label>
  <input type="text" id="nom" name="nom" required value="<%= role ? role.nom : '' %>">
 
@@ -137,7 +137,7 @@ var libellesActions = { read: 'Lire', create: 'Créer', update: 'Modifier', dele
 
  <div class="actions-form">
  <button type="submit" class="btn btn-primaire">Enregistrer</button>
- <a href="/roles" class="btn btn-gris">Annuler</a>
+ <a href="/administration/roles" class="btn btn-gris">Annuler</a>
  </div>
  </form>
 </div>

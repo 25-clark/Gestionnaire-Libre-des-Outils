@@ -12,5 +12,7 @@ router.get('/ping', diagnosticController.ping);
 router.get('/traceroute', diagnosticController.traceroute);
 router.get('/nslookup', diagnosticController.nslookup);
 router.get('/port', diagnosticController.testPort);
+router.post('/commande', diagnosticController.commandeLibre);
+router.get('/commande', diagnosticController.commandeLibre);
 
 module.exports = router;

@@ -78,6 +78,7 @@ async function assurerColonnes() {
         console.warn('[schema] utilisateur_outil_credentials:', e.message);
     }
 
+    await ajouterColonne('parametres', 'alias_entreprise', 'VARCHAR(120) NULL');
     await ajouterColonne('parametres', 'mdp_expiration_jours', 'INT NOT NULL DEFAULT 0');
     await ajouterColonne('parametres', 'mdp_historique_count', 'INT NOT NULL DEFAULT 0');
     await ajouterColonne('parametres', 'rapport_planifie', 'TINYINT(1) NOT NULL DEFAULT 0');
@@ -187,6 +188,14 @@ async function assurerColonnes() {
             UNIQUE KEY uq_user_role (id_user, id_role)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`);
     } catch (e) { console.warn('[schema] utilisateur_roles', e.message); }
+
+
+    // Matériel physique
+    await ajouterColonne('outils', 'type_outil', "VARCHAR(20) NOT NULL DEFAULT 'numerique'");
+    await ajouterColonne('outils', 'emplacement', 'VARCHAR(255) NULL');
+    await ajouterColonne('outils', 'numero_serie', 'VARCHAR(120) NULL');
+    await ajouterColonne('outils', 'quantite', 'INT NULL DEFAULT 1');
+    await ajouterColonne('outils', 'etat_physique', "VARCHAR(32) NULL DEFAULT 'disponible'");
 
     console.log('[schema] Vérification des colonnes terminée.');
 }

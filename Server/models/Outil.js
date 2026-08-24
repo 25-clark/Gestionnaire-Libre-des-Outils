@@ -37,6 +37,31 @@ module.exports = (sequelize) => {
             type: DataTypes.DATE,
             allowNull: true
         },
+        type_outil: {
+            type: DataTypes.ENUM('numerique', 'materiel'),
+            allowNull: false,
+            defaultValue: 'numerique'
+        },
+        emplacement: {
+            type: DataTypes.STRING(255),
+            allowNull: true,
+            defaultValue: null
+        },
+        numero_serie: {
+            type: DataTypes.STRING(120),
+            allowNull: true,
+            defaultValue: null
+        },
+        quantite: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            defaultValue: 1
+        },
+        etat_physique: {
+            type: DataTypes.ENUM('disponible', 'emprunte', 'maintenance', 'hors_service'),
+            allowNull: true,
+            defaultValue: 'disponible'
+        },
         active: {
             // false = désactivé (mais pas supprimé)
             type: DataTypes.BOOLEAN,

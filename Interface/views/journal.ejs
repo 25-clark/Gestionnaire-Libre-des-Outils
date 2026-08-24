@@ -4,15 +4,15 @@
  <h1><i class="bi bi-journal-text"></i> Journal d'événements</h1>
  <div style="display:flex; gap:8px;">
  <% if (peut('export', 'read')) { %>
- <a href="/journal/export.csv?q=<%= encodeURIComponent(q) %>&ressource=<%= ressource %>&action=<%= action %>" class="btn btn-gris btn-petit"><i class="bi bi-download"></i> CSV</a>
- <a href="/journal/export-pdf?q=<%= encodeURIComponent(q) %>&ressource=<%= ressource %>&action=<%= action %>" target="_blank" class="btn btn-gris btn-petit"><i class="bi bi-printer"></i> PDF</a>
+ <a href="/administration/journal/export.csv?q=<%= encodeURIComponent(q) %>&ressource=<%= ressource %>&action=<%= action %>" class="btn btn-gris btn-petit"><i class="bi bi-download"></i> CSV</a>
+ <a href="/administration/journal/export-pdf?q=<%= encodeURIComponent(q) %>&ressource=<%= ressource %>&action=<%= action %>" target="_blank" class="btn btn-gris btn-petit"><i class="bi bi-printer"></i> PDF</a>
  <% } %>
  </div>
 </div>
 <p style="color:var(--gris); font-size:14px; margin-top:-10px;"><%= total %> événement(s) au total.</p>
 
 <div class="carte" style="max-width:900px;">
- <form action="/journal" method="GET" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+ <form action="/administration/journal" method="GET" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
  <div style="flex:1; min-width:160px;">
  <label for="q">Rechercher</label>
  <input type="text" id="q" name="q" value="<%= q %>" placeholder="nom, matricule, libellé...">
@@ -45,7 +45,7 @@
  </div>
  <button type="submit" class="btn btn-primaire">Filtrer</button>
  <% if (q || ressource || action) { %>
- <a href="/journal" class="btn btn-gris">Réinitialiser</a>
+ <a href="/administration/journal" class="btn btn-gris">Réinitialiser</a>
  <% } %>
  </form>
 </div>
@@ -75,11 +75,11 @@
  <% if (totalPages > 1) { %>
  <div style="display:flex; gap:8px; margin-top:14px; align-items:center;">
  <% if (page > 1) { %>
- <a href="/journal?page=<%= page - 1 %>&par_page=<%= par_page %>&q=<%= encodeURIComponent(q) %>&ressource=<%= ressource %>&action=<%= action %>" class="btn btn-gris btn-petit"><i class="bi bi-arrow-left"></i> Précédent</a>
+ <a href="/administration/journal?page=<%= page - 1 %>&par_page=<%= par_page %>&q=<%= encodeURIComponent(q) %>&ressource=<%= ressource %>&action=<%= action %>" class="btn btn-gris btn-petit"><i class="bi bi-arrow-left"></i> Précédent</a>
  <% } %>
  <span style="color:var(--gris); font-size:13px;">Page <%= page %> / <%= totalPages %></span>
  <% if (page < totalPages) { %>
- <a href="/journal?page=<%= page + 1 %>&par_page=<%= par_page %>&q=<%= encodeURIComponent(q) %>&ressource=<%= ressource %>&action=<%= action %>" class="btn btn-gris btn-petit">Suivant <i class="bi bi-arrow-right"></i> </a>
+ <a href="/administration/journal?page=<%= page + 1 %>&par_page=<%= par_page %>&q=<%= encodeURIComponent(q) %>&ressource=<%= ressource %>&action=<%= action %>" class="btn btn-gris btn-petit">Suivant <i class="bi bi-arrow-right"></i> </a>
  <% } %>
  </div>
  <% } %>

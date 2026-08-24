@@ -3,10 +3,10 @@
 <div class="entete-page">
  <h1><i class="bi bi-bell"></i> Notifications</h1>
  <% if (notifications && notifications.length) { %>
- <form action="/notifications/vider" method="POST" onsubmit="return confirm('Supprimer définitivement toutes les notifications ?');" style="display:inline;">
+ <form action="/assistance/notifications/vider" method="POST" onsubmit="return confirm('Supprimer définitivement toutes les notifications ?');" style="display:inline;">
  <button type="submit" class="btn btn-gris btn-petit"><i class="bi bi-trash"></i> Vider</button>
  </form>
- <form action="/notifications/toutes-lues" method="POST" style="display:inline;">
+ <form action="/assistance/notifications/toutes-lues" method="POST" style="display:inline;">
  <button type="submit" class="btn btn-gris btn-petit">Tout marquer comme lu</button>
  </form>
  <% } %>
@@ -19,9 +19,9 @@
  <% notifications.forEach(function(n, i) { %>
  <div class="notif-item<%= i < notifications.length - 1 ? ' notif-sep' : '' %><%= n.lu ? '' : ' notif-non-lue' %>">
    <% if (n.lien) { %>
-   <a href="/notifications/<%= n.id %>/ouvrir" class="notif-btn" style="text-decoration:none;color:inherit;display:flex;gap:10px;align-items:flex-start;width:100%;padding:10px 0;">
+   <a href="/assistance/notifications/<%= n.id %>/ouvrir" class="notif-btn" style="text-decoration:none;color:inherit;display:flex;gap:10px;align-items:flex-start;width:100%;padding:10px 0;">
    <% } else { %>
-   <form action="/notifications/<%= n.id %>/lue" method="POST" style="flex:1;margin:0;">
+   <form action="/assistance/notifications/<%= n.id %>/lue" method="POST" style="flex:1;margin:0;">
    <button type="submit" class="notif-btn" style="width:100%;text-align:left;">
    <% } %>
      <span style="font-size:18px; line-height:1;">
@@ -49,11 +49,11 @@
  <% if (totalPages > 1) { %>
  <div style="display:flex; gap:8px; margin-top:14px; align-items:center;">
  <% if (page > 1) { %>
- <a href="/notifications?page=<%= page - 1 %>" class="btn btn-gris btn-petit"><i class="bi bi-arrow-left"></i> Précédent</a>
+ <a href="/assistance/notifications?page=<%= page - 1 %>" class="btn btn-gris btn-petit"><i class="bi bi-arrow-left"></i> Précédent</a>
  <% } %>
  <span style="color:var(--gris); font-size:13px;">Page <%= page %> / <%= totalPages %></span>
  <% if (page < totalPages) { %>
- <a href="/notifications?page=<%= page + 1 %>" class="btn btn-gris btn-petit">Suivant <i class="bi bi-arrow-right"></i> </a>
+ <a href="/assistance/notifications?page=<%= page + 1 %>" class="btn btn-gris btn-petit">Suivant <i class="bi bi-arrow-right"></i> </a>
  <% } %>
  </div>
  <% } %>

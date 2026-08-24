@@ -69,7 +69,7 @@
 
  <% if (peut('acces', 'create')) { %>
  <div class="carte" style="max-width:520px;">
- <form action="/acces/sous-activites" method="POST">
+ <form action="/administration/acces/sous-activites" method="POST">
  <input type="hidden" name="id_sous_activite" value="<%= sousActivite.id %>">
  <input type="hidden" name="retour" value="/sous-activites/<%= sousActivite.id %>?onglet=utilisateurs">
 
@@ -110,7 +110,7 @@
  <td><%= a.permissions && a.permissions.write ? 'Écriture' : 'Lecture' %><% if (a.permissions && a.permissions.delete) { %> + Suppression<% } %></td>
  <td style="text-align:right;">
  <% if (peut('acces', 'delete')) { %>
- <form action="/acces/sous-activites/<%= a.id %>/supprimer" method="POST" class="form-inline"
+ <form action="/administration/acces/sous-activites/<%= a.id %>/supprimer" method="POST" class="form-inline"
  onsubmit="return confirm('Révoquer cet accès ?');">
  <input type="hidden" name="retour" value="/sous-activites/<%= sousActivite.id %>?onglet=utilisateurs">
  <button type="submit" class="btn btn-danger btn-petit">Révoquer</button>

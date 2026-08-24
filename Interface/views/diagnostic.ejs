@@ -6,7 +6,7 @@
 </p>
 
 <div class="carte" style="max-width:640px;">
- <form action="/diagnostic/executer" method="GET">
+ <form action="/assistance/diagnostic/executer" method="GET">
  <label for="cible">Cible (IP ou nom d'hôte)</label>
  <input type="text" id="cible" name="cible" value="<%= cible %>" placeholder="192.168.1.10 ou routeur.local" required>
 
@@ -21,6 +21,20 @@
  <button type="submit" name="test" value="port" class="btn btn-gris"><i class="bi bi-plug"></i> Test de port</button>
  </div>
  </form>
+
+ <hr style="border:none;border-top:1px solid var(--gris-bordure);margin:18px 0 14px;">
+ <form action="/assistance/diagnostic/commande" method="POST">
+  <label for="commande">Commande libre (réseau)</label>
+  <input type="text" id="commande" name="commande" value="<%= typeof commandeLibre !== 'undefined' ? (commandeLibre || '') : '' %>"
+    placeholder="Ex. ipconfig /all · netstat -an · Get-NetIPConfiguration · ss -tuln"
+    autocomplete="off" maxlength="400">
+  <p class="champ-aide" style="color:var(--gris);font-size:13px;">
+    Liste blanche uniquement (pas de pipe <code>|</code>, ni <code>&amp;&amp;</code>). Windows :
+    <code>ipconfig</code>, <code>netstat</code>, <code>arp</code>, <code>route</code>,
+    PowerShell : <code>Get-NetIPConfiguration</code>, <code>Test-NetConnection</code>, <code>Resolve-DnsName</code>…
+  </p>
+  <button type="submit" class="btn btn-primaire btn-petit"><i class="bi bi-terminal"></i> Exécuter</button>
+ </form>
 </div>
 
 <% if (erreur) { %>
@@ -28,20 +42,134 @@
 <% } %>
 
 <% if (resultat) { %>
- <div class="carte" style="max-width:800px;">
- <h2 style="margin-top:0; font-size:16px; color:var(--bleu-fonce);">
- Résultat — <%= testLibelle %> sur <code><%= cible %></code><% if (test === 'port') { %>:<%= port %><% } %>
- </h2>
- <pre style="background:var(--gris-fonce, #222); color:#e8e8e8; padding:14px; border-radius:var(--rayon); overflow-x:auto; font-size:13px; white-space:pre-wrap; word-break:break-word;"><%= resultat.sortie %></pre>
+ <div class="carte" style="max-width:800px;" id="carte-resultat-diag">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+   <h2 style="margin:0; font-size:16px; color:var(--bleu-fonce);">
+    Résultat — <%= testLibelle || 'Test' %><% if (test === 'commande' && commandeLibre) { %> : <code><%= commandeLibre %></code><% } else if (cible) { %> sur <code><%= cible %></code><% if (test === 'port') { %>:<%= port %><% } %><% } %>
+   </h2>
+   <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <button type="button" class="btn btn-gris btn-petit" id="btn-copie-diag" title="Copier le résultat">
+      <i class="bi bi-clipboard"></i> Copier
+    </button>
+    <button type="button" class="btn btn-gris btn-petit" id="btn-csv-diag" title="Exporter en CSV">
+      <i class="bi bi-download"></i> CSV
+    </button>
+    <button type="button" class="btn btn-gris btn-petit" id="btn-pdf-diag" title="Exporter / imprimer en PDF">
+      <i class="bi bi-printer"></i> PDF
+    </button>
+   </div>
+  </div>
+  <pre id="sortie-diag" class="diag-sortie"><%= resultat.sortie %></pre>
+  <p id="msg-copie-diag" style="display:none;font-size:13px;color:var(--vert,#10b981);margin:8px 0 0;">Copié dans le presse-papiers.</p>
  </div>
+ <script type="application/json" id="diag-meta-boot"><%- JSON.stringify({
+   test: (typeof testLibelle !== 'undefined' && testLibelle) ? testLibelle : (test || ''),
+   cible: cible || '',
+   port: (test === 'port') ? String(port || '') : ''
+ }) %></script>
+ <script>
+ (function () {
+   var pre = document.getElementById('sortie-diag');
+   var texte = pre ? pre.textContent : '';
+   var meta = { test: '', cible: '', port: '', date: new Date().toLocaleString('fr-FR') };
+   try {
+     var boot = document.getElementById('diag-meta-boot');
+     if (boot) {
+       var parsed = JSON.parse(boot.textContent || '{}');
+       meta.test = parsed.test || '';
+       meta.cible = parsed.cible || '';
+       meta.port = parsed.port || '';
+     }
+   } catch (e) {}
+   function nomFichier(ext) {
+     var base = 'diagnostic-' + (meta.test || 'test').toLowerCase().replace(/\s+/g, '-') +
+       '-' + (meta.cible || 'cible').replace(/[^a-zA-Z0-9.-]/g, '_');
+     return base + '.' + ext;
+   }
+   function telecharger(nom, contenu, mime) {
+     var blob = new Blob([contenu], { type: mime });
+     var a = document.createElement('a');
+     a.href = URL.createObjectURL(blob);
+     a.download = nom;
+     document.body.appendChild(a);
+     a.click();
+     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+   }
+   var btnCopie = document.getElementById('btn-copie-diag');
+   if (btnCopie) {
+     btnCopie.addEventListener('click', function () {
+       var full = meta.test + ' — ' + meta.cible + (meta.port ? ':' + meta.port : '') +
+         '\n' + meta.date + '\n\n' + texte;
+       function ok() {
+         var m = document.getElementById('msg-copie-diag');
+         if (m) { m.style.display = 'block'; setTimeout(function(){ m.style.display = 'none'; }, 2000); }
+         btnCopie.innerHTML = '<i class="bi bi-check2"></i> Copié';
+         setTimeout(function(){ btnCopie.innerHTML = '<i class="bi bi-clipboard"></i> Copier'; }, 1500);
+       }
+       if (navigator.clipboard && navigator.clipboard.writeText) {
+         navigator.clipboard.writeText(full).then(ok).catch(function () {
+           var ta = document.createElement('textarea');
+           ta.value = full; document.body.appendChild(ta); ta.select();
+           try { document.execCommand('copy'); ok(); } catch (e) {}
+           ta.remove();
+         });
+       } else {
+         var ta = document.createElement('textarea');
+         ta.value = full; document.body.appendChild(ta); ta.select();
+         try { document.execCommand('copy'); ok(); } catch (e) {}
+         ta.remove();
+       }
+     });
+   }
+   var btnCsv = document.getElementById('btn-csv-diag');
+   if (btnCsv) {
+     btnCsv.addEventListener('click', function () {
+       var lignes = [
+         'Test;Cible;Port;Date',
+         [meta.test, meta.cible, meta.port, meta.date].map(function (v) {
+           return '"' + String(v).replace(/"/g, '""') + '"';
+         }).join(';'),
+         '',
+         'Sortie',
+         '"' + String(texte).replace(/"/g, '""') + '"'
+       ];
+       telecharger(nomFichier('csv'), '\uFEFF' + lignes.join('\r\n'), 'text/csv;charset=utf-8');
+     });
+   }
+   var btnPdf = document.getElementById('btn-pdf-diag');
+   if (btnPdf) {
+     btnPdf.addEventListener('click', function () {
+       var w = window.open('', '_blank');
+       if (!w) { alert('Autorisez les pop-ups pour l\'export PDF.'); return; }
+       var esc = function (s) {
+         return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+       };
+       w.document.write(
+         '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Diagnostic GLO</title>' +
+         '<style>body{font-family:system-ui,sans-serif;padding:24px;color:#0f172a}' +
+         'h1{font-size:18px;margin:0 0 8px} .meta{color:#64748b;font-size:13px;margin-bottom:16px}' +
+         'pre{background:#0f172a;color:#e2e8f0;padding:16px;border-radius:8px;white-space:pre-wrap;font-size:12px}' +
+         '@media print{body{padding:0}}</style></head><body>' +
+         '<h1>Diagnostic réseau — ' + esc(meta.test) + '</h1>' +
+         '<div class="meta">Cible : <strong>' + esc(meta.cible) +
+         (meta.port ? ':' + esc(meta.port) : '') + '</strong> · ' + esc(meta.date) + '</div>' +
+         '<pre>' + esc(texte) + '</pre>' +
+         '<script>window.onload=function(){window.print();}<\/script>' +
+         '</body></html>'
+       );
+       w.document.close();
+     });
+   }
+ })();
+ </script>
 <% } %>
 
 <div class="entete-page" style="margin-top:28px;">
  <h2 style="font-size:16px; color:var(--bleu-fonce); margin:0;"><i class="bi bi-broadcast"></i> État du parc réseau</h2>
  <div style="display:flex; gap:8px;">
  <% if (peut('export', 'read')) { %>
- <a href="/diagnostic/export.csv" class="btn btn-gris btn-petit"><i class="bi bi-download"></i> CSV</a>
- <a href="/diagnostic/export-pdf" target="_blank" class="btn btn-gris btn-petit"><i class="bi bi-printer"></i> PDF</a>
+ <a href="/assistance/diagnostic/export.csv" class="btn btn-gris btn-petit"><i class="bi bi-download"></i> CSV</a>
+ <a href="/assistance/diagnostic/export-pdf" target="_blank" class="btn btn-gris btn-petit"><i class="bi bi-printer"></i> PDF</a>
  <% } %>
  </div>
 </div>
@@ -66,7 +194,7 @@
  <%= o.derniere_verification ? new Date(o.derniere_verification).toLocaleString('fr-FR') : 'Jamais' %>
  </td>
  <td style="text-align:right;">
- <a href="/diagnostic?cible=<%= encodeURIComponent(o.adresse) %>" class="btn btn-gris btn-petit">Tester</a>
+ <a href="/assistance/diagnostic?cible=<%= encodeURIComponent(o.adresse) %>" class="btn btn-gris btn-petit">Tester</a>
  </td>
  </tr>
  <% }) %>

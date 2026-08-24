@@ -19,7 +19,7 @@
 <% } %>
 
 <div class="carte" style="max-width:760px;">
- <form action="/ldap" method="POST">
+ <form action="/administration/ldap" method="POST">
  <div class="champ-case">
  <input type="checkbox" id="ldap_actif" name="ldap_actif" <%= config.ldap_actif ? 'checked' : '' %>>
  <label for="ldap_actif">Activer l'intégration LDAP</label>
@@ -98,14 +98,14 @@
 <div class="carte" style="max-width:760px; margin-top:16px;">
  <h2 style="margin-top:0; font-size:15px; color:var(--bleu-fonce);">Test &amp; import</h2>
 
- <form action="/ldap/tester" method="POST" class="form-inline" style="margin-bottom:10px;">
+ <form action="/administration/ldap/tester" method="POST" class="form-inline" style="margin-bottom:10px;">
  <button type="submit" class="btn btn-gris" <%= config.ldapjs_disponible ? '' : 'disabled' %>><i class="bi bi-plug"></i> Tester la connexion</button>
  </form>
  <% if (resultatTest) { %>
  <div class="<%= resultatTest.ok ? 'message-succes' : 'message-erreur' %>"><%= resultatTest.message %></div>
  <% } %>
 
- <form action="/ldap/importer-utilisateurs" method="POST" class="form-inline" style="margin:10px 0;">
+ <form action="/administration/ldap/importer-utilisateurs" method="POST" class="form-inline" style="margin:10px 0;">
  <button type="submit" class="btn btn-gris" <%= config.ldapjs_disponible ? '' : 'disabled' %>><i class="bi bi-person"></i>  Importer les utilisateurs</button>
  </form>
  <% if (resultatImportUtilisateurs) { %>
@@ -116,7 +116,7 @@
  </div>
  <% } %>
 
- <form action="/ldap/importer-activites" method="POST" class="form-inline">
+ <form action="/administration/ldap/importer-activites" method="POST" class="form-inline">
  <button type="submit" class="btn btn-gris" <%= config.ldapjs_disponible ? '' : 'disabled' %>><i class="bi bi-folder"></i> Importer les activités et sous-activités</button>
  </form>
  <% if (resultatImportActivites) { %>

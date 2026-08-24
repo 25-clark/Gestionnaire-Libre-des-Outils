@@ -13,6 +13,51 @@ router.use((req, res, next) => {
     next();
 });
 
+
+router.get('/mot-de-passe-defaut', async (req, res, next) => {
+    try {
+        const { data: parametre } = await apiClient(req).get('/parametres');
+        res.render('parametres-mdp-defaut', {
+            titre: 'Mot de passe par défaut',
+            parametre,
+            erreur: null,
+            succes: req.query.succes || null
+        });
+    } catch (err) { next(err); }
+});
+
+router.post('/mot-de-passe-defaut', async (req, res) => {
+    try {
+        const mdp = req.body.mot_de_passe_defaut || '';
+        const conf = req.body.confirmation || '';
+        if (mdp.length < 6) {
+            return res.render('parametres-mdp-defaut', {
+                titre: 'Mot de passe par défaut',
+                parametre: {},
+                erreur: 'Le mot de passe doit contenir au moins 6 caractères.',
+                succes: null
+            });
+        }
+        if (mdp !== conf) {
+            return res.render('parametres-mdp-defaut', {
+                titre: 'Mot de passe par défaut',
+                parametre: {},
+                erreur: 'La confirmation ne correspond pas.',
+                succes: null
+            });
+        }
+        await apiClient(req).put('/parametres', { mot_de_passe_defaut: mdp });
+        res.redirect('/administration/parametres/mot-de-passe-defaut?succes=1');
+    } catch (err) {
+        res.render('parametres-mdp-defaut', {
+            titre: 'Mot de passe par défaut',
+            parametre: {},
+            erreur: err.response?.data?.message || 'Erreur lors de l\'enregistrement.',
+            succes: null
+        });
+    }
+});
+
 router.get('/', async (req, res, next) => {
     try {
         const api = apiClient(req);
@@ -96,14 +141,14 @@ router.post('/sauvegarde/restaurer', (req, res, next) => {
         if (err) return next(err);
         try {
             if (!req.file) {
-                return res.redirect('/parametres?erreur=Fichier manquant');
+                return res.redirect('/administration/parametres?erreur=Fichier manquant');
             }
             const payload = JSON.parse(req.file.buffer.toString('utf8'));
             const api = apiClient(req);
             await api.post('/sauvegarde/restaurer', payload);
-            res.redirect('/parametres?succes=Restauration terminée');
+            res.redirect('/administration/parametres?succes=Restauration terminée');
         } catch (e) {
-            res.redirect('/parametres?erreur=' + encodeURIComponent(e.response?.data?.message || e.message || 'Échec restauration'));
+            res.redirect('/administration/parametres?erreur=' + encodeURIComponent(e.response?.data?.message || e.message || 'Échec restauration'));
         }
     });
 });

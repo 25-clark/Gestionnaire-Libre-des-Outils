@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { apiClientAnonyme } = require('../config/api');
 
-router.get('/statistiques', async (req, res, next) => {
+router.get('/administration/statistiques', async (req, res, next) => {
     try {
         const api = apiClientAnonyme();
         const { data: stats } = await api.get('/statistiques/public');

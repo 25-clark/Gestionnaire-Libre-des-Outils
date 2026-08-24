@@ -34,7 +34,7 @@ router.post('/', async (req, res, next) => {
     try {
         const api = apiClient(req);
         await api.put('/ldap/parametres', req.body);
-        res.redirect('/ldap?succes=1');
+        res.redirect('/administration/ldap?succes=1');
     } catch (err) { next(err); }
 });
 

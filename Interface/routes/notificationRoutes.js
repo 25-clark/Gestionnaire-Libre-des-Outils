@@ -35,7 +35,7 @@ router.get('/', async (req, res, next) => {
 // Marque comme lue puis redirige vers le lien associé (ou revient aux
 // notifications s'il n'y en a pas) — un seul clic suffit.
 router.post('/:id/lue', async (req, res) => {
-    let lien = '/notifications';
+    let lien = '/assistance/notifications';
     try {
         const api = apiClient(req);
         const { data } = await api.post(`/notifications/${req.params.id}/lue`);
@@ -51,7 +51,7 @@ router.post('/toutes-lues', async (req, res) => {
         await api.post('/notifications/toutes-lues');
         delete req.session._notifBadge;
     } catch { /* pas bloquant */ }
-    res.redirect('/notifications');
+    res.redirect('/assistance/notifications');
 });
 
 router.post('/vider', async (req, res) => {
@@ -60,7 +60,7 @@ router.post('/vider', async (req, res) => {
         await api.post('/notifications/vider');
         delete req.session._notifBadge;
     } catch { /* pas bloquant */ }
-    res.redirect('/notifications');
+    res.redirect('/assistance/notifications');
 });
 
 
@@ -71,9 +71,9 @@ router.get('/:id/ouvrir', async (req, res, next) => {
         const { data: n } = await api.get(`/notifications/${req.params.id}`).catch(() => ({ data: null }));
         try { await api.post(`/notifications/${req.params.id}/lue`); } catch (_) {}
         if (n && n.lien) return res.redirect(n.lien);
-        return res.redirect('/notifications');
+        return res.redirect('/assistance/notifications');
     } catch (err) {
-        res.redirect('/notifications');
+        res.redirect('/assistance/notifications');
     }
 });
 

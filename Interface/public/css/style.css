@@ -441,6 +441,15 @@ table.tableau {
     width: 100%;
     border-collapse: collapse;
     font-size: 14px;
+    min-width: 100%;
+}
+.wrap-tableau {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.carte table.tableau {
+    width: 100%;
 }
 table.tableau th {
     text-align: left;
@@ -1154,3 +1163,62 @@ body.densite-compact .topbar { min-height: 48px; }
 body.densite-compact input,
 body.densite-compact select,
 body.densite-compact textarea { padding: 6px 8px; font-size: 13px; }
+
+
+/* Descriptions sous les champs de formulaire */
+label + p,
+.carte > form > p,
+form p[style*="color:var(--gris)"],
+form p.champ-aide,
+p.champ-aide {
+    margin-top: -2px !important;
+    margin-bottom: 12px;
+}
+
+
+/* Mon profil — grille et liens latéraux */
+.profil-grille {
+    display: grid;
+    grid-template-columns: 1fr minmax(240px, 320px);
+    gap: 16px;
+    align-items: start;
+}
+@media (max-width: 900px) {
+    .profil-grille { grid-template-columns: 1fr; }
+}
+.profil-liens-aside {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.profil-lien-action {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-radius: var(--rayon, 10px);
+    border: 1px solid var(--gris-bordure, #e2e8f0);
+    background: var(--gris-clair, #f1f5f9);
+    text-decoration: none !important;
+    color: inherit;
+    transition: background 0.15s, border-color 0.15s;
+}
+.profil-lien-action:hover {
+    background: var(--bleu-clair, #eff6ff);
+    border-color: #bfdbfe;
+}
+.profil-lien-action i {
+    font-size: 1.25rem;
+    color: var(--bleu, #2563eb);
+    margin-top: 2px;
+}
+.profil-lien-action strong {
+    display: block;
+    font-size: 14px;
+}
+.profil-lien-action small {
+    display: block;
+    color: var(--gris, #64748b);
+    font-size: 12px;
+    margin-top: 2px;
+}

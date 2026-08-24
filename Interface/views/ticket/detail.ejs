@@ -3,7 +3,7 @@
 <div class="entete-page">
  <h1><i class="bi bi-ticket-detailed"></i> #<%= ticket.id %> — <%= ticket.titre %></h1>
  <% if (peut('tickets', 'delete')) { %>
- <form action="/tickets/<%= ticket.id %>/supprimer" method="POST" class="form-inline"
+ <form action="/assistance/tickets/<%= ticket.id %>/supprimer" method="POST" class="form-inline"
  onsubmit="return confirm('Supprimer ce ticket et tout son historique de messages ?');">
  <button type="submit" class="btn btn-danger">Supprimer</button>
  </form>
@@ -26,7 +26,7 @@
             <span class="badge-sla depasse"><i class="bi bi-arrow-up-circle"></i> Escaladé le <%= new Date(ticket.escalade_le).toLocaleString('fr-FR') %></span>
         <% } %>
         <% if (peut('tickets', 'update') && ticket.statut !== 'resolu' && ticket.statut !== 'ferme') { %>
-            <form action="/tickets/<%= ticket.id %>/escalader" method="POST" style="margin:0;" onsubmit="return confirm('Escalader ce ticket vers un administrateur ?');">
+            <form action="/assistance/tickets/<%= ticket.id %>/escalader" method="POST" style="margin:0;" onsubmit="return confirm('Escalader ce ticket vers un administrateur ?');">
                 <button type="submit" class="btn btn-gris btn-petit"><i class="bi bi-arrow-up-circle"></i> Escalader vers un admin</button>
             </form>
         <% } %>
@@ -78,7 +78,7 @@
  <% } %>
  </p>
  <p class="msg-contenu" style="margin:0; font-size:14px; white-space:pre-wrap;"><%= m.contenu %></p>
- <form class="form-edit-msg" action="/tickets/<%= ticket.id %>/messages/<%= m.id %>/modifier" method="POST" hidden style="margin-top:8px;">
+ <form class="form-edit-msg" action="/assistance/tickets/<%= ticket.id %>/messages/<%= m.id %>/modifier" method="POST" hidden style="margin-top:8px;">
   <textarea name="contenu" rows="3" required><%= m.contenu %></textarea>
   <div class="actions-form">
    <button type="submit" class="btn btn-primaire btn-petit">Enregistrer</button>
@@ -110,7 +110,7 @@ document.querySelectorAll('.btn-cancel-edit').forEach(function(btn){
  <% } %>
 
  <div class="carte" style="margin-top:14px;">
- <form action="/tickets/<%= ticket.id %>/messages" method="POST">
+ <form action="/assistance/tickets/<%= ticket.id %>/messages" method="POST">
  <label for="contenu">Ajouter un message</label>
  <textarea id="contenu" name="contenu" rows="3" required placeholder="Écrire une réponse..."></textarea>
  <div class="actions-form">
@@ -123,7 +123,7 @@ document.querySelectorAll('.btn-cancel-edit').forEach(function(btn){
  <div>
  <div class="carte">
  <h2 style="font-size:15px; color:var(--bleu-fonce); margin:0 0 12px;">Statut du ticket</h2>
- <form action="/tickets/<%= ticket.id %>/modifier" method="POST">
+ <form action="/assistance/tickets/<%= ticket.id %>/modifier" method="POST">
  <label for="statut">Statut</label>
  <select id="statut" name="statut" onchange="this.form.submit()" <%= !(peut('tickets','update') || (currentUser && (ticket.id_createur === currentUser.id || (ticket.Assigne && ticket.Assigne.id === currentUser.id)))) ? 'disabled' : '' %>>
  <% Object.keys(LIBELLES_STATUT).forEach(function(s) { %>

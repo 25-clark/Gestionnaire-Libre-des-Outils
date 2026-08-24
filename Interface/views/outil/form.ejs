@@ -1,5 +1,6 @@
 <%- include('../partials/header') %>
 <% var estEdition = !!(typeof outil !== 'undefined' && outil && outil.id); %>
+<% var typeO = estEdition ? (outil.type_outil || 'numerique') : 'numerique'; %>
 <div class="entete-page"><h1><%= titre %></h1></div>
 
 <div class="carte" style="max-width:560px;">
@@ -7,78 +8,92 @@
  <div class="message-erreur"><%= erreur %></div>
  <% } %>
  <% if (!estEdition) { %>
- <p style="color:var(--gris); font-size:13px; margin-top:-4px;">
- Renseignez le nom de l'outil ainsi que, le cas échéant, son URL d'accès et son adresse réseau (IP ou nom d'hôte) pour le diagnostic.
+ <p class="champ-aide" style="color:var(--gris); font-size:13px;">
+ Renseignez le nom de l'outil. Pour un équipement physique, choisissez le type « Matériel ».
  </p>
  <% } %>
 
  <form action="<%= estEdition ? '/outils/' + outil.id + '/modifier' : '/outils' %>" method="POST" enctype="multipart/form-data" id="form-outil">
  <input type="hidden" name="id_activite" value="<%= id_activite %>">
  <input type="hidden" name="retour" value="<%= typeof retour !== 'undefined' ? retour : '/' %>">
- 
+
  <label for="nom">Nom de l'outil</label>
  <input type="text" id="nom" name="nom" required value="<%= estEdition ? (outil.nom || '') : '' %>">
 
- <label for="lien">Lien (optionnel)</label>
- <input type="url" id="lien" name="lien" placeholder="https://..." value="<%= estEdition ? (outil.lien || '') : '' %>">
+ <label for="type_outil">Type d'outil</label>
+ <select id="type_outil" name="type_outil">
+  <option value="numerique" <%= typeO === 'numerique' ? 'selected' : '' %>>Numérique (lien / application)</option>
+  <option value="materiel" <%= typeO === 'materiel' ? 'selected' : '' %>>Matériel physique</option>
+ </select>
+ <p class="champ-aide" style="color:var(--gris);font-size:13px;">Matériel : outillage, appareils, consommables, etc.</p>
 
- <label for="adresse">Adresse IP / nom d'hôte (optionnel)</label>
- <input type="text" id="adresse" name="adresse" placeholder="192.168.1.10 ou routeur.local" value="<%= estEdition ? (outil.adresse || '') : '' %>">
- <p style="color:var(--gris); font-size:13px; margin-top:-6px;">
- Permet de tester la joignabilité de l'outil (ping, traceroute...) depuis l'onglet Diagnostic réseau.
- </p>
+ <div id="bloc-numerique" style="<%= typeO === 'materiel' ? 'display:none' : '' %>">
+  <label for="lien">Lien (optionnel)</label>
+  <input type="url" id="lien" name="lien" placeholder="https://..." value="<%= estEdition ? (outil.lien || '') : '' %>">
+  <label for="adresse">Adresse IP / nom d'hôte (optionnel)</label>
+  <input type="text" id="adresse" name="adresse" placeholder="192.168.1.10 ou routeur.local" value="<%= estEdition ? (outil.adresse || '') : '' %>">
+  <p class="champ-aide" style="color:var(--gris);font-size:13px;">Pour le diagnostic réseau (ping, traceroute…).</p>
+ </div>
+
+ <div id="bloc-materiel" style="<%= typeO === 'materiel' ? '' : 'display:none' %>">
+  <label for="emplacement">Emplacement</label>
+  <input type="text" id="emplacement" name="emplacement" placeholder="Atelier A, Armoire 3, Baie 12…"
+    value="<%= estEdition ? (outil.emplacement || '') : '' %>">
+  <label for="numero_serie">N° de série / inventaire</label>
+  <input type="text" id="numero_serie" name="numero_serie" placeholder="SN-… ou code inventaire"
+    value="<%= estEdition ? (outil.numero_serie || '') : '' %>">
+  <label for="quantite">Quantité</label>
+  <input type="number" id="quantite" name="quantite" min="0" step="1" style="max-width:120px;"
+    value="<%= estEdition && outil.quantite != null ? outil.quantite : 1 %>">
+  <label for="etat_physique">État</label>
+  <select id="etat_physique" name="etat_physique">
+   <% var etats = [
+     ['disponible', 'Disponible'],
+     ['emprunte', 'Emprunté'],
+     ['maintenance', 'En maintenance'],
+     ['hors_service', 'Hors service']
+   ];
+   var etatActuel = estEdition ? (outil.etat_physique || 'disponible') : 'disponible';
+   etats.forEach(function(e) { %>
+   <option value="<%= e[0] %>" <%= etatActuel === e[0] ? 'selected' : '' %>><%= e[1] %></option>
+   <% }); %>
+  </select>
+ </div>
 
  <label>Propriétaire</label>
  <p style="margin:4px 0 0; padding:9px 11px; background:var(--gris-clair); border-radius:var(--rayon); font-size:14px;">
- <%= currentUser.prenom %> <%= currentUser.nom %> <span style="color:var(--gris);">(vous)</span>
+  <%= currentUser.prenom %> <%= currentUser.nom %> <span style="color:var(--gris);">(vous)</span>
  </p>
 
  <label for="id_sous_activite">Sous-activité (optionnel)</label>
  <select id="id_sous_activite" name="id_sous_activite">
- <option value="">— Aucune —</option>
- <% sousActivites.forEach(function(sa) { %>
- <option value="<%= sa.id %>" <%= String(sa.id) === String(id_sous_activite) ? 'selected' : '' %>><%= sa.nom %></option>
- <% }) %>
+  <option value="">— Aucune —</option>
+  <% (sousActivites || []).forEach(function(sa) { %>
+  <option value="<%= sa.id %>" <%= String(sa.id) === String(id_sous_activite) ? 'selected' : '' %>><%= sa.nom %></option>
+  <% }); %>
  </select>
 
  <label for="image">Image (optionnel)</label>
  <input type="file" id="image" name="image" accept="image/*">
-<div class="actions-form" style="margin-top:18px;">
- <button type="submit" class="btn btn-primaire"><%= estEdition ? "Enregistrer" : "Créer" %></button>
- <a href="<%= id_activite ? '/activites/' + id_activite + '?onglet=outils' : '/' %>" class="btn btn-gris">Annuler</a>
+
+ <div class="actions-form" style="margin-top:18px;">
+  <button type="submit" class="btn btn-primaire"><%= estEdition ? 'Enregistrer' : 'Créer' %></button>
+  <a href="<%= id_activite ? '/activites/' + id_activite + '?onglet=outils' : '/' %>" class="btn btn-gris">Annuler</a>
  </div>
  </form>
 </div>
 
 <script>
 (function () {
- var liste = document.getElementById('creds-liste');
- function ligne(label, valeur) {
- var div = document.createElement('div');
- div.className = 'contact-ligne';
- div.innerHTML =
- '<input type="text" class="cred-label" placeholder="Libellé (ex. Login)" value="' + (label || '') + '" style="flex:1;">' +
- '<input type="text" class="cred-valeur" placeholder="Valeur" value="' + (valeur || '') + '" style="flex:1.2;">' +
- '<button type="button" class="btn-retirer" title="Retirer">&times;</button>';
- div.querySelector('.btn-retirer').onclick = function () { div.remove(); };
- liste.appendChild(div);
- }
- document.getElementById('btn-ajouter-cred').onclick = function () { ligne('', ''); };
- // Deux champs par défaut
- ligne('Login', '');
- ligne('Mot de passe', '');
-
- document.getElementById('form-outil').addEventListener('submit', function () {
- var rows = liste.querySelectorAll('.contact-ligne');
- var creds = [];
- rows.forEach(function (row) {
- var label = (row.querySelector('.cred-label').value || '').trim();
- var valeur = (row.querySelector('.cred-valeur').value || '').trim();
- if (label || valeur) creds.push({ label: label || 'Champ', valeur: valeur });
- });
- document.getElementById('credentials-json').value = JSON.stringify(creds);
- });
+  var sel = document.getElementById('type_outil');
+  var num = document.getElementById('bloc-numerique');
+  var mat = document.getElementById('bloc-materiel');
+  function sync() {
+    var m = sel.value === 'materiel';
+    num.style.display = m ? 'none' : '';
+    mat.style.display = m ? '' : 'none';
+  }
+  sel.addEventListener('change', sync);
 })();
 </script>
-
 <%- include('../partials/footer') %>
