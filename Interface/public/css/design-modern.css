@@ -1016,3 +1016,13 @@ html.theme-sombre .diag-sortie {
     color: #f1f5f9 !important;
     border-color: rgba(148, 163, 184, 0.35);
 }
+
+body.menu-compact .topbar nav > a,
+body.menu-compact .topbar .lien-menu-deroulant {
+  padding: 6px 8px;
+  font-size: 12.5px;
+}
+body.densite-compact .carte { padding: 12px 14px; }
+body.densite-compact .tableau th,
+body.densite-compact .tableau td { padding: 8px 10px; }
+body.densite-compact .entete-page { margin-bottom: 10px; }

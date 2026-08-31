@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { Outil, Parametre, OutilHistoriqueStatut } = require('../models');
+const { Outil, Parametre, OutilHistoriqueStatut, Activite, SousActivite } = require('../models');
 const { pingSimple } = require('./ping');
 const { consigner } = require('./journal');
 const { notifier } = require('./notification');
@@ -72,10 +72,25 @@ async function verifierUnOutil(outil) {
             // une action), pas le retour en ligne, pour ne pas noyer le
             // propriétaire de notifications à chaque va-et-vient.
             if (!enLigne && outil.id_user) {
+                let lien = `/outils/${outil.id}`;
+                try {
+                    const full = await Outil.findByPk(outil.id, {
+                        include: [
+                            { model: Activite, as: 'activites' },
+                            { model: SousActivite, as: 'sousActivites' }
+                        ]
+                    });
+                    if (full && full.sousActivites && full.sousActivites.length) {
+                        lien = `/sous-activites/${full.sousActivites[0].id}?onglet=outils`;
+                    } else if (full && full.activites && full.activites.length) {
+                        lien = `/activites/${full.activites[0].id}?onglet=outils`;
+                    }
+                } catch (_) {}
                 await notifier({
                     id_user: outil.id_user,
                     type: 'alerte',
-                    message: `Votre outil "${outil.nom}" (${outil.adresse}) ne répond plus.`
+                    message: `Votre outil "${outil.nom}" (${outil.adresse}) ne répond plus.`,
+                    lien
                 });
             }
         }

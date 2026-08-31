@@ -94,6 +94,17 @@ async function getAll(req, res, next) {
             tickets = tickets.filter((t, i) => resultats[i]);
         }
 
+        // Sans permission « Modifier » sur Tickets : uniquement les tickets créés ou assignés à soi
+        if (!isAdmin(req.currentUser) && !userHasPermission(req.currentUser, 'tickets', 'update')) {
+            tickets = tickets.filter(t => {
+                if (t.id_createur === req.currentUser.id) return true;
+                if (t.id_assigne === req.currentUser.id) return true;
+                const users = ticketAssigneesUsers(t);
+                if (users.includes(req.currentUser.id)) return true;
+                return false;
+            });
+        }
+
         // Filtres optionnels
         if (req.query.statut) {
             const st = Array.isArray(req.query.statut) ? req.query.statut : String(req.query.statut).split(',').filter(Boolean);
@@ -177,6 +188,14 @@ async function getById(req, res, next) { /* sla enrich below */
         if (!(await utilisateurPeutVoirTicket(req.currentUser, ticket))) {
             return res.status(403).json({ message: "Vous n'avez pas accès à ce ticket." });
         }
+        if (!isAdmin(req.currentUser) && !userHasPermission(req.currentUser, 'tickets', 'update')) {
+            const own = ticket.id_createur === req.currentUser.id
+                || ticket.id_assigne === req.currentUser.id
+                || ticketAssigneesUsers(ticket).includes(req.currentUser.id);
+            if (!own) {
+                return res.status(403).json({ message: "Sans permission Modifier, seuls vos tickets sont accessibles." });
+            }
+        }
 
         const json = ticket.toJSON();
         json.sla_statut = statutSla(json);
@@ -238,7 +257,7 @@ async function create(req, res, next) {
                 id_user: ticketComplet.Outil.id_user,
                 type: 'alerte',
                 message: `Nouveau ticket sur votre outil "${ticketComplet.Outil.nom}" : ${titre}`,
-                lien: `/tickets/${ticket.id}`
+                lien: `/assistance/tickets/${ticket.id}`
             });
         }
 
@@ -297,7 +316,7 @@ async function update(req, res, next) {
                 id_user: uid,
                 type: 'info',
                 message: `On vous a assigné le ticket #${ticket.id} "${ticket.titre}".`,
-                lien: `/tickets/${ticket.id}`
+                lien: `/assistance/tickets/${ticket.id}`
             });
         }
         if (changements.statut && ['resolu', 'ferme'].includes(changements.statut) && ticket.id_createur !== req.currentUser.id) {
@@ -305,7 +324,7 @@ async function update(req, res, next) {
                 id_user: ticket.id_createur,
                 type: 'succes',
                 message: `Votre ticket #${ticket.id} "${ticket.titre}" a été marqué ${changements.statut === 'resolu' ? 'résolu' : 'fermé'}.`,
-                lien: `/tickets/${ticket.id}`
+                lien: `/assistance/tickets/${ticket.id}`
             });
         }
 
@@ -345,6 +364,9 @@ async function ajouterMessage(req, res, next) {
         if (!(await utilisateurPeutVoirTicket(req.currentUser, ticket))) {
             return res.status(403).json({ message: "Vous n'avez pas accès à ce ticket." });
         }
+        if (['resolu', 'ferme'].includes(ticket.statut)) {
+            return res.status(400).json({ message: 'Ce ticket est résolu ou fermé : les nouveaux messages ne sont plus acceptés.' });
+        }
 
         const { contenu } = req.body;
         if (!contenu || !contenu.trim()) {
@@ -371,7 +393,7 @@ async function ajouterMessage(req, res, next) {
                 id_user: idDestinataire,
                 type: 'info',
                 message: `Nouveau message de ${req.currentUser.prenom} ${req.currentUser.nom} sur le ticket #${ticket.id} "${ticket.titre}".`,
-                lien: `/tickets/${ticket.id}`
+                lien: `/assistance/tickets/${ticket.id}`
             });
         }
 
@@ -420,14 +442,14 @@ async function escalader(req, res, next) {
         await notifier({
             id_user: admin.id,
             message: `Ticket #${ticket.id} « ${ticket.titre} » escaladé vers vous par ${req.currentUser.prenom} ${req.currentUser.nom}.`,
-            lien: `/tickets/${ticket.id}`,
+            lien: `/assistance/tickets/${ticket.id}`,
             type: 'alerte'
         });
         if (ticket.id_createur && ticket.id_createur !== admin.id) {
             await notifier({
                 id_user: ticket.id_createur,
                 message: `Votre ticket #${ticket.id} a été escaladé vers un administrateur.`,
-                lien: `/tickets/${ticket.id}`,
+                lien: `/assistance/tickets/${ticket.id}`,
                 type: 'info'
             });
         }

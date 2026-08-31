@@ -23,7 +23,16 @@ async function nombreNonLues(req, res, next) {
     } catch (err) { next(err); }
 }
 
+async function getById(req, res, next) {
+    try {
+        const notification = await Notification.findOne({ where: { id: req.params.id, id_user: req.currentUser.id } });
+        if (!notification) return res.status(404).json({ message: 'Notification introuvable.' });
+        res.json(notification);
+    } catch (err) { next(err); }
+}
+
 async function marquerLue(req, res, next) {
+
     try {
         const notification = await Notification.findOne({ where: { id: req.params.id, id_user: req.currentUser.id } });
         if (!notification) return res.status(404).json({ message: 'Notification introuvable.' });
@@ -48,5 +57,5 @@ async function vider(req, res, next) {
     } catch (err) { next(err); }
 }
 
-module.exports = { getAll, nombreNonLues, marquerLue, marquerToutesLues, vider };
+module.exports = { getAll, getById, nombreNonLues, marquerLue, marquerToutesLues, vider };
 

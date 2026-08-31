@@ -120,12 +120,19 @@ async function traiter(req, res, next) {
             traite_le: new Date()
         });
 
+        let lienDemande = '/securite/demandes-acces';
+        if (decision === 'approuvee') {
+            if (dem.type_cible === 'activite') lienDemande = `/activites/${dem.id_cible}`;
+            else if (dem.type_cible === 'sous_activite') lienDemande = `/sous-activites/${dem.id_cible}`;
+            else if (dem.type_cible === 'outil') lienDemande = `/outils/${dem.id_cible}`;
+        }
         await notifier({
             id_user: dem.id_demandeur,
             message: decision === 'approuvee'
                 ? 'Votre demande d\'accès a été approuvée.'
                 : 'Votre demande d\'accès a été refusée.',
-            type: 'acces'
+            type: 'acces',
+            lien: lienDemande
         }).catch(() => {});
 
         await consigner({

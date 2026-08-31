@@ -223,7 +223,8 @@ async function reinitialiserMotDePasse(req, res, next) {
         await notifier({
             id_user: utilisateur.id,
             type: 'alerte',
-            message: 'Votre mot de passe a été réinitialisé par un administrateur. Vous devrez le changer à votre prochaine connexion.'
+            message: 'Votre mot de passe a été réinitialisé par un administrateur. Vous devrez le changer à votre prochaine connexion.',
+            lien: '/changer-mot-de-passe'
         });
 
         res.json({ message: 'Mot de passe réinitialisé à la valeur par défaut.' });

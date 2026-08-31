@@ -47,7 +47,7 @@
           </td>
           <td>
             <% if (o.lien) { %>
-              <a href="<%= o.lien %>" target="_blank" rel="noopener" class="lien-ouvrir-outil"
+              <a href="<%= o.lien %>" rel="noopener" class="lien-ouvrir-outil"
                  data-creds-b64="<%= Buffer.from(JSON.stringify(o.credentials || [])).toString('base64') %>" >Ouvrir</a>
             <% } else { %>—<% } %>
           </td>
@@ -187,7 +187,28 @@
 
   var sauvegarde = null;
   try { sauvegarde = localStorage.getItem(cle); } catch (e) {}
-  activer((sauvegarde && ['liste', 'cartes', 'vignettes'].indexOf(sauvegarde) >= 0) ? sauvegarde : 'liste');
+  var prefVue = null;
+  try {
+    var gp = window.__gloPrefs || JSON.parse(localStorage.getItem('glo_prefs') || '{}');
+    prefVue = gp.vue_outils_defaut || null;
+  } catch (e) {}
+  var initVue = (sauvegarde && ['liste', 'cartes', 'vignettes'].indexOf(sauvegarde) >= 0)
+    ? sauvegarde
+    : ((prefVue && ['liste', 'cartes', 'vignettes'].indexOf(prefVue) >= 0) ? prefVue : 'liste');
+  activer(initVue);
+  document.querySelectorAll('a.lien-ouvrir-outil').forEach(function (a) {
+    a.addEventListener('click', function (ev) {
+      var nt = true;
+      try {
+        var g = window.__gloPrefs || JSON.parse(localStorage.getItem('glo_prefs') || '{}');
+        nt = g.ouvrir_outil_nouvel_onglet !== false;
+      } catch (e) {}
+      if (!nt) { /* same tab default */ return; }
+      ev.preventDefault();
+      window.open(a.href, '_blank', 'noopener');
+    });
+  });
+
 
   function buildActions(el) {
     var id = el.getAttribute('data-outil-id');
@@ -236,7 +257,15 @@
     el.addEventListener('dblclick', function (e) {
       e.preventDefault();
       var lien = el.getAttribute('data-outil-lien');
-      if (lien) window.open(lien, '_blank', 'noopener');
+      if (lien) {
+        var nt = true;
+        try {
+          var g = window.__gloPrefs || JSON.parse(localStorage.getItem('glo_prefs') || '{}');
+          nt = g.ouvrir_outil_nouvel_onglet !== false;
+        } catch (e) {}
+        if (nt) window.open(lien, '_blank', 'noopener');
+        else window.location.href = lien;
+      }
     });
   });
 })();

@@ -22,6 +22,8 @@
  var prefsLang = (typeof lang !== 'undefined' ? lang : (_p.langue || 'fr'));
  var bodyClasses = [];
  if (prefsDensite === 'compact') bodyClasses.push('densite-compact');
+ if (_p.menu_compact) bodyClasses.push('menu-compact');
+
  var _gloPrefsBoot = {
    theme: prefsTheme,
    langue: prefsLang,
@@ -172,7 +174,7 @@
  <a href="<%= itemsSecurite[0].href %>" class="<%= nav.section==='securite' ? 'nav-actif' : '' %>"><%= itemsSecurite[0].label %></a>
  <% } else if (itemsSecurite.length > 1) { %>
  <div class="menu-deroulant<%= nav.section==='securite' ? ' menu-actif' : '' %>">
- <button type="button" class="lien-menu-deroulant<%= nav.section==='securite' ? ' nav-actif' : '' %>">Sécurité <i class="bi bi-chevron-down" style="font-size:0.75em;"></i></button>
+ <button type="button" class="lien-menu-deroulant<%= nav.section==='securite' ? ' nav-actif' : '' %>">Accès &amp; sessions <i class="bi bi-chevron-down" style="font-size:0.75em;"></i></button>
  <div class="contenu-menu-deroulant">
  <% itemsSecurite.forEach(function(item) {
    var itemActif = (nav.item && item.href.indexOf(nav.item) !== -1) || (typeof pagePath !== 'undefined' && pagePath === item.href);

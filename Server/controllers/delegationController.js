@@ -76,7 +76,8 @@ async function creer(req, res, next) {
         await notifier({
             id_user: id_receveur,
             message: `${req.currentUser.prenom} ${req.currentUser.nom} vous a délégué des droits jusqu'au ${date_fin.toLocaleDateString('fr-FR')}.`,
-            type: 'delegation'
+            type: 'delegation',
+            lien: '/securite/delegations'
         }).catch(() => {});
 
         res.status(201).json({ message: 'Délégation créée.', delegation: del });

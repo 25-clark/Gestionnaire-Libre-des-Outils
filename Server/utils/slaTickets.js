@@ -69,7 +69,7 @@ async function verifierSlaTickets() {
         if (t.id_escalade_admin) destinataires.add(t.id_escalade_admin);
 
         const msg = `SLA dépassé — ticket #${t.id} « ${t.titre} » (priorité ${t.priorite}). Merci de le traiter ou de l'escalader.`;
-        const lien = `/tickets/${t.id}`;
+        const lien = `/assistance/tickets/${t.id}`;
 
         for (const id_user of destinataires) {
             await notifier({ id_user, message: msg, lien, type: 'alerte' });

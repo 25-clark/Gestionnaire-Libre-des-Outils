@@ -110,6 +110,11 @@ document.querySelectorAll('.btn-cancel-edit').forEach(function(btn){
  <% } %>
 
  <div class="carte" style="margin-top:14px;">
+ <% if (ticket.statut === 'resolu' || ticket.statut === 'ferme') { %>
+ <p style="margin:0;font-size:13px;color:var(--gris);">
+   <i class="bi bi-lock"></i> Ticket <%= ticket.statut === 'resolu' ? 'résolu' : 'fermé' %> : les nouveaux messages sont désactivés.
+ </p>
+ <% } else { %>
  <form action="/assistance/tickets/<%= ticket.id %>/messages" method="POST">
  <label for="contenu">Ajouter un message</label>
  <textarea id="contenu" name="contenu" rows="3" required placeholder="Écrire une réponse..."></textarea>
@@ -117,6 +122,7 @@ document.querySelectorAll('.btn-cancel-edit').forEach(function(btn){
  <button type="submit" class="btn btn-primaire">Envoyer</button>
  </div>
  </form>
+ <% } %>
  </div>
  </div>
 
@@ -140,21 +146,74 @@ document.querySelectorAll('.btn-cancel-edit').forEach(function(btn){
 
  <% var selUsers = Array.isArray(ticket.assignees_users) ? ticket.assignees_users.map(Number) : (ticket.Assigne ? [ticket.Assigne.id] : []); %>
  <% var selRoles = Array.isArray(ticket.assignees_roles) ? ticket.assignees_roles.map(Number) : []; %>
- <label for="assignees_users">Assigné aux utilisateurs</label>
- <select id="assignees_users" name="assignees_users" multiple size="5" style="min-height:100px;">
- <% (utilisateurs || []).forEach(function(u) { %>
- <option value="<%= u.id %>" <%= selUsers.indexOf(u.id) >= 0 ? 'selected' : '' %>><%= u.prenom %> <%= u.nom %></option>
- <% }) %>
+ <% var mapUsers = {}; (utilisateurs || []).forEach(function(u){ mapUsers[u.id] = (u.prenom||'') + ' ' + (u.nom||''); }); %>
+ <% var mapRoles = {}; (roles || []).forEach(function(r){ mapRoles[r.id] = r.nom; }); %>
+
+ <label>Assigné aux utilisateurs</label>
+ <div id="chips-users" class="assignee-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px;"></div>
+ <select id="select-add-user" style="width:100%;">
+  <option value="">— Ajouter un utilisateur —</option>
+  <% (utilisateurs || []).forEach(function(u) { %>
+  <option value="<%= u.id %>"><%= u.prenom %> <%= u.nom %></option>
+  <% }) %>
  </select>
- <p style="font-size:12px;color:var(--gris);">Maintenir Ctrl (ou Cmd) pour sélectionner plusieurs personnes.</p>
- <% if (typeof roles !== 'undefined' && roles && roles.length) { %>
- <label for="assignees_roles">Assigné aux rôles</label>
- <select id="assignees_roles" name="assignees_roles" multiple size="4" style="min-height:80px;">
- <% roles.forEach(function(r) { %>
- <option value="<%= r.id %>" <%= selRoles.indexOf(r.id) >= 0 ? 'selected' : '' %>><%= r.nom %></option>
- <% }) %>
+ <div id="hidden-users"></div>
+
+ <label style="margin-top:12px;">Assigné aux rôles</label>
+ <div id="chips-roles" class="assignee-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px;"></div>
+ <select id="select-add-role" style="width:100%;">
+  <option value="">— Ajouter un rôle —</option>
+  <% (roles || []).forEach(function(r) { %>
+  <option value="<%= r.id %>"><%= r.nom %></option>
+  <% }) %>
  </select>
- <% } %>
+ <div id="hidden-roles"></div>
+
+ <script type="application/json" id="assignees-boot"><%- JSON.stringify({ users: selUsers, roles: selRoles, mapUsers: mapUsers, mapRoles: mapRoles }) %></script>
+ <script>
+ (function(){
+   var boot = {};
+   try { boot = JSON.parse(document.getElementById('assignees-boot').textContent || '{}'); } catch(e) {}
+   var users = (boot.users || []).map(Number);
+   var roles = (boot.roles || []).map(Number);
+   var mapU = boot.mapUsers || {};
+   var mapR = boot.mapRoles || {};
+   function chip(label, onX) {
+     var s = document.createElement('span');
+     s.className = 'role-chip';
+     s.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--bleu-clair,#eff6ff);border:1px solid #bfdbfe;font-size:13px;';
+     s.innerHTML = '<span></span><button type="button" aria-label="Retirer" style="border:0;background:transparent;cursor:pointer;font-size:16px;line-height:1;">&times;</button>';
+     s.querySelector('span').textContent = label;
+     s.querySelector('button').onclick = onX;
+     return s;
+   }
+   function sync() {
+     var cu = document.getElementById('chips-users');
+     var cr = document.getElementById('chips-roles');
+     var hu = document.getElementById('hidden-users');
+     var hr = document.getElementById('hidden-roles');
+     cu.innerHTML = ''; hu.innerHTML = '';
+     cr.innerHTML = ''; hr.innerHTML = '';
+     users.forEach(function(id) {
+       cu.appendChild(chip(mapU[id] || ('#'+id), function(){ users = users.filter(function(x){ return x !== id; }); sync(); }));
+       var i = document.createElement('input'); i.type='hidden'; i.name='assignees_users'; i.value=id; hu.appendChild(i);
+     });
+     roles.forEach(function(id) {
+       cr.appendChild(chip(mapR[id] || ('#'+id), function(){ roles = roles.filter(function(x){ return x !== id; }); sync(); }));
+       var i = document.createElement('input'); i.type='hidden'; i.name='assignees_roles'; i.value=id; hr.appendChild(i);
+     });
+   }
+   document.getElementById('select-add-user').addEventListener('change', function(){
+     var v = parseInt(this.value, 10); if (!v) return;
+     if (users.indexOf(v) < 0) users.push(v); this.value=''; sync();
+   });
+   document.getElementById('select-add-role').addEventListener('change', function(){
+     var v = parseInt(this.value, 10); if (!v) return;
+     if (roles.indexOf(v) < 0) roles.push(v); this.value=''; sync();
+   });
+   sync();
+ })();
+ </script>
  <div class="actions-form">
  <button type="submit" class="btn btn-primaire btn-petit">Enregistrer l'assignation</button>
  </div>

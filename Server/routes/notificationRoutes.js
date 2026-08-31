@@ -10,6 +10,7 @@ router.use(requireAuth);
 // ce n'est pas une ressource métier partagée).
 router.get('/', notificationController.getAll);
 router.get('/non-lues/nombre', notificationController.nombreNonLues);
+router.get('/:id', notificationController.getById);
 router.post('/:id/lue', notificationController.marquerLue);
 router.post('/toutes-lues', notificationController.marquerToutesLues);
 router.delete('/', notificationController.vider);

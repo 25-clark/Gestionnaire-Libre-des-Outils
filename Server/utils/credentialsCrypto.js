@@ -91,7 +91,8 @@ function chiffrerCredentials(liste) {
         .filter(c => c && (c.label || c.valeur))
         .map(c => ({
             label: String(c.label || '').trim() || 'Champ',
-            valeur: chiffrerValeur(c.valeur == null ? '' : String(c.valeur))
+            valeur: chiffrerValeur(c.valeur == null ? '' : String(c.valeur)),
+            copier_ouverture: c.copier_ouverture === false || c.copier_ouverture === 0 ? false : true
         }));
 }
 
@@ -99,7 +100,8 @@ function dechiffrerCredentials(liste) {
     if (!Array.isArray(liste)) return [];
     return liste.map(c => ({
         label: c && c.label != null ? String(c.label) : 'Champ',
-        valeur: dechiffrerValeur(c && c.valeur != null ? c.valeur : '')
+        valeur: dechiffrerValeur(c && c.valeur != null ? c.valeur : ''),
+        copier_ouverture: c && (c.copier_ouverture === false || c.copier_ouverture === 0) ? false : true
     }));
 }
 

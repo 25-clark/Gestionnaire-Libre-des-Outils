@@ -255,6 +255,7 @@ const totpDispo = parametre.totp_disponible !== false;
                     id_user: user.id,
                     message: 'Une nouvelle connexion à votre compte a été détectée depuis un autre appareil ou navigateur. Si ce n\'est pas vous, changez votre mot de passe.',
                     type: 'securite',
+                    lien: '/securite/sessions',
                     lu: false
                 }).catch(() => {});
                 // Notifier les admins (journal + notification)
@@ -267,6 +268,7 @@ const totpDispo = parametre.totp_disponible !== false;
                         id_user: admin.id,
                         message: `Connexion concurrente : ${user.prenom} ${user.nom} (${user.matricule}) s'est connecté alors qu'une autre session était active.`,
                         type: 'securite',
+                        lien: '/securite/sessions',
                         lu: false
                     }).catch(() => {});
                 }
