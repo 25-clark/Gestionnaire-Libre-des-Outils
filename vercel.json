@@ -1,26 +1,16 @@
 {
   "version": 2,
-  "buildCommand": "cd Interface && npm install && npm run build",
   "installCommand": "cd Interface && npm install",
-  "builds": [
-    {
-      "src": "Interface/app.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": [
-          "Interface/views/**",
-          "Interface/public/**",
-          "Interface/routes/**",
-          "Interface/middlewares/**",
-          "Interface/utils/**",
-          "Interface/config/**"
-        ]
-      }
+  "buildCommand": "cd Interface && npm run build",
+  "functions": {
+    "Interface/api/index.js": {
+      "includeFiles": "Interface/{views,public,routes,middlewares,utils,config}/**",
+      "maxDuration": 30
     }
-  ],
-  "routes": [
-    { "src": "/css/(.*)", "dest": "Interface/public/css/$1" },
-    { "src": "/js/(.*)", "dest": "Interface/public/js/$1" },
-    { "src": "/(.*)", "dest": "Interface/app.js" }
+  },
+  "rewrites": [
+    { "source": "/css/(.*)", "destination": "/Interface/public/css/$1" },
+    { "source": "/js/(.*)", "destination": "/Interface/public/js/$1" },
+    { "source": "/(.*)", "destination": "/Interface/api" }
   ]
 }

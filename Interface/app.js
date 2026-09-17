@@ -31,7 +31,9 @@ const securiteRoutes = require('./routes/securiteRoutes');
 const app = express();
 
 app.set('view engine', 'ejs');
+// Sous Vercel, __dirname pointe vers le bundle de la fonction
 app.set('views', path.join(__dirname, 'views'));
+app.set('view cache', process.env.NODE_ENV === 'production');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

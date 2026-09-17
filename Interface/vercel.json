@@ -1,25 +1,14 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "app.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": [
-          "views/**",
-          "public/**",
-          "routes/**",
-          "middlewares/**",
-          "utils/**",
-          "config/**"
-        ]
-      }
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "{views,public,routes,middlewares,utils,config}/**",
+      "maxDuration": 30
     }
-  ],
-  "routes": [
-    { "src": "/css/(.*)", "dest": "public/css/$1" },
-    { "src": "/js/(.*)", "dest": "public/js/$1" },
-    { "src": "/uploads/(.*)", "dest": "public/uploads/$1" },
-    { "src": "/(.*)", "dest": "app.js" }
+  },
+  "rewrites": [
+    { "source": "/css/(.*)", "destination": "/public/css/$1" },
+    { "source": "/js/(.*)", "destination": "/public/js/$1" },
+    { "source": "/(.*)", "destination": "/api" }
   ]
 }
