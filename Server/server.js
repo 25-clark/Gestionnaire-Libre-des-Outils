@@ -118,14 +118,37 @@ const PORT = envConfig.port;
 
 logDemarrage();
 
+async function tableExiste(nomTable) {
+    try {
+        const [rows] = await sequelize.query(
+            `SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.TABLES
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :t`,
+            { replacements: { t: nomTable } }
+        );
+        return Number(rows[0].n) > 0;
+    } catch {
+        return false;
+    }
+}
+
+async function preparerSchema() {
+    console.log('Connexion à la base de données réussie.');
+    // Base vide (premier déploiement) : créer toutes les tables des modèles
+    if (!(await tableExiste('outils')) || !(await tableExiste('utilisateurs'))) {
+        console.log('[schema] Base vide ou incomplète — création des tables (sync)...');
+        await sequelize.sync();
+        console.log('[schema] Tables créées.');
+    }
+    await assurerColonnes();
+}
+
 sequelize.authenticate()
+    .then(() => preparerSchema())
     .then(() => {
-        console.log('Connexion à la base de données réussie.');
-        return assurerColonnes();
-    })
-    .then(() => {
-        app.listen(PORT, () => {
-            console.log(`Serveur GLO démarré sur le port ${PORT} [${envConfig.nodeEnv}]`);
+        // Render injecte PORT — écouter 0.0.0.0 pour le health check
+        const host = process.env.HOST || '0.0.0.0';
+        app.listen(PORT, host, () => {
+            console.log(`Serveur GLO démarré sur ${host}:${PORT} [${envConfig.nodeEnv}]`);
             demarrerSurveillance();
             demarrerSlaTickets();
             demarrerPlanification();

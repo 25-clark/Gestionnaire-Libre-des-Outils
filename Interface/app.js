@@ -347,6 +347,7 @@ app.use((err, req, res, next) => {
 });
 
 // Export pour Vercel / tests ; écoute uniquement en exécution directe
+try { logDemarrage(); } catch (e) { console.error('[env]', e.message); }
 module.exports = app;
 
 if (require.main === module) {

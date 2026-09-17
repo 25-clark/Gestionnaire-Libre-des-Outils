@@ -16,12 +16,18 @@ async function colonneExiste(table, colonne) {
 }
 
 async function ajouterColonne(table, colonne, definitionSql) {
-    if (await colonneExiste(table, colonne)) {
+    try {
+        if (await colonneExiste(table, colonne)) {
+            return false;
+        }
+        await sequelize.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${colonne}\` ${definitionSql}`);
+        console.log(`[schema] Colonne ajoutée : ${table}.${colonne}`);
+        return true;
+    } catch (e) {
+        // Table absente ou contrainte : on ignore (sync aura créé le nécessaire)
+        console.warn(`[schema] skip ${table}.${colonne}: ${e.message}`);
         return false;
     }
-    await sequelize.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${colonne}\` ${definitionSql}`);
-    console.log(`[schema] Colonne ajoutée : ${table}.${colonne}`);
-    return true;
 }
 
 async function assurerColonnes() {

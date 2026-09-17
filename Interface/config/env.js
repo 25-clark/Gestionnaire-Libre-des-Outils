@@ -6,14 +6,22 @@ const isProd = NODE_ENV === 'production';
 const isDev = !isProd;
 
 function requisEnProd(cle, valeur) {
-    if (isProd && (!valeur || valeur === 'glo_interface_secret')) {
-        console.error(`[env] Variable obligatoire en production : ${cle}`);
-        process.exit(1);
+    if (isProd && (!valeur || valeur === 'glo_interface_secret' || valeur === 'glo_interface_secret_a_changer')) {
+        const msg = `[env] Variable obligatoire en production : ${cle}`;
+        // Sur Vercel, process.exit tue la fonction → 500 FUNCTION_INVOCATION_FAILED
+        if (process.env.VERCEL) {
+            console.error(msg + ' (définir dans Project → Settings → Environment Variables)');
+        } else {
+            console.error(msg);
+            process.exit(1);
+        }
     }
 }
 
-const SESSION_SECRET = process.env.SESSION_SECRET || (isDev ? 'glo-interface-dev-secret' : '');
-requisEnProd('SESSION_SECRET', SESSION_SECRET);
+const SESSION_SECRET = process.env.SESSION_SECRET
+    || (isDev ? 'glo-interface-dev-secret' : '')
+    || (process.env.VERCEL ? 'vercel-insecure-change-me' : '');
+requisEnProd('SESSION_SECRET', process.env.SESSION_SECRET || '');
 
 const API_URL = (process.env.API_URL || 'http://localhost:4000/api').replace(/\/$/, '');
 if (isProd && /localhost|127\.0\.0\.1/.test(API_URL)) {

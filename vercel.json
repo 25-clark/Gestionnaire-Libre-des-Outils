@@ -1,10 +1,7 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "name": "glo-interface",
   "buildCommand": "cd Interface && npm install && npm run build",
   "installCommand": "cd Interface && npm install",
-  "framework": null,
   "builds": [
     {
       "src": "Interface/app.js",
@@ -22,20 +19,8 @@
     }
   ],
   "routes": [
-    {
-      "src": "/css/(.*)",
-      "dest": "Interface/public/css/$1"
-    },
-    {
-      "src": "/js/(.*)",
-      "dest": "Interface/public/js/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "Interface/app.js"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+    { "src": "/css/(.*)", "dest": "Interface/public/css/$1" },
+    { "src": "/js/(.*)", "dest": "Interface/public/js/$1" },
+    { "src": "/(.*)", "dest": "Interface/app.js" }
+  ]
 }

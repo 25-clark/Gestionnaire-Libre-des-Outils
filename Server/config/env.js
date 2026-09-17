@@ -11,7 +11,7 @@ const isDev = !isProd;
 function requisEnProd(cle, valeur) {
     if (isProd && (!valeur || valeur === 'change_moi' || valeur === 'change_moi_en_production')) {
         console.error(`[env] Variable obligatoire en production : ${cle}`);
-        process.exit(1);
+        if (!process.env.RENDER && !process.env.VERCEL) process.exit(1);
     }
 }
 
@@ -60,7 +60,7 @@ const config = {
     nodeEnv: NODE_ENV,
     isProd,
     isDev,
-    port: parseInt(process.env.PORT, 10) || 4000,
+    port: parseInt(process.env.PORT, 10) || parseInt(process.env.GLO_PORT, 10) || 4000,
     sessionSecret: SESSION_SECRET,
     credentialsSecret: CREDENTIALS_SECRET,
     clientOrigins: originesCors(),
