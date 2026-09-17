@@ -26,7 +26,9 @@ if (isProd && !process.env.CREDENTIALS_SECRET) {
 /** Origines CORS autorisées (CLIENT_URL ou CLIENT_URLS séparées par des virgules). */
 function originesCors() {
     const raw = process.env.CLIENT_URLS || process.env.CLIENT_URL || 'http://localhost:3000';
-    return raw.split(',').map((s) => s.trim()).filter(Boolean);
+    return raw.split(',')
+        .map((s) => s.trim().replace(/\/+$/, ''))
+        .filter(Boolean);
 }
 
 /**

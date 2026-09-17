@@ -120,41 +120,63 @@ logDemarrage();
 
 async function tableExiste(nomTable) {
     try {
-        const [rows] = await sequelize.query(
-            `SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.TABLES
-             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :t`,
-            { replacements: { t: nomTable } }
-        );
-        return Number(rows[0].n) > 0;
-    } catch {
+        // SHOW TABLES est plus fiable que INFORMATION_SCHEMA sur TiDB Cloud
+        const [rows] = await sequelize.query(`SHOW TABLES LIKE :t`, {
+            replacements: { t: nomTable }
+        });
+        return Array.isArray(rows) && rows.length > 0;
+    } catch (e) {
+        console.warn('[schema] tableExiste:', e.message);
         return false;
     }
 }
 
 async function preparerSchema() {
     console.log('Connexion à la base de données réussie.');
-    // Base vide (premier déploiement) : créer toutes les tables des modèles
-    if (!(await tableExiste('outils')) || !(await tableExiste('utilisateurs'))) {
+    const hasOutils = await tableExiste('outils');
+    const hasUsers = await tableExiste('utilisateurs');
+    if (!hasOutils || !hasUsers) {
         console.log('[schema] Base vide ou incomplète — création des tables (sync)...');
         await sequelize.sync();
         console.log('[schema] Tables créées.');
+    } else {
+        console.log('[schema] Tables principales déjà présentes.');
     }
-    await assurerColonnes();
+    try {
+        await assurerColonnes();
+    } catch (e) {
+        console.warn('[schema] assurerColonnes (non bloquant):', e.message);
+    }
 }
 
 sequelize.authenticate()
     .then(() => preparerSchema())
     .then(() => {
-        // Render injecte PORT — écouter 0.0.0.0 pour le health check
         const host = process.env.HOST || '0.0.0.0';
         app.listen(PORT, host, () => {
             console.log(`Serveur GLO démarré sur ${host}:${PORT} [${envConfig.nodeEnv}]`);
-            demarrerSurveillance();
-            demarrerSlaTickets();
-            demarrerPlanification();
+            try {
+                demarrerSurveillance();
+                demarrerSlaTickets();
+                demarrerPlanification();
+            } catch (e) {
+                console.warn('[jobs]', e.message);
+            }
         });
     })
-    .catch((err) => {
-        console.error('Impossible de se connecter à la base de données :', err.message);
-        process.exit(1);
+    .catch(async (err) => {
+        console.error('[schema/db] Erreur:', err.message);
+        // Dernier recours : forcer sync puis réessayer d'écouter
+        try {
+            console.log('[schema] Tentative de récupération (sync forcé)...');
+            await sequelize.sync();
+            await assurerColonnes().catch(() => {});
+            const host = process.env.HOST || '0.0.0.0';
+            app.listen(PORT, host, () => {
+                console.log(`Serveur GLO démarré sur ${host}:${PORT} (après recovery)`);
+            });
+        } catch (e2) {
+            console.error('[schema] Échec définitif:', e2.message);
+            process.exit(1);
+        }
     });
