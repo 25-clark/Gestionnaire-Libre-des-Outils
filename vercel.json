@@ -1,10 +1,10 @@
 {
   "version": 2,
-  "installCommand": "cd Interface && npm install",
-  "buildCommand": "cd Interface && npm run build",
+  "installCommand": "npm install --prefix Interface",
+  "buildCommand": "npm run build --prefix Interface",
   "functions": {
     "Interface/api/index.js": {
-      "includeFiles": "Interface/{views,public,routes,middlewares,utils,config}/**",
+      "includeFiles": "Interface/{views,public,routes,middlewares,utils,config,node_modules}/**",
       "maxDuration": 30
     }
   },
