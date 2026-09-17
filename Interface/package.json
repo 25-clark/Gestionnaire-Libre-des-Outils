@@ -1,11 +1,16 @@
 {
   "name": "glo-interface",
   "version": "1.0.0",
-  "description": "Frontend EJS - Gestionnaire d'outils par activité (GLO)",
+  "description": "Frontend EJS - Gestionnaire d'outils par activit\u00e9 (GLO)",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "lint": "eslint . --ext .js --ignore-pattern node_modules --ignore-pattern public/uploads",
+    "lint:fix": "eslint . --ext .js --ignore-pattern node_modules --ignore-pattern public/uploads --fix",
+    "build": "node --check app.js && echo \"[build] Interface syntax OK\"",
+    "start:local": "node app.js",
+    "start:prod": "node app.js"
   },
   "dependencies": {
     "axios": "^1.7.4",
@@ -16,6 +21,11 @@
     "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.4"
+    "nodemon": "^3.1.4",
+    "eslint": "^9.9.0",
+    "@eslint/js": "^9.9.0"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

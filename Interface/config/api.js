@@ -3,7 +3,13 @@ const axios = require('axios');
 const http = require('http');
 const https = require('https');
 
-const API_URL = process.env.API_URL || 'http://localhost:4000/api';
+let API_URL;
+try {
+    API_URL = require('./env').config.apiUrl;
+} catch {
+    API_URL = (process.env.API_URL || 'http://localhost:4000/api').replace(/\/$/, '');
+}
+
 
 // keepAlive désactivé : évite ECONNRESET quand le Server redémarre (nodemon)
 // ou ferme une connexion idle pendant qu'Axios la réutilise.

@@ -10,3 +10,8 @@ Interface/public/uploads/outils/*
 !Interface/public/uploads/outils/.gitkeep
 npm-debug.log*
 note.txt
+# Lint / tooling
+.eslintcache
+*.log
+.vercel
+Server/data/

@@ -1,0 +1,21 @@
+{
+  "name": "glo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Gestionnaire Libre des Outils — monorepo Server + Interface",
+  "scripts": {
+    "install:all": "npm install --prefix Server && npm install --prefix Interface",
+    "lint": "npm run lint --prefix Server && npm run lint --prefix Interface",
+    "lint:fix": "npm run lint:fix --prefix Server && npm run lint:fix --prefix Interface",
+    "build": "npm run build --prefix Server && npm run build --prefix Interface",
+    "build:interface": "npm run build --prefix Interface",
+    "build:server": "npm run build --prefix Server",
+    "start:server": "npm start --prefix Server",
+    "start:interface": "npm start --prefix Interface",
+    "dev:server": "npm run dev --prefix Server",
+    "dev:interface": "npm run dev --prefix Interface"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

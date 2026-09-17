@@ -1,5 +1,7 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
+const { config: envConfig, logDemarrage } = require('./config/env');
+
 // Diagnostic SMTP au démarrage
 (function () {
     const host = (process.env.SMTP_HOST || '').trim();
@@ -46,24 +48,37 @@ const demandeAccesRoutes = require('./routes/demandeAccesRoutes');
 const app = express();
 app.disable('x-powered-by');
 
+if (envConfig.trustProxy) {
+    app.set('trust proxy', 1);
+}
+
 app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: function (origin, cb) {
+        // Requêtes same-origin / outils sans Origin (curl, health)
+        if (!origin) return cb(null, true);
+        if (envConfig.clientOrigins.includes(origin) || envConfig.clientOrigins.includes('*')) {
+            return cb(null, true);
+        }
+        // En dev, accepter localhost sur n'importe quel port
+        if (envConfig.isDev && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+            return cb(null, true);
+        }
+        console.warn('[cors] Origine refusée :', origin);
+        return cb(null, false);
+    },
     credentials: true
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'change_moi',
+    secret: envConfig.sessionSecret,
     resave: false,
     saveUninitialized: false,
     rolling: true,
     store: new FileSessionStore(),
-    cookie: {
-        httpOnly: true,
-        sameSite: 'lax',
-        maxAge: 1000 * 60 * 60 * 8 // 8h par défaut
-    }
+    cookie: envConfig.cookie,
+    proxy: envConfig.trustProxy
 }));
 
 // Fichiers statiques (logos d'activités, images d'outils)
@@ -99,7 +114,9 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({ message: err.message || 'Erreur serveur.' });
 });
 
-const PORT = process.env.PORT || 4000;
+const PORT = envConfig.port;
+
+logDemarrage();
 
 sequelize.authenticate()
     .then(() => {
@@ -108,7 +125,7 @@ sequelize.authenticate()
     })
     .then(() => {
         app.listen(PORT, () => {
-            console.log(`Serveur GLO démarré sur http://localhost:${PORT}`);
+            console.log(`Serveur GLO démarré sur le port ${PORT} [${envConfig.nodeEnv}]`);
             demarrerSurveillance();
             demarrerSlaTickets();
             demarrerPlanification();
